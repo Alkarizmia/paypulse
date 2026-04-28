@@ -6,6 +6,7 @@ import { LocaleProvider } from "./locale-context";
 import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const font = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -60,6 +61,7 @@ export default function RootLayout({
           </LocaleProvider>
         </AuthProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
