@@ -2,14 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useId, useState, type CSSProperties, type ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useId, useState, type ReactNode } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
 import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
 import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
+import { PwaInstallButton } from "@/app/pwa-install-button";
+import {
+  HeroHeadlineGlow,
+  HeroWingAurora,
+  LandingStarfield,
+  MotionHeroTitle,
+  MotionKicker,
+  Reveal,
+  SoftFloat,
+  SoftFloatDashboard,
+} from "@/app/landing/landing-motion";
 
 const ACCENT = "#3DFF8A";
-const BG = "#071528";
+const BG = "#050505";
 const FOUNDER_NAME = "El Fahmi Bilal";
 const FOUNDER_IMAGE_SRC = "/images/founder-bilal.png";
 const RECURRING_CYCLE_IMAGE_SRC = "/images/recurring-cycle-illustration.png";
@@ -38,10 +50,24 @@ function RecurringCycleArrowDecor({ ariaLabel }: { ariaLabel: string }) {
 
 function FounderTrust({ kicker, role }: { kicker: string; role: string }) {
   const [photoVisible, setPhotoVisible] = useState(true);
+  const reduceMotion = useReducedMotion();
   return (
-    <div
-      className="pp-rise mt-10 flex max-w-xl items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3.5 sm:px-5"
-      style={{ "--pp-rise-delay": "0.62s" } as CSSProperties}
+    <motion.div
+      className="mt-10 flex max-w-xl items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 shadow-lg shadow-violet-950/20 backdrop-blur-md sm:px-5"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.52, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={
+        reduceMotion
+          ? undefined
+          : {
+              y: -3,
+              borderColor: "rgba(255,255,255,0.16)",
+              boxShadow:
+                "0 20px 48px -12px rgba(0,0,0,0.45), 0 0 40px -8px rgba(139,92,246,0.18), 0 0 0 1px rgba(167,139,250,0.12)",
+            }
+      }
     >
       <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl ring-2 ring-[#3DFF8A]/35 shadow-lg shadow-black/30">
         {photoVisible ? (
@@ -66,7 +92,7 @@ function FounderTrust({ kicker, role }: { kicker: string; role: string }) {
         <p className="mt-1 truncate text-base font-bold text-white">{FOUNDER_NAME}</p>
         <p className="text-sm text-slate-400">{role}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -117,78 +143,10 @@ const PLAN_FR: Record<
   },
 };
 
-/** Délai entre première et dernière lettre (s) ; + durée par lettre → total sous 3 s. */
-const HERO_CHAR_STAGGER_BUDGET_S = 2.28;
-const HERO_CHAR_ANIM_S = 0.42;
-
-function StaggerWords({ text, className }: { text: string; className?: string }) {
-  const words = text.split(/\s+/).filter(Boolean);
-  return (
-    <span className={className}>
-      {words.map((w, i) => (
-        <Fragment key={`${i}-${w}`}>
-          {i > 0 ? " " : null}
-          <span className="pp-word" style={{ animationDelay: `${i * 0.055}s` }}>
-            {w}
-          </span>
-        </Fragment>
-      ))}
-    </span>
-  );
-}
-
-function StaggerTitleChars({ text }: { text: string }) {
-  const parts = text.trim().split(/(\s+)/);
-  const letterCount = Math.max(
-    parts.reduce((n, p) => (/^\s+$/.test(p) ? n : n + Array.from(p).length), 0),
-    1,
-  );
-  const staggerWindow = Math.max(0.12, HERO_CHAR_STAGGER_BUDGET_S);
-  const step = letterCount > 1 ? staggerWindow / (letterCount - 1) : 0;
-
-  let letterIndex = 0;
-  return (
-    <>
-      {parts.map((part, pi) => {
-        if (part === "") return null;
-        if (/^\s+$/.test(part)) {
-          return (
-            <span key={`sp-${pi}`} className="whitespace-pre">
-              {part}
-            </span>
-          );
-        }
-        const chars = Array.from(part);
-        return (
-          <span key={`w-${pi}`} className="inline-block max-w-full align-top whitespace-nowrap">
-            {chars.map((ch, ci) => {
-              const i = letterIndex++;
-              return (
-                <span
-                  key={`${pi}-${ci}-${ch}`}
-                  className="pp-char"
-                  style={{
-                    animationDuration: `${HERO_CHAR_ANIM_S}s`,
-                    animationDelay: `${i * step}s`,
-                  }}
-                >
-                  {ch}
-                </span>
-              );
-            })}
-          </span>
-        );
-      })}
-    </>
-  );
-}
-
-function ProductDemoMock({
+export function ProductDemoMock({
   demo,
   className,
-  animateFloat = true,
 }: {
-  animateFloat?: boolean;
   demo: {
     panelTitle: string;
     tabIn: string;
@@ -206,7 +164,7 @@ function ProductDemoMock({
   className?: string;
 }) {
   return (
-    <div className={`relative mx-auto max-w-xl lg:mx-0 ${animateFloat ? "pp-float" : ""} ${className ?? ""}`}>
+    <div className={`relative mx-auto max-w-xl lg:mx-0 ${className ?? ""}`}>
       <div className="absolute -right-6 -top-4 z-10 hidden max-w-[200px] rounded-xl border border-white/10 bg-[#0a1f35] p-3 shadow-xl sm:block">
         <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: ACCENT }}>
           {demo.floatLabel}
@@ -317,7 +275,7 @@ function DashboardChartsMock({ charts, className }: { charts: ChartsMockCopy; cl
 
   return (
     <div
-      className={`mx-auto w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08080c] shadow-2xl shadow-black/40 lg:mx-0 lg:max-w-none ${className ?? ""}`}
+      className={`mx-auto w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08080c]/95 shadow-2xl shadow-black/40 backdrop-blur-sm lg:mx-0 lg:max-w-none ${className ?? ""}`}
     >
       <div className="flex items-center gap-2 border-b border-white/[0.08] bg-[#0c0c12] px-3 py-2.5">
         <span className="h-2 w-2 rounded-full bg-red-400/90" aria-hidden />
@@ -474,16 +432,17 @@ function featureIcon(kind: "clients" | "status" | "remind" | "dash" | "auto" | "
 export function LandingPage() {
   const { locale } = useLocale();
   const { isAuthenticated } = useAuth();
+  const reduceMotion = useReducedMotion();
 
   const t =
     locale === "fr"
       ? {
           product: "Factures et relances pour freelances",
-          title: "PayPulse aide à encaisser plus vite, sans courir après les clients.",
-          body: "Ajoutez vos clients et factures, voyez payé / non payé, et gérez vos relances (prévisualisation puis envoi depuis votre messagerie). Tableau de bord : argent en attente, reçu, retard moyen. Les offres supérieures ajoutent relances automatiques, brouillons avancés et, en Agence, des espaces de travail séparés pour plusieurs marques.",
-          ctaTrial: "Créer un compte",
+          title: "Recuperez votre argent. Automatiquement.",
+          body: "PayPulse relance vos clients a votre place jusqu'au paiement.",
+          ctaTrial: "Commencer gratuitement",
           ctaDashboard: "Aller au dashboard",
-          ctaPricing: "Voir les offres",
+          ctaPricing: "Voir comment ca marche",
           demoAnchor: "demo",
           pricingAnchor: "pricing",
           featuresTitle: "Tout ce qu’il faut pour suivre l’argent",
@@ -587,6 +546,27 @@ export function LandingPage() {
           },
           founderKicker: "Une face derrière le produit",
           founderRole: "Fondateur, PayPulse",
+          installLabels: {
+            defaultLabel: "Telecharger PayPulse",
+            mobileLabel: "Installer sur mobile",
+            macLabel: "Telecharger sur Mac",
+            windowsLabel: "Telecharger sur Windows",
+            secondaryLabel: "Installer l'application",
+          },
+          problemTitle: "Le probleme n'est pas vos clients. C'est le timing.",
+          problemBody:
+            "Les paiements en retard cassent la tresorerie, prennent du temps et ajoutent une charge mentale. PayPulse automatise le suivi sans casser votre relation client.",
+          solutionTitle: "Une machine de relance elegante, connectee a votre rythme.",
+          solutionBody:
+            "Chaque facture est suivie, chaque relance est cadree, chaque encaissement est visible dans un dashboard clair et premium.",
+          howTitle: "Comment ca marche",
+          howSteps: [
+            "Connectez vos clients et factures en quelques minutes.",
+            "PayPulse detecte les echeances et prepare les relances.",
+            "Vous encaissez plus vite avec un suivi automatique.",
+          ],
+          finalCtaTitle: "Arretez de courir apres votre argent",
+          finalCtaButton: "Commencer gratuitement",
           features: [
             { kind: "clients" as const, title: "Clients & factures", body: "Centralisez dossiers, montants et dates d’échéance sans tableur dispersé." },
             { kind: "status" as const, title: "Payé / impayé", body: "Chaque ligne affiche un statut clair pour prioriser qui relancer." },
@@ -598,11 +578,11 @@ export function LandingPage() {
         }
       : {
           product: "Invoices and nudges for freelancers",
-          title: "PayPulse helps you get paid sooner—without chasing clients manually.",
-          body: "Add clients and invoices, track paid vs unpaid, and run reminders (preview, then send from your mail app). Dashboard: pending cash, cash in, average delay. Higher plans add auto reminders, richer drafts, and—on Agency—separate workspaces for more than one brand.",
-          ctaTrial: "Create account",
+          title: "Recover your cash. Automatically.",
+          body: "PayPulse follows up with your clients until you get paid.",
+          ctaTrial: "Start free",
           ctaDashboard: "Go to dashboard",
-          ctaPricing: "See plans",
+          ctaPricing: "See how it works",
           demoAnchor: "demo",
           pricingAnchor: "pricing",
           featuresTitle: "Everything you need to track cash",
@@ -704,6 +684,27 @@ export function LandingPage() {
           },
           founderKicker: "A face behind the product",
           founderRole: "Founder, PayPulse",
+          installLabels: {
+            defaultLabel: "Download PayPulse",
+            mobileLabel: "Install on mobile",
+            macLabel: "Download for Mac",
+            windowsLabel: "Download for Windows",
+            secondaryLabel: "Install the app",
+          },
+          problemTitle: "The problem is not your clients. It's timing.",
+          problemBody:
+            "Late payments hurt cash flow, waste time, and create friction. PayPulse automates follow-up without hurting client relationships.",
+          solutionTitle: "A polished reminder engine built for speed.",
+          solutionBody:
+            "Every invoice is tracked, every follow-up stays consistent, and every payment is visible in one clean dashboard.",
+          howTitle: "How it works",
+          howSteps: [
+            "Connect your clients and invoices in minutes.",
+            "PayPulse detects due dates and prepares reminders.",
+            "Get paid faster with automatic follow-up.",
+          ],
+          finalCtaTitle: "Stop chasing your money",
+          finalCtaButton: "Start free",
           features: [
             { kind: "clients" as const, title: "Clients & invoices", body: "Centralize cases, amounts, and due dates without scattered spreadsheets." },
             { kind: "status" as const, title: "Paid / unpaid", body: "Each row shows a clear status so you know who to nudge first." },
@@ -721,22 +722,23 @@ export function LandingPage() {
   }));
 
   const planCardClass = (highlight: boolean) =>
-    `pp-dashboard-card-interactive relative flex flex-col rounded-2xl border p-6 ${
+    `pp-dashboard-card-interactive relative flex flex-col rounded-2xl border p-6 backdrop-blur-md ${
       highlight
-        ? "border-[#3DFF8A]/50 bg-[#0a1f35] shadow-xl shadow-[#3DFF8A]/10 hover:border-[#3DFF8A]/65"
-        : "border-white/10 bg-[#0a1628]/80 hover:border-white/25"
+        ? "border-[#3DFF8A]/50 bg-[#0a1f35]/90 shadow-xl shadow-[#3DFF8A]/14 hover:border-[#3DFF8A]/65 hover:shadow-[0_20px_48px_-12px_rgba(61,255,138,0.18),0_0_40px_-8px_rgba(139,92,246,0.12)]"
+        : "border-white/10 bg-[#0a1628]/75 hover:border-white/20 hover:shadow-[0_18px_40px_-14px_rgba(0,0,0,0.45),0_0_32px_-10px_rgba(139,92,246,0.1)]"
     }`;
 
   return (
     <div className="relative min-h-screen overflow-x-hidden antialiased text-white" style={{ backgroundColor: BG }}>
       <div className="pp-landing-ambient" aria-hidden>
+        <LandingStarfield />
         <div
           className="pp-landing-ambient__blob left-[-20%] top-[-25%] h-[min(520px,55vw)] w-[min(520px,55vw)]"
-          style={{ background: "radial-gradient(circle, rgba(61,255,138,0.35) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(61,255,138,0.32) 0%, rgba(61,255,138,0.08) 42%, transparent 72%)" }}
         />
         <div
           className="pp-landing-ambient__blob pp-landing-ambient__blob--2 right-[-15%] bottom-[10%] h-[min(480px,50vw)] w-[min(480px,50vw)]"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.28) 0%, transparent 72%)" }}
+          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.26) 0%, rgba(167,139,250,0.1) 45%, transparent 74%)" }}
         />
         <div
           className="absolute inset-0 opacity-[0.07]"
@@ -750,94 +752,174 @@ export function LandingPage() {
 
       <main className="relative z-[1]">
         <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:pb-28">
+          <HeroWingAurora />
           <div
-            className="pointer-events-none absolute inset-0 opacity-90"
+            className="pointer-events-none absolute inset-0 z-[1] opacity-90"
             style={{
               background:
                 "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(61,255,138,0.1), transparent)",
             }}
           />
-          <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+          <div className="relative z-10 mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
             <div className="min-w-0 max-w-full">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
-                <StaggerWords text={t.product} />
-              </p>
-              <div className="relative mt-5 pb-4 sm:pb-6">
-                <div
-                  className="pp-hero-title-glow pointer-events-none absolute left-[-8%] right-[-8%] top-[72%] z-0 h-36 sm:h-40"
-                  aria-hidden
-                />
-                <h1
-                  aria-label={t.title}
-                  className="relative z-10 max-w-xl text-balance text-4xl font-bold tracking-tight text-white hyphens-none sm:text-5xl lg:text-[3.1rem] lg:leading-[1.12]"
-                >
-                  <span aria-hidden className="block max-w-xl ps-[0.12em] text-balance">
-                    <StaggerTitleChars text={t.title} />
-                  </span>
-                </h1>
+              <MotionKicker
+                text={t.product}
+                className="text-xs font-semibold uppercase tracking-[0.2em] text-[#3DFF8A]"
+              />
+              <div className="relative mt-6 pb-5 sm:pb-7">
+                <HeroHeadlineGlow />
+                {locale === "fr" ? (
+                  <h1 className="relative z-10 max-w-xl text-balance text-4xl font-bold tracking-tight text-white hyphens-none sm:text-5xl lg:text-[3.1rem] lg:leading-[1.12]">
+                    Recuperez votre argent.
+                    <span className="block bg-gradient-to-r from-violet-200 via-fuchsia-200 to-violet-400 bg-clip-text text-transparent [text-shadow:0_0_28px_rgba(168,85,247,0.45)]">
+                      Automatiquement.
+                    </span>
+                  </h1>
+                ) : (
+                  <MotionHeroTitle
+                    title={t.title}
+                    className="relative z-10 max-w-xl text-balance text-4xl font-bold tracking-tight text-white hyphens-none sm:text-5xl lg:text-[3.1rem] lg:leading-[1.12]"
+                  />
+                )}
               </div>
-              <p
-                className="pp-rise mt-5 max-w-xl text-lg leading-relaxed text-slate-300"
-                style={{ "--pp-rise-delay": "0.35s" } as CSSProperties}
-              >
+              <Reveal className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300" delay={0.06}>
                 {t.body}
-              </p>
-              <div
-                className="pp-rise mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
-                style={{ "--pp-rise-delay": "0.5s" } as CSSProperties}
-              >
-                <Link
-                  href={isAuthenticated ? "/dashboard" : "/signup"}
-                  className="inline-flex items-center justify-center rounded-full px-8 py-3.5 text-sm font-semibold text-[#041018] shadow-lg transition hover:opacity-95"
-                  style={{ backgroundColor: ACCENT, boxShadow: "0 12px 40px rgba(61,255,138,0.22)" }}
+              </Reveal>
+              <Reveal className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center" delay={0.12}>
+                <motion.div
+                  className="inline-flex w-full sm:w-auto"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 22 }}
                 >
-                  {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
-                </Link>
-                <a
-                  href={`#${t.pricingAnchor}`}
-                  className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/10"
+                  <Link
+                    href={isAuthenticated ? "/dashboard" : "/signup"}
+                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#3DFF8A] to-[#5cff9e] px-8 py-3.5 text-sm font-semibold text-[#041018] shadow-[0_12px_40px_rgba(61,255,138,0.28),0_0_0_1px_rgba(255,255,255,0.12)] transition hover:shadow-[0_16px_48px_rgba(61,255,138,0.38),0_0_32px_rgba(139,92,246,0.15)] sm:w-auto"
+                  >
+                    {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
+                  </Link>
+                </motion.div>
+                <motion.div
+                  className="inline-flex w-full sm:w-auto"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 24 }}
                 >
-                  {t.ctaPricing}
-                </a>
-              </div>
+                  <a
+                    href={`#${t.pricingAnchor}`}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-8 py-3.5 text-sm font-semibold text-white shadow-inner shadow-white/[0.03] backdrop-blur-sm transition hover:border-violet-400/35 hover:bg-white/10 hover:shadow-[0_0_24px_rgba(139,92,246,0.12)] sm:w-auto"
+                  >
+                    {t.ctaPricing}
+                  </a>
+                </motion.div>
+              </Reveal>
+              <PwaInstallButton labels={t.installLabels} />
               <FounderTrust kicker={t.founderKicker} role={t.founderRole} />
             </div>
-            <ProductDemoMock demo={t.demo} />
+            <motion.div
+              className="relative min-w-0"
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={
+                reduceMotion
+                  ? undefined
+                  : {
+                      rotateX: 2,
+                      rotateY: -2,
+                      scale: 1.01,
+                      transition: { type: "spring", stiffness: 260, damping: 22 },
+                    }
+              }
+              style={{ perspective: 1200 }}
+            >
+              <SoftFloat>
+                <motion.div
+                  className="relative mx-auto w-full max-w-[520px] [transform-style:preserve-3d]"
+                  whileHover={{
+                    filter: "drop-shadow(0 28px 56px rgba(0,0,0,0.55)) drop-shadow(0 12px 36px rgba(139,92,246,0.12))",
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 -z-10 rounded-[3rem] bg-[radial-gradient(circle_at_45%_35%,rgba(139,92,246,0.48),rgba(139,92,246,0.16)_38%,transparent_68%)] blur-3xl" />
+                  <div className="pointer-events-none absolute -inset-x-4 bottom-6 -z-10 h-20 rounded-full bg-violet-500/35 blur-2xl" />
+                  <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.03] p-4 shadow-[0_30px_90px_-24px_rgba(0,0,0,0.72),0_0_90px_-36px_rgba(139,92,246,0.62)] backdrop-blur-xl">
+                    <div className="absolute inset-0 bg-[linear-gradient(130deg,rgba(255,255,255,0.08),transparent_38%,rgba(139,92,246,0.2))]" />
+                    <div className="relative aspect-[4/5] w-full">
+                      <Image
+                        src={FOUNDER_IMAGE_SRC}
+                        alt={FOUNDER_NAME}
+                        fill
+                        className="object-cover object-top"
+                        sizes="(max-width: 1024px) 90vw, 42vw"
+                        unoptimized
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              </SoftFloat>
+            </motion.div>
           </div>
         </section>
 
         <section id="features" className="scroll-mt-28 border-t border-white/10 bg-[#06101f] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.featuresTitle}</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-slate-400">{t.featuresSub}</p>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Reveal className="text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.featuresTitle}</h2>
+            </Reveal>
+            <Reveal className="mx-auto mt-3 max-w-2xl text-center text-slate-400" delay={0.06}>
+              <p>{t.featuresSub}</p>
+            </Reveal>
+            <motion.div
+              className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-48px" }}
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } },
+              }}
+            >
               {featureCards.map((card) => (
-                <div
+                <motion.div
                   key={card.title}
-                  className="pp-dashboard-card-interactive rounded-2xl border border-white/10 bg-[#071528]/90 p-6 hover:border-white/20"
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.52, ease: [0.22, 1, 0.36, 1] } },
+                  }}
+                  className="rounded-2xl border border-white/10 bg-[#071528]/80 p-6 shadow-lg shadow-black/25 backdrop-blur-md"
+                  whileHover={{
+                    y: -4,
+                    borderColor: "rgba(167, 139, 250, 0.22)",
+                    boxShadow:
+                      "0 22px 48px -14px rgba(0,0,0,0.48), 0 0 0 1px rgba(255,255,255,0.06), 0 0 44px -8px rgba(139, 92, 246, 0.14)",
+                  }}
+                  transition={{ type: "spring", stiffness: 380, damping: 26 }}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">{card.icon}</div>
+                    <div className="relative rounded-xl border border-white/10 bg-white/[0.05] p-3 shadow-[0_0_24px_-4px_rgba(139,92,246,0.2)]">
+                      {card.icon}
+                    </div>
                     <div>
                       <h3 className="text-base font-semibold text-white">{card.title}</h3>
                       <p className="mt-2 text-sm leading-relaxed text-slate-400">{card.body}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         <section id="recurring-cycle" className="scroll-mt-28 border-t border-white/10 bg-[#071528] px-4 py-16 sm:px-6">
           <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
-            <div className="flex min-w-0 flex-col justify-center lg:py-2">
+            <Reveal className="flex min-w-0 flex-col justify-center lg:py-2">
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.recurringTitle}</h2>
-              <p className="mt-4 text-sm leading-relaxed text-slate-400 sm:text-base">{t.recurringBody}</p>
-            </div>
-            <div className="relative min-w-0 w-full">
+              <p className="mt-5 text-sm leading-relaxed text-slate-400 sm:text-base">{t.recurringBody}</p>
+            </Reveal>
+            <Reveal className="relative min-w-0 w-full" delay={0.08}>
               {/* Ratio 1200×680 : pleine largeur de colonne, hauteur dérivée — image en fill + object-cover */}
-              <div className="relative aspect-[1200/680] w-full overflow-hidden rounded-2xl">
+              <div className="relative aspect-[1200/680] w-full overflow-hidden rounded-2xl shadow-[0_24px_56px_-12px_rgba(0,0,0,0.45),0_0_40px_-8px_rgba(139,92,246,0.1)] ring-1 ring-white/10">
                 <Image
                   src={RECURRING_CYCLE_IMAGE_SRC}
                   alt={t.recurringImgAlt}
@@ -848,44 +930,148 @@ export function LandingPage() {
                 />
                 <RecurringCycleArrowDecor ariaLabel={t.recurringArrowAria} />
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
         <section id={t.demoAnchor} className="scroll-mt-28 border-t border-white/10 bg-[#071528] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.demoTitle}</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-slate-400">{t.demoSub}</p>
-            <div className="mt-12 grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
-              <ul className="space-y-4 text-left">
+            <Reveal className="text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.demoTitle}</h2>
+            </Reveal>
+            <Reveal className="mx-auto mt-3 max-w-2xl text-center text-slate-400" delay={0.05}>
+              <p>{t.demoSub}</p>
+            </Reveal>
+            <div className="mt-14 grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
+              <motion.ul
+                className="space-y-4 text-left"
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-40px" }}
+                variants={{
+                  hidden: {},
+                  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
+                }}
+              >
                 {t.demoBullets.map((line) => (
-                  <li key={line} className="flex gap-3 text-sm leading-relaxed text-slate-300">
-                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3DFF8A]/15 text-xs font-bold text-[#3DFF8A]" aria-hidden>
+                  <motion.li
+                    key={line}
+                    variants={{
+                      hidden: { opacity: 0, y: 14 },
+                      show: { opacity: 1, y: 0, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } },
+                    }}
+                    className="flex gap-3 text-sm leading-relaxed text-slate-300"
+                  >
+                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3DFF8A]/15 text-xs font-bold text-[#3DFF8A] shadow-[0_0_16px_rgba(61,255,138,0.12)]" aria-hidden>
                       ✓
                     </span>
                     <span>{line}</span>
-                  </li>
+                  </motion.li>
                 ))}
-              </ul>
+              </motion.ul>
               <div className="flex min-w-0 justify-center lg:justify-end">
-                <div className="pp-float-dashboard w-full max-w-xl lg:max-w-[min(100%,520px)]">
-                  <DashboardChartsMock
-                    charts={t.chartsMock}
-                    className="origin-top scale-[0.94] sm:scale-[0.97] lg:max-w-none"
-                  />
-                </div>
+                <motion.div
+                  className="w-full max-w-xl lg:max-w-[min(100%,520px)]"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.62, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={
+                    reduceMotion
+                      ? undefined
+                      : {
+                          rotateX: 2.5,
+                          rotateY: 2,
+                          scale: 1.01,
+                          transition: { type: "spring", stiffness: 280, damping: 22 },
+                        }
+                  }
+                  style={{ perspective: 1400 }}
+                >
+                  <SoftFloatDashboard>
+                    <motion.div className="[transform-style:preserve-3d]">
+                      <DashboardChartsMock
+                        charts={t.chartsMock}
+                        className="origin-top scale-[0.94] sm:scale-[0.97] lg:max-w-none"
+                      />
+                    </motion.div>
+                  </SoftFloatDashboard>
+                </motion.div>
               </div>
             </div>
           </div>
         </section>
 
+        <section className="border-t border-white/10 bg-[#07070a] px-4 py-16 sm:px-6">
+          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
+            <Reveal className="rounded-2xl border border-white/10 bg-white/[0.03] p-7 shadow-[0_20px_56px_-18px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-200/80">Probleme</p>
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-white">{t.problemTitle}</h3>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">{t.problemBody}</p>
+            </Reveal>
+            <Reveal
+              className="rounded-2xl border border-violet-300/20 bg-[linear-gradient(160deg,rgba(139,92,246,0.16),rgba(17,24,39,0.78))] p-7 shadow-[0_22px_64px_-20px_rgba(139,92,246,0.5)] backdrop-blur-xl"
+              delay={0.07}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-100/90">Solution</p>
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-white">{t.solutionTitle}</h3>
+              <p className="mt-4 text-sm leading-relaxed text-slate-200">{t.solutionBody}</p>
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="border-t border-white/10 bg-[#050505] px-4 py-16 sm:px-6">
+          <div className="mx-auto max-w-5xl">
+            <Reveal className="text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.howTitle}</h2>
+            </Reveal>
+            <motion.div
+              className="mt-10 grid gap-4 sm:grid-cols-3"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-40px" }}
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+            >
+              {t.howSteps.map((step, idx) => (
+                <motion.div
+                  key={step}
+                  variants={{
+                    hidden: { opacity: 0, y: 16 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                  }}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-lg"
+                  whileHover={{
+                    y: -4,
+                    borderColor: "rgba(167,139,250,0.34)",
+                    boxShadow: "0 18px 42px -16px rgba(139,92,246,0.42)",
+                  }}
+                >
+                  <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-violet-300/25 bg-violet-500/15 text-sm font-bold text-violet-100">
+                    {idx + 1}
+                  </div>
+                  <p className="text-sm leading-relaxed text-slate-300">{step}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
         <section id={t.pricingAnchor} className="scroll-mt-28 px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-6xl">
-            <div className="mx-auto max-w-2xl text-center">
+            <Reveal className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-white">{t.pricingTitle}</h2>
-              <p className="mt-3 text-slate-400">{t.pricingSub}</p>
-            </div>
-            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <p className="mt-4 text-slate-400">{t.pricingSub}</p>
+            </Reveal>
+            <motion.div
+              className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-32px" }}
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
+              }}
+            >
               {MARKETING_PLANS.map((plan) => {
                 const localized = locale === "fr" ? PLAN_FR[plan.id] : null;
                 const name = localized?.name ?? plan.name;
@@ -897,7 +1083,18 @@ export function LandingPage() {
                 const highlight = Boolean(plan.highlighted);
 
                 return (
-                  <div key={plan.id} className={planCardClass(highlight)}>
+                  <motion.div
+                    key={plan.id}
+                    className={planCardClass(highlight)}
+                    variants={{
+                      hidden: { opacity: 0, y: 22 },
+                      show: { opacity: 1, y: 0, transition: { duration: 0.52, ease: [0.22, 1, 0.36, 1] } },
+                    }}
+                    whileHover={{
+                      y: -4,
+                      transition: { type: "spring", stiffness: 400, damping: 24 },
+                    }}
+                  >
                     {highlight ? (
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#3DFF8A] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#041018]">
                         {t.popular}
@@ -919,33 +1116,52 @@ export function LandingPage() {
                         </li>
                       ))}
                     </ul>
-                    <Link
-                      href={isAuthenticated ? `/dashboard?plan=${plan.id}` : `/signup?plan=${plan.id}`}
-                      className={`mt-8 block w-full rounded-xl py-3 text-center text-sm font-semibold transition ${
-                        highlight
-                          ? "bg-[#3DFF8A] text-[#041018] hover:bg-[#5cff9e]"
-                          : "border border-white/15 bg-white/5 text-white hover:bg-white/10"
-                      }`}
-                    >
-                      {cta}
-                    </Link>
-                  </div>
+                    <motion.div className="mt-8" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Link
+                        href={isAuthenticated ? `/dashboard?plan=${plan.id}` : `/signup?plan=${plan.id}`}
+                        className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition ${
+                          highlight
+                            ? "bg-gradient-to-r from-[#3DFF8A] to-[#5cff9e] text-[#041018] shadow-[0_8px_28px_rgba(61,255,138,0.25)] hover:shadow-[0_12px_36px_rgba(61,255,138,0.32)]"
+                            : "border border-white/15 bg-white/[0.06] text-white shadow-inner shadow-white/[0.02] backdrop-blur-sm hover:border-violet-400/30 hover:bg-white/10"
+                        }`}
+                      >
+                        {cta}
+                      </Link>
+                    </motion.div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         <section id="faq" className="scroll-mt-28 border-t border-white/10 bg-[#06101f] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.faqTitle}</h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-slate-400">{t.faqSub}</p>
-            <div className="mt-10 space-y-3">
+            <Reveal className="text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.faqTitle}</h2>
+            </Reveal>
+            <Reveal className="mx-auto mt-3 max-w-xl text-center text-slate-400" delay={0.05}>
+              <p>{t.faqSub}</p>
+            </Reveal>
+            <motion.div
+              className="mt-12 space-y-3"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-24px" }}
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
+              }}
+            >
               {t.faqItems.map((item) => (
-                <details
+                <motion.div
                   key={item.q}
-                  className="group rounded-2xl border border-white/10 bg-[#071528]/80 px-4 py-1 open:border-white/18 open:bg-[#071528] [&_summary]:cursor-pointer"
+                  variants={{
+                    hidden: { opacity: 0, y: 12 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+                  }}
                 >
+                  <details className="group rounded-2xl border border-white/10 bg-[#071528]/75 px-4 py-1 shadow-lg shadow-black/20 backdrop-blur-md open:border-white/18 open:bg-[#071528]/90 [&_summary]:cursor-pointer">
                   <summary className="flex list-none items-center justify-between gap-3 py-3 text-sm font-semibold text-white outline-none ring-offset-2 ring-offset-[#06101f] focus-visible:ring-2 focus-visible:ring-[#3DFF8A]/70 [&::-webkit-details-marker]:hidden">
                     <span>{item.q}</span>
                     <span
@@ -956,32 +1172,82 @@ export function LandingPage() {
                     </span>
                   </summary>
                   <p className="border-t border-white/10 pb-4 pt-2 text-sm leading-relaxed text-slate-400">{item.a}</p>
-                </details>
+                  </details>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         <section className="border-t border-white/10 bg-[#071528] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-4xl">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Persona</p>
-            <h2 className="mt-3 text-center text-xl font-bold text-white sm:text-2xl">{t.personaTitle}</h2>
-            <blockquote className="mx-auto mt-6 max-w-2xl border-l-2 border-[#3DFF8A]/60 pl-5 text-left text-base italic leading-relaxed text-slate-300">
-              {t.personaQuote}
-            </blockquote>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2">
-              <div className="pp-dashboard-card-interactive rounded-2xl border border-white/10 bg-[#06101f] p-6 hover:border-white/20">
+            <Reveal className="text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Persona</p>
+              <h2 className="mt-3 text-xl font-bold text-white sm:text-2xl">{t.personaTitle}</h2>
+            </Reveal>
+            <Reveal className="mx-auto mt-6 max-w-2xl" delay={0.06}>
+              <blockquote className="border-l-2 border-[#3DFF8A]/60 pl-5 text-left text-base italic leading-relaxed text-slate-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+                {t.personaQuote}
+              </blockquote>
+            </Reveal>
+            <motion.div
+              className="mt-12 grid gap-6 sm:grid-cols-2"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-40px" }}
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+              }}
+            >
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 18 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+                className="rounded-2xl border border-white/10 bg-[#06101f]/85 p-6 shadow-lg shadow-black/25 backdrop-blur-md"
+                whileHover={{
+                  y: -4,
+                  borderColor: "rgba(255,255,255,0.16)",
+                  boxShadow: "0 20px 44px -12px rgba(0,0,0,0.45), 0 0 36px -10px rgba(139,92,246,0.1)",
+                }}
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.beforeTitle}</p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-300">{t.beforeBody}</p>
-              </div>
-              <div className="pp-dashboard-card-interactive rounded-2xl border border-[#3DFF8A]/25 bg-[#0a1f35] p-6 hover:border-[#3DFF8A]/40">
+              </motion.div>
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 18 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+                className="rounded-2xl border border-[#3DFF8A]/25 bg-[#0a1f35]/90 p-6 shadow-[0_16px_40px_-12px_rgba(61,255,138,0.12)] backdrop-blur-md"
+                whileHover={{
+                  y: -4,
+                  borderColor: "rgba(61,255,138,0.45)",
+                  boxShadow: "0 22px 48px -10px rgba(61,255,138,0.15), 0 0 40px -8px rgba(139,92,246,0.12)",
+                }}
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: ACCENT }}>
                   {t.afterTitle}
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-200">{t.afterBody}</p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
+        </section>
+
+        <section className="border-t border-white/10 bg-[#050505] px-4 py-18 sm:px-6">
+          <Reveal className="mx-auto flex max-w-4xl flex-col items-center rounded-3xl border border-violet-300/20 bg-[linear-gradient(180deg,rgba(139,92,246,0.14),rgba(5,5,5,0.82))] px-6 py-12 text-center shadow-[0_22px_72px_-24px_rgba(139,92,246,0.5)] backdrop-blur-2xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{t.finalCtaTitle}</h2>
+            <motion.div className="mt-8" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                href={isAuthenticated ? "/dashboard" : "/signup"}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-violet-300 via-fuchsia-300 to-violet-500 px-8 py-3.5 text-sm font-semibold text-[#0f0620] shadow-[0_14px_42px_rgba(139,92,246,0.45)]"
+              >
+                {t.finalCtaButton}
+              </Link>
+            </motion.div>
+          </Reveal>
         </section>
 
         <footer className="border-t border-white/10 px-4 py-12 sm:px-6">

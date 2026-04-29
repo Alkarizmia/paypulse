@@ -5,6 +5,7 @@ import { ConditionalTopBar } from "./conditional-topbar";
 import { LocaleProvider } from "./locale-context";
 import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
+import { PwaRegister } from "./pwa-register";
 
 const font = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -39,6 +40,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  manifest: "/manifest.webmanifest",
+  applicationName: "PayPulse",
+  appleWebApp: {
+    title: "PayPulse",
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({
@@ -49,6 +57,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={font.variable}>
       <body className={`${font.className} min-h-screen antialiased`}>
+        <PwaRegister />
         <AuthProvider>
           <LocaleProvider>
             <div className="flex min-h-screen flex-col">
