@@ -100,13 +100,13 @@ export function AddClientForm({
   const blocked = Boolean(disabled || submitting || freeInvoiceLimitReached);
 
   return (
-    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-6 shadow-[0_0_30px_-16px_rgba(139,92,246,0.2)] sm:p-8 hover:border-violet-500/25">
+    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-8 shadow-[0_0_30px_-16px_rgba(139,92,246,0.2)] hover:border-violet-500/25">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-white">
             {labels?.title ?? "Nouveau client"}
           </h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
             {labels?.subtitle ??
               `Nom, email, montant dû et date d'échéance — ${
                 supabaseActive ? "enregistré dans Supabase" : "enregistré dans ce navigateur (mode local)"
@@ -142,9 +142,9 @@ export function AddClientForm({
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-6">
+      <form onSubmit={handleSubmit} className="mt-5 sm:mt-6">
         <fieldset disabled={blocked} className="min-w-0">
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
             {portfolioOptions && portfolioOptions.length > 0 ? (
               <label className="block sm:col-span-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -157,7 +157,7 @@ export function AddClientForm({
                       : portfolioOptions[0].id
                   }
                   onChange={(e) => onPortfolioChange?.(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
                 >
                   {portfolioOptions.map((o) => (
                     <option key={o.id} value={o.id}>
@@ -176,7 +176,7 @@ export function AddClientForm({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
                 placeholder="Ex. Agence Dupont"
               />
             </label>
@@ -188,7 +188,7 @@ export function AddClientForm({
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
                 placeholder="Ex. Dupont Studio"
               />
             </label>
@@ -201,7 +201,7 @@ export function AddClientForm({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
                 placeholder="contact@exemple.fr"
               />
             </label>
@@ -216,7 +216,7 @@ export function AddClientForm({
                 value={amountDue}
                 onChange={(e) => setAmountDue(e.target.value)}
                 pattern="^\d+([.,]\d{1,2})?$"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
                 placeholder="1200"
               />
             </label>
@@ -229,7 +229,7 @@ export function AddClientForm({
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
               />
             </label>
             <label className="block">
@@ -239,7 +239,7 @@ export function AddClientForm({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as Client["status"])}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 sm:px-4 py-2 text-sm sm:text-base text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-900 dark:focus:ring-sky-500/20"
               >
                 <option value="unpaid">{labels?.unpaid ?? "Impayé"}</option>
                 <option value="paid">{labels?.paid ?? "Payé"}</option>
@@ -251,7 +251,7 @@ export function AddClientForm({
               {validationError}
             </p>
           )}
-          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
+          <div className="mt-6 sm:mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 sm:pt-6 dark:border-slate-800 sm:flex-row sm:justify-end">
             <button
               type="submit"
               className="inline-flex w-full items-center justify-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-violet-900/40 transition duration-200 hover:-translate-y-0.5 hover:bg-violet-500 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"

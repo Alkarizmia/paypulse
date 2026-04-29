@@ -927,27 +927,27 @@ export function DashboardView() {
         </div>
 
         <div ref={paiementsRef} className="scroll-mt-28 mt-12">
-          <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-6 hover:border-violet-500/25">
-            <h2 className="text-lg font-semibold text-white">{copy.paiementsTitle}</h2>
-            <p className="mt-1 text-sm text-slate-400">{copy.paiementsSub}</p>
-            <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+          <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-6 hover:border-violet-500/25">
+            <h2 className="text-base sm:text-lg font-semibold text-white">{copy.paiementsTitle}</h2>
+            <p className="mt-1 text-xs sm:text-sm text-slate-400">{copy.paiementsSub}</p>
+            <dl className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {locale === "fr" ? "Encours total" : "Total outstanding"}
                 </dt>
-                <dd className="mt-1 text-xl font-semibold tabular-nums text-white">{moneyFmt.format(totalAmountDue)}</dd>
+                <dd className="mt-1 text-lg sm:text-xl font-semibold tabular-nums text-white">{moneyFmt.format(totalAmountDue)}</dd>
               </div>
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {locale === "fr" ? "Factures payées" : "Paid invoices"}
                 </dt>
-                <dd className="mt-1 text-xl font-semibold tabular-nums text-emerald-300">{paidCount}</dd>
+                <dd className="mt-1 text-lg sm:text-xl font-semibold tabular-nums text-emerald-300">{paidCount}</dd>
               </div>
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {locale === "fr" ? "Taux de paiement" : "Payment rate"}
                 </dt>
-                <dd className="mt-1 text-xl font-semibold tabular-nums text-violet-300">{paymentRate}%</dd>
+                <dd className="mt-1 text-lg sm:text-xl font-semibold tabular-nums text-violet-300">{paymentRate}%</dd>
               </div>
             </dl>
             <div className="mt-6 flex flex-wrap gap-3">

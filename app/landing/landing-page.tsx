@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
 import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
 import { useLocale } from "@/app/locale-context";
@@ -27,15 +27,26 @@ const FOUNDER_IMAGE_SRC = "/images/founder-bilal.png";
 const RECURRING_CYCLE_IMAGE_SRC = "/images/recurring-cycle-illustration.png";
 
 /** Flèche demi-tour décorative : zoom uniquement sur ce picto au survol. */
-function RecurringCycleArrowDecor({ ariaLabel }: { ariaLabel: string }) {
+function RecurringCycleArrowDecor({
+  ariaLabel,
+  isAnimating,
+  onTrigger,
+}: {
+  ariaLabel: string;
+  isAnimating: boolean;
+  onTrigger: () => void;
+}) {
   return (
-    <div
+    <button
+      type="button"
       className="group/arrow pointer-events-auto absolute right-[2.5%] top-[3.5%] z-10 flex h-11 w-11 cursor-default items-center justify-center rounded-xl border border-sky-500/50 bg-sky-950/55 p-1.5 shadow-md shadow-black/35 backdrop-blur-[2px] sm:right-[3.5%] sm:top-[4%] sm:h-12 sm:w-12"
-      role="img"
       aria-label={ariaLabel}
+      onClick={onTrigger}
     >
       <svg
-        className="h-full w-full max-h-[1.35rem] max-w-[1.35rem] text-sky-200 transition-transform duration-300 ease-out group-hover/arrow:scale-[1.28] motion-reduce:transition-none motion-reduce:group-hover/arrow:scale-100 sm:max-h-6 sm:max-w-6"
+        className={`h-full w-full max-h-[1.35rem] max-w-[1.35rem] text-sky-200 transition-transform duration-300 ease-out group-hover/arrow:scale-[1.28] motion-reduce:transition-none motion-reduce:group-hover/arrow:scale-100 sm:max-h-6 sm:max-w-6 ${
+          isAnimating ? "scale-[1.28] text-violet-200" : ""
+        }`}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -44,55 +55,7 @@ function RecurringCycleArrowDecor({ ariaLabel }: { ariaLabel: string }) {
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
       </svg>
-    </div>
-  );
-}
-
-function FounderTrust({ kicker, role }: { kicker: string; role: string }) {
-  const [photoVisible, setPhotoVisible] = useState(true);
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.div
-      className="mt-10 flex max-w-xl items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 shadow-lg shadow-violet-950/20 backdrop-blur-md sm:px-5"
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.52, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={
-        reduceMotion
-          ? undefined
-          : {
-              y: -3,
-              borderColor: "rgba(255,255,255,0.16)",
-              boxShadow:
-                "0 20px 48px -12px rgba(0,0,0,0.45), 0 0 40px -8px rgba(139,92,246,0.18), 0 0 0 1px rgba(167,139,250,0.12)",
-            }
-      }
-    >
-      <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl ring-2 ring-[#3DFF8A]/35 shadow-lg shadow-black/30">
-        {photoVisible ? (
-          <Image
-            src={FOUNDER_IMAGE_SRC}
-            alt={FOUNDER_NAME}
-            width={144}
-            height={144}
-            className="h-full w-full object-cover object-[center_15%]"
-            sizes="72px"
-            unoptimized
-            onError={() => setPhotoVisible(false)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-600 via-[#0a1f35] to-emerald-600 text-sm font-bold tracking-tight text-white">
-            EB
-          </div>
-        )}
-      </div>
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#3DFF8A]/90">{kicker}</p>
-        <p className="mt-1 truncate text-base font-bold text-white">{FOUNDER_NAME}</p>
-        <p className="text-sm text-slate-400">{role}</p>
-      </div>
-    </motion.div>
+    </button>
   );
 }
 
@@ -814,7 +777,6 @@ export function LandingPage() {
                 </motion.div>
               </Reveal>
               <PwaInstallButton labels={t.installLabels} />
-              <FounderTrust kicker={t.founderKicker} role={t.founderRole} />
             </div>
             <motion.div
               className="relative min-w-0"
@@ -854,6 +816,13 @@ export function LandingPage() {
                         sizes="(max-width: 1024px) 90vw, 42vw"
                         unoptimized
                       />
+                    </div>
+                    <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-2xl border border-white/15 bg-black/20 px-4 py-3 backdrop-blur-md">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-transparent bg-gradient-to-r from-violet-100/80 via-fuchsia-200/85 to-violet-300/80 bg-clip-text">
+                        {t.founderKicker}
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-white/90">{FOUNDER_NAME}</p>
+                      <p className="text-sm text-slate-300/85">{t.founderRole}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -919,16 +888,42 @@ export function LandingPage() {
             </Reveal>
             <Reveal className="relative min-w-0 w-full" delay={0.08}>
               {/* Ratio 1200×680 : pleine largeur de colonne, hauteur dérivée — image en fill + object-cover */}
-              <div className="relative aspect-[1200/680] w-full overflow-hidden rounded-2xl shadow-[0_24px_56px_-12px_rgba(0,0,0,0.45),0_0_40px_-8px_rgba(139,92,246,0.1)] ring-1 ring-white/10">
-                <Image
-                  src={RECURRING_CYCLE_IMAGE_SRC}
-                  alt={t.recurringImgAlt}
-                  fill
-                  className="object-cover object-top"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  unoptimized
+              <div className="relative aspect-[1200/680] w-full overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_15%_10%,rgba(139,92,246,0.2),transparent_45%),linear-gradient(160deg,#030712,#0b1025)] shadow-[0_24px_56px_-12px_rgba(0,0,0,0.45),0_0_40px_-8px_rgba(139,92,246,0.1)] ring-1 ring-white/10">
+                <motion.div
+                  className="absolute inset-0"
+                  initial={false}
+                  animate={{ opacity: [0.85, 1, 0.86] }}
+                  transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <RecurringCycleArrowDecor ariaLabel={t.recurringArrowAria} />
+                <div className="absolute inset-x-6 top-6 rounded-xl border border-emerald-400/35 bg-emerald-500/12 p-3 backdrop-blur-sm sm:inset-x-8">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/90">Etape 1</p>
+                    <span className="rounded-full bg-emerald-400/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                      Paye
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-100/90">La facture du mois en cours est reglee.</p>
+                </div>
+                <motion.div
+                  className="absolute left-1/2 top-[38%] z-[5] -translate-x-1/2 rounded-full border border-sky-400/40 bg-sky-500/10 p-2 text-sky-200 shadow-lg"
+                  animate={{ rotate: [0, -12, 0, 12, 0], scale: [1, 1.08, 1] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                  </svg>
+                </motion.div>
+                <div className="absolute inset-x-6 bottom-6 rounded-xl border border-orange-300/35 bg-orange-500/12 p-3 backdrop-blur-sm sm:inset-x-8">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/90">Etape 2</p>
+                    <span className="rounded-full bg-orange-400/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-100">
+                      Impaye / Retard
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-100/90">
+                    La nouvelle ligne est creee pour le mois suivant, avec relance active.
+                  </p>
+                </div>
               </div>
             </Reveal>
           </div>

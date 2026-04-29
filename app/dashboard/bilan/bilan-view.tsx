@@ -54,6 +54,7 @@ export function BilanView() {
   const [plan, setPlan] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<RangeKey>("30d");
+  const [showTTable, setShowTTable] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -139,6 +140,10 @@ export function BilanView() {
           sumPending: "Total impayé (période)",
           sumPaid: "Total payé (période)",
           rows: "Lignes",
+          tTable: "Tableau en T (entreprise)",
+          debit: "Débit (impayés / en attente)",
+          credit: "Crédit (encaissés)",
+          balance: "Solde net",
         }
       : {
           title: "Summary",
@@ -160,6 +165,10 @@ export function BilanView() {
           sumPending: "Total unpaid (period)",
           sumPaid: "Total paid (period)",
           rows: "Rows",
+          tTable: "Company T-table",
+          debit: "Debit (pending / unpaid)",
+          credit: "Credit (paid in)",
+          balance: "Net balance",
         };
 
   async function handleLogout() {
@@ -199,10 +208,59 @@ export function BilanView() {
         <div className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-bold text-white">{t.title}</h2>
-            <Link href="/dashboard" className="text-sm font-medium text-violet-300 hover:text-violet-200">
-              ← {t.back}
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTTable((v) => !v)}
+                className="rounded-full border border-emerald-500/35 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-600/25"
+              >
+                {t.tTable}
+              </button>
+              <Link href="/dashboard" className="text-sm font-medium text-violet-300 hover:text-violet-200">
+                ← {t.back}
+              </Link>
+            </div>
           </div>
+
+          {showTTable ? (
+            <section className="rounded-xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">{t.debit}</p>
+                  <ul className="mt-3 space-y-2 text-xs sm:text-sm text-slate-200">
+                    {rows
+                      .filter((c) => c.status !== "paid")
+                      .map((c) => (
+                        <li key={`d-${c.id}`} className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-1.5">
+                          <span className="truncate">{c.name}</span>
+                          <span className="shrink-0 tabular-nums">{money.format(c.amountDue)}</span>
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="mt-3 text-sm font-semibold text-amber-100">{money.format(totals.pending)}</p>
+                </div>
+
+                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">{t.credit}</p>
+                  <ul className="mt-3 space-y-2 text-xs sm:text-sm text-slate-200">
+                    {rows
+                      .filter((c) => c.status === "paid")
+                      .map((c) => (
+                        <li key={`c-${c.id}`} className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-1.5">
+                          <span className="truncate">{c.name}</span>
+                          <span className="shrink-0 tabular-nums">{money.format(c.amountDue)}</span>
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="mt-3 text-sm font-semibold text-emerald-100">{money.format(totals.paid)}</p>
+                </div>
+              </div>
+              <div className="mt-4 rounded-lg border border-violet-400/20 bg-violet-500/[0.06] p-3 text-sm">
+                <span className="text-violet-200">{t.balance}:</span>{" "}
+                <span className="font-semibold text-white tabular-nums">{money.format(totals.paid - totals.pending)}</span>
+              </div>
+            </section>
+          ) : null}
 
           <div className="flex flex-wrap gap-2">
             {rangeButtons.map(({ key: k, label }) => (

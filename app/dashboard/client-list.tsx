@@ -54,8 +54,8 @@ export function ClientList({
 }: ClientListProps) {
   if (clients.length === 0) {
     return (
-      <div className="pp-dashboard-card-interactive rounded-2xl border border-dashed border-white/15 bg-[#12121a] p-12 text-center hover:border-white/25">
-        <p className="text-base font-medium text-slate-100">
+      <div className="pp-dashboard-card-interactive rounded-2xl border border-dashed border-white/15 bg-[#12121a] p-7 sm:p-12 text-center hover:border-white/25">
+        <p className="text-sm sm:text-base font-medium text-slate-100">
           {labels?.emptyTitle ?? "Aucun client pour le moment, ajoute ton premier client"}
         </p>
         <p className="mt-2 text-sm text-slate-400">
@@ -66,8 +66,8 @@ export function ClientList({
   }
 
   return (
-    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-6 sm:p-8 hover:border-white/15">
-      <div className="mb-6">
+    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-8 hover:border-white/15">
+      <div className="mb-5 sm:mb-6">
         <h2 className="text-lg font-bold tracking-tight text-white">
           {labels?.title ?? "Vos clients"}
         </h2>
@@ -75,17 +75,17 @@ export function ClientList({
           {labels?.subtitle ?? "Statut des montants et relances (simulation email)."}
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
         {clients.map((client) => (
           <article
             key={client.id}
-            className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#1a1a22] p-5 hover:border-violet-500/30"
+            className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#1a1a22] p-4 sm:p-5 hover:border-violet-500/30"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="font-semibold text-white">{client.name}</h3>
                 {client.companyName && <p className="text-xs text-slate-500">{client.companyName}</p>}
-                <p className="mt-1 text-sm text-slate-400">{client.email}</p>
+                <p className="mt-1 text-xs sm:text-sm text-slate-400 break-all">{client.email}</p>
               </div>
               {client.status === "paid" ? (
                 <span className="inline-flex items-center gap-1.5">
@@ -110,19 +110,19 @@ export function ClientList({
                 </span>
               )}
             </div>
-            <div className="mt-5 flex items-end justify-between gap-3 border-t border-white/[0.06] pt-4">
+            <div className="mt-4 sm:mt-5 flex items-end justify-between gap-2 sm:gap-3 border-t border-white/[0.06] pt-3.5 sm:pt-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-500">
                   {labels?.due ?? "Échéance"}
                 </p>
-                <p className="text-sm text-slate-300">
+                <p className="text-xs sm:text-sm text-slate-300">
                   {dateFmt.format(new Date(client.dueDate + "T12:00:00"))}
                 </p>
-                <p className="mt-1 text-lg font-semibold tabular-nums text-white">
+                <p className="mt-1 text-base sm:text-lg font-semibold tabular-nums text-white">
                   {money.format(client.amountDue)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap justify-end items-center gap-1.5 sm:gap-2">
                 {client.status === "unpaid" ? (
                   <button
                     type="button"

@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#050505" />
+  <rect x="30" y="30" width="452" height="452" rx="106" fill="#07070A" />
+  <rect x="30" y="30" width="452" height="452" rx="106" stroke="url(#pp-border)" />
+  <rect x="68" y="68" width="376" height="376" rx="90" fill="url(#pp-bg)" />
+
+  <path d="M156 352V156H280" stroke="url(#pp-mark)" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M246 352H304C345.974 352 380 317.974 380 276C380 234.026 345.974 200 304 200H246" stroke="url(#pp-mark)" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" />
+
+  <defs>
+    <linearGradient id="pp-bg" x1="80" y1="72" x2="436" y2="440" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2A1660" />
+      <stop offset="1" stop-color="#4C1D95" />
+    </linearGradient>
+    <linearGradient id="pp-mark" x1="156" y1="156" x2="388" y2="348" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5F3FF" />
+      <stop offset="1" stop-color="#EDE9FE" />
+    </linearGradient>
+    <linearGradient id="pp-border" x1="38" y1="34" x2="474" y2="478" gradientUnits="userSpaceOnUse">
+      <stop stop-color="rgba(255,255,255,0.22)" />
+      <stop offset="1" stop-color="rgba(255,255,255,0.08)" />
+    </linearGradient>
+  </defs>
+</svg>

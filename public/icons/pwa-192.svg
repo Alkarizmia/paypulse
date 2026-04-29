@@ -1,12 +1,25 @@
 <svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="44" fill="#050505"/>
-  <rect x="12" y="12" width="168" height="168" rx="38" fill="url(#bg)" stroke="rgba(255,255,255,0.16)"/>
-  <path d="M56 126V64H92C109.673 64 124 78.3269 124 96C124 113.673 109.673 128 92 128H74" stroke="#E9D5FF" stroke-width="12" stroke-linecap="round"/>
-  <path d="M100 58L136 58" stroke="#A78BFA" stroke-width="10" stroke-linecap="round"/>
+  <rect width="192" height="192" rx="44" fill="#050505" />
+  <rect x="12" y="12" width="168" height="168" rx="40" fill="#08080C" />
+  <rect x="12" y="12" width="168" height="168" rx="40" stroke="url(#border)" />
+  <rect x="26" y="26" width="140" height="140" rx="34" fill="url(#bg)" />
+
+  <path d="M58 128V62H100" stroke="url(#mark)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M90 128H114C129.464 128 142 115.464 142 100C142 84.536 129.464 72 114 72H90" stroke="url(#mark)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M97 66H137" stroke="#C4B5FD" stroke-width="10" stroke-linecap="round" />
+
   <defs>
-    <linearGradient id="bg" x1="24" y1="16" x2="170" y2="180" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#151028"/>
-      <stop offset="1" stop-color="#2B1456"/>
+    <linearGradient id="bg" x1="34" y1="30" x2="156" y2="162" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#151028" />
+      <stop offset="1" stop-color="#321766" />
+    </linearGradient>
+    <linearGradient id="mark" x1="54" y1="60" x2="144" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E9D5FF" />
+      <stop offset="1" stop-color="#DDD6FE" />
+    </linearGradient>
+    <linearGradient id="border" x1="16" y1="14" x2="176" y2="178" gradientUnits="userSpaceOnUse">
+      <stop stop-color="rgba(255,255,255,0.28)" />
+      <stop offset="1" stop-color="rgba(255,255,255,0.12)" />
     </linearGradient>
   </defs>
 </svg>
