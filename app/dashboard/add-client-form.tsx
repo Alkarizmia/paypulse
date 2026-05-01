@@ -100,13 +100,13 @@ export function AddClientForm({
   const blocked = Boolean(disabled || submitting || freeInvoiceLimitReached);
 
   return (
-    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-8 shadow-[0_0_30px_-16px_rgba(139,92,246,0.2)] hover:border-violet-500/25">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+    <section className="pp-dashboard-card-interactive min-w-0 rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-8 shadow-[0_0_30px_-16px_rgba(139,92,246,0.2)] hover:border-violet-500/25">
+      <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold tracking-tight text-white">
             {labels?.title ?? "Nouveau client"}
           </h2>
-          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+          <p className="mt-1 break-words text-xs sm:text-sm text-slate-400">
             {labels?.subtitle ??
               `Nom, email, montant dû et date d'échéance — ${
                 supabaseActive ? "enregistré dans Supabase" : "enregistré dans ce navigateur (mode local)"
@@ -142,7 +142,7 @@ export function AddClientForm({
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-5 sm:mt-6">
+      <form onSubmit={handleSubmit} className="mt-5 min-w-0 sm:mt-6">
         <fieldset disabled={blocked} className="min-w-0">
           <div className="grid gap-4 sm:gap-5 sm:grid-cols-2">
             {portfolioOptions && portfolioOptions.length > 0 ? (

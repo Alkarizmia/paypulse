@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Mentions légales | PayPulse",
-  description: "Mentions légales PayPulse : éditeur, hébergeur, contact.",
+  title: "Mentions légales | PayPulss",
+  description: "Mentions légales PayPulss : éditeur, hébergeur, contact.",
 };
 
 export default function MentionsLegalesPage() {

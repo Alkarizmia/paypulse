@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useAnimationControls, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -70,14 +70,24 @@ type RevealProps = {
 /** Scroll-in: fade + slight rise */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const reduce = useReducedMotion();
+  const controls = useAnimationControls();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-56px 0px -24px 0px" }}
-      transition={{ duration: 0.52, delay, ease: EASE }}
+      animate={controls}
+      onViewportEnter={() => {
+        void controls.start({
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.52, delay, ease: EASE },
+        });
+      }}
+      onViewportLeave={() => {
+        controls.set({ opacity: 0, y: 20 });
+      }}
+      viewport={{ margin: "-56px 0px -24px 0px", amount: 0.2 }}
     >
       {children}
     </motion.div>
@@ -131,7 +141,7 @@ export function HeroWingAurora() {
         </motion.div>
       </div>
 
-      {/* Contre-aile — accent vert PayPulse, phase décalée */}
+      {/* Contre-aile — accent vert PayPulss, phase décalée */}
       <div className="absolute left-1/2 top-[10vh] flex w-[min(780px,120vw)] -translate-x-1/2 justify-center sm:top-[6vh]">
         <motion.div
           className="relative h-[min(58vh,480px)] w-full max-w-[760px]"
@@ -199,7 +209,7 @@ export function HeroHeadlineGlow() {
   );
 }
 
-const BRAND = "PayPulse";
+const BRAND = "PayPulss";
 
 /** Kicker line — word stagger with Framer Motion */
 export function MotionKicker({ text, className }: { text: string; className?: string }) {
@@ -225,7 +235,7 @@ export function MotionKicker({ text, className }: { text: string; className?: st
   );
 }
 
-/** Hero title: animated gradient on PayPulse + letter stagger on remainder */
+/** Hero title: animated gradient on PayPulss + letter stagger on remainder */
 export function MotionHeroTitle({
   title,
   className,

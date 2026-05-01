@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Sécurité des données | PayPulse",
-  description: "Mesures de sécurité PayPulse : authentification, isolation des données, bonnes pratiques.",
+  title: "Sécurité des données | PayPulss",
+  description: "Mesures de sécurité PayPulss : authentification, isolation des données, bonnes pratiques.",
 };
 
 export default function DataRightsPage() {
   return (
     <LegalLayout title="Sécurité des données" updated="21 avril 2026">
       <p>
-        Ce document présente, à titre informatif, les principes de sécurité appliqués au service <strong>PayPulse</strong>.
+        Ce document présente, à titre informatif, les principes de sécurité appliqués au service <strong>PayPulss</strong>.
         Il complète la{" "}
         <a href="/confidentialite" className="text-blue-700 underline hover:text-blue-800">
           politique de confidentialité

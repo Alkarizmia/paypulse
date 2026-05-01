@@ -66,7 +66,7 @@ export function ClientList({
   }
 
   return (
-    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-8 hover:border-white/15">
+    <section className="pp-dashboard-card-interactive min-w-0 rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-8 hover:border-white/15">
       <div className="mb-5 sm:mb-6">
         <h2 className="text-lg font-bold tracking-tight text-white">
           {labels?.title ?? "Vos clients"}
@@ -79,16 +79,16 @@ export function ClientList({
         {clients.map((client) => (
           <article
             key={client.id}
-            className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#1a1a22] p-4 sm:p-5 hover:border-violet-500/30"
+            className="pp-dashboard-card-interactive min-w-0 rounded-2xl border border-white/[0.08] bg-[#1a1a22] p-4 sm:p-5 hover:border-violet-500/30"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-semibold text-white">{client.name}</h3>
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h3 className="break-words font-semibold text-white">{client.name}</h3>
                 {client.companyName && <p className="text-xs text-slate-500">{client.companyName}</p>}
                 <p className="mt-1 text-xs sm:text-sm text-slate-400 break-all">{client.email}</p>
               </div>
               {client.status === "paid" ? (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 self-start sm:self-auto">
                   <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
                     {labels?.paid ?? "Payé"}
                   </span>
@@ -105,13 +105,13 @@ export function ClientList({
                   ) : null}
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full bg-orange-500/15 px-2.5 py-1 text-xs font-semibold text-orange-300 ring-1 ring-inset ring-orange-500/35">
+                <span className="inline-flex items-center self-start rounded-full bg-orange-500/15 px-2.5 py-1 text-xs font-semibold text-orange-300 ring-1 ring-inset ring-orange-500/35 sm:self-auto">
                   {labels?.unpaid ?? "Impayé"}
                 </span>
               )}
             </div>
-            <div className="mt-4 sm:mt-5 flex items-end justify-between gap-2 sm:gap-3 border-t border-white/[0.06] pt-3.5 sm:pt-4">
-              <div>
+            <div className="mt-4 flex min-w-0 flex-col gap-3 border-t border-white/[0.06] pt-3.5 sm:mt-5 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-4">
+              <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wide text-slate-500">
                   {labels?.due ?? "Échéance"}
                 </p>
@@ -122,12 +122,12 @@ export function ClientList({
                   {money.format(client.amountDue)}
                 </p>
               </div>
-              <div className="flex flex-wrap justify-end items-center gap-1.5 sm:gap-2">
+              <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-1.5">
                 {client.status === "unpaid" ? (
                   <button
                     type="button"
                     onClick={() => onMarkPaid(client.id)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-sm font-bold text-emerald-300 transition hover:bg-emerald-500/20"
+                    className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-sm font-bold text-emerald-300 transition hover:bg-emerald-500/20 sm:h-8 sm:w-8"
                     title={labels?.markPaid ?? "Marquer comme payé"}
                     aria-label={labels?.markPaid ?? "Marquer comme payé"}
                   >
@@ -138,7 +138,7 @@ export function ClientList({
                   type="button"
                   disabled={client.status === "paid"}
                   onClick={() => onSendReminder(client)}
-                  className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-violet-900/40 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500 disabled:shadow-none"
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-violet-900/40 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500 disabled:shadow-none sm:w-auto"
                 >
                   {labels?.remind ?? "Envoyer relance"}
                 </button>
@@ -146,7 +146,7 @@ export function ClientList({
                   <button
                     type="button"
                     onClick={() => onDelete(client.id)}
-                    className="inline-flex items-center justify-center rounded-lg border border-red-500/35 bg-red-500/10 px-3.5 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/20"
+                    className="inline-flex w-full items-center justify-center rounded-lg border border-red-500/35 bg-red-500/10 px-3.5 py-2 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 sm:w-auto"
                   >
                     {labels?.delete ?? "Supprimer"}
                   </button>

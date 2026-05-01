@@ -85,7 +85,7 @@ export function AccountTeamSettings({ supabase, planId }: AccountTeamSettingsPro
       locale === "fr"
         ? {
             title: "Équipe & invitations",
-            sub: "Invitez un collègue par e-mail. Il doit créer un compte PayPulse avec le même e-mail, puis ouvrir le lien d’acceptation.",
+            sub: "Invitez un collègue par e-mail. Il doit créer un compte PayPulss avec le même e-mail, puis ouvrir le lien d’acceptation.",
             acting:
               "Vous consultez un compte partagé depuis le dashboard. Revenez à « Mon compte » pour gérer les invitations de votre propre organisation.",
             admin: "Admin",
@@ -107,7 +107,7 @@ export function AccountTeamSettings({ supabase, planId }: AccountTeamSettingsPro
           }
         : {
             title: "Team & invites",
-            sub: "Invite a colleague by email. They need a PayPulse account on that email, then open the accept link.",
+            sub: "Invite a colleague by email. They need a PayPulss account on that email, then open the accept link.",
             acting:
               "You are viewing a shared account from the dashboard. Switch to “My account” to manage invites for your own organization.",
             admin: "Admin",

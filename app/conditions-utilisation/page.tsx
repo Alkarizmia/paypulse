@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Conditions générales d'utilisation | PayPulse",
-  description: "CGU PayPulse : usage du service, comptes, limites, responsabilité.",
+  title: "Conditions générales d'utilisation | PayPulss",
+  description: "CGU PayPulss : usage du service, comptes, limites, responsabilité.",
 };
 
 export default function ConditionsPage() {
   return (
     <LegalLayout title="Conditions générales d'utilisation (CGU)" updated="21 avril 2026">
       <p>
-        Les présentes conditions régissent l&apos;accès et l&apos;utilisation du service en ligne <strong>PayPulse</strong>{" "}
+        Les présentes conditions régissent l&apos;accès et l&apos;utilisation du service en ligne <strong>PayPulss</strong>{" "}
         (ci-après le « Service »), édité par <strong>[SOCIÉTÉ]</strong>, [ADRESSE_SIÈGE] — contact :{" "}
         <strong>[EMAIL_CONTACT]</strong>.
       </p>
@@ -21,7 +21,7 @@ export default function ConditionsPage() {
 
       <h2>1. Objet du Service</h2>
       <p>
-        PayPulse est un outil logiciel destiné aux freelances et indépendants pour <strong>organiser</strong> le suivi
+        PayPulss est un outil logiciel destiné aux freelances et indépendants pour <strong>organiser</strong> le suivi
         des clients et des factures, les statuts de paiement, des relances par e-mail (selon les fonctionnalités
         effectivement disponibles dans votre version), et un tableau de bord synthétique (ex. montants en attente,
         encaissés, délais). Des intégrations techniques (ex. webhooks sortants, export de données) peuvent être proposées
@@ -80,7 +80,7 @@ export default function ConditionsPage() {
       <p>
         Les données que vous saisissez vous appartiennent ou relèvent de vos droits contractuels avec vos clients. Nous
         ne revendiquons pas la propriété de vos contenus métier. Le code, l&apos;interface, la marque et la
-        documentation PayPulse restent la propriété de l&apos;éditeur ou de ses concédants de licence.
+        documentation PayPulss restent la propriété de l&apos;éditeur ou de ses concédants de licence.
       </p>
 
       <h2>7. Disponibilité</h2>

@@ -402,7 +402,7 @@ export function LandingPage() {
       ? {
           product: "Factures et relances pour freelances",
           title: "Recuperez votre argent. Automatiquement.",
-          body: "PayPulse relance vos clients a votre place jusqu'au paiement.",
+          body: "PayPulss relance vos clients a votre place jusqu'au paiement.",
           ctaTrial: "Commencer gratuitement",
           ctaDashboard: "Aller au dashboard",
           ctaPricing: "Voir comment ca marche",
@@ -476,7 +476,7 @@ export function LandingPage() {
           },
           planCtaEnFallback: "S'inscrire",
           demo: {
-            panelTitle: "PayPulse · Aperçu",
+            panelTitle: "PayPulss · Aperçu",
             tabIn: "Encaissements",
             tabOut: "À relancer",
             rowClient: "Studio Mirabelle",
@@ -490,7 +490,7 @@ export function LandingPage() {
             floatLabel: "Rappel J+7",
           },
           chartsMock: {
-            windowTitle: "PayPulse · Dashboard",
+            windowTitle: "PayPulss · Dashboard",
             pending: "Montant en attente",
             pendingVal: "8 420 €",
             received: "Reçus ce mois",
@@ -508,9 +508,9 @@ export function LandingPage() {
             monthLabels: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin"] as const,
           },
           founderKicker: "Une face derrière le produit",
-          founderRole: "Fondateur, PayPulse",
+          founderRole: "Fondateur, PayPulss",
           installLabels: {
-            defaultLabel: "Telecharger PayPulse",
+            defaultLabel: "Telecharger PayPulss",
             mobileLabel: "Installer sur mobile",
             macLabel: "Telecharger sur Mac",
             windowsLabel: "Telecharger sur Windows",
@@ -518,14 +518,14 @@ export function LandingPage() {
           },
           problemTitle: "Le probleme n'est pas vos clients. C'est le timing.",
           problemBody:
-            "Les paiements en retard cassent la tresorerie, prennent du temps et ajoutent une charge mentale. PayPulse automatise le suivi sans casser votre relation client.",
+            "Les paiements en retard cassent la tresorerie, prennent du temps et ajoutent une charge mentale. PayPulss automatise le suivi sans casser votre relation client.",
           solutionTitle: "Une machine de relance elegante, connectee a votre rythme.",
           solutionBody:
             "Chaque facture est suivie, chaque relance est cadree, chaque encaissement est visible dans un dashboard clair et premium.",
           howTitle: "Comment ca marche",
           howSteps: [
             "Connectez vos clients et factures en quelques minutes.",
-            "PayPulse detecte les echeances et prepare les relances.",
+            "PayPulss detecte les echeances et prepare les relances.",
             "Vous encaissez plus vite avec un suivi automatique.",
           ],
           finalCtaTitle: "Arretez de courir apres votre argent",
@@ -542,7 +542,7 @@ export function LandingPage() {
       : {
           product: "Invoices and nudges for freelancers",
           title: "Recover your cash. Automatically.",
-          body: "PayPulse follows up with your clients until you get paid.",
+          body: "PayPulss follows up with your clients until you get paid.",
           ctaTrial: "Start free",
           ctaDashboard: "Go to dashboard",
           ctaPricing: "See how it works",
@@ -614,7 +614,7 @@ export function LandingPage() {
           },
           planCtaEnFallback: "Get started",
           demo: {
-            panelTitle: "PayPulse · Preview",
+            panelTitle: "PayPulss · Preview",
             tabIn: "Paid / incoming",
             tabOut: "Needs nudge",
             rowClient: "Mirabelle Studio",
@@ -628,7 +628,7 @@ export function LandingPage() {
             floatLabel: "Day-7 nudge",
           },
           chartsMock: {
-            windowTitle: "PayPulse · Dashboard",
+            windowTitle: "PayPulss · Dashboard",
             pending: "Amount pending",
             pendingVal: "$8,420",
             received: "Received this month",
@@ -646,9 +646,9 @@ export function LandingPage() {
             monthLabels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] as const,
           },
           founderKicker: "A face behind the product",
-          founderRole: "Founder, PayPulse",
+          founderRole: "Founder, PayPulss",
           installLabels: {
-            defaultLabel: "Download PayPulse",
+            defaultLabel: "Download PayPulss",
             mobileLabel: "Install on mobile",
             macLabel: "Download for Mac",
             windowsLabel: "Download for Windows",
@@ -656,14 +656,14 @@ export function LandingPage() {
           },
           problemTitle: "The problem is not your clients. It's timing.",
           problemBody:
-            "Late payments hurt cash flow, waste time, and create friction. PayPulse automates follow-up without hurting client relationships.",
+            "Late payments hurt cash flow, waste time, and create friction. PayPulss automates follow-up without hurting client relationships.",
           solutionTitle: "A polished reminder engine built for speed.",
           solutionBody:
             "Every invoice is tracked, every follow-up stays consistent, and every payment is visible in one clean dashboard.",
           howTitle: "How it works",
           howSteps: [
             "Connect your clients and invoices in minutes.",
-            "PayPulse detects due dates and prepares reminders.",
+            "PayPulss detects due dates and prepares reminders.",
             "Get paid faster with automatic follow-up.",
           ],
           finalCtaTitle: "Stop chasing your money",
@@ -782,7 +782,7 @@ export function LandingPage() {
               className="relative min-w-0"
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
+              viewport={{ margin: "-80px", amount: 0.2 }}
               transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
               whileHover={
                 reduceMotion
@@ -843,7 +843,7 @@ export function LandingPage() {
               className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-48px" }}
+              viewport={{ margin: "-48px", amount: 0.2 }}
               variants={{
                 hidden: {},
                 show: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } },
@@ -942,7 +942,7 @@ export function LandingPage() {
                 className="space-y-4 text-left"
                 initial="hidden"
                 whileInView="show"
-                viewport={{ once: true, margin: "-40px" }}
+                viewport={{ margin: "-40px", amount: 0.2 }}
                 variants={{
                   hidden: {},
                   show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
@@ -969,7 +969,7 @@ export function LandingPage() {
                   className="w-full max-w-xl lg:max-w-[min(100%,520px)]"
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
+                  viewport={{ margin: "-60px", amount: 0.2 }}
                   transition={{ duration: 0.62, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
                   whileHover={
                     reduceMotion
@@ -1024,7 +1024,7 @@ export function LandingPage() {
               className="mt-10 grid gap-4 sm:grid-cols-3"
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
+              viewport={{ margin: "-40px", amount: 0.2 }}
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
             >
               {t.howSteps.map((step, idx) => (
@@ -1061,7 +1061,7 @@ export function LandingPage() {
               className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-32px" }}
+              viewport={{ margin: "-32px", amount: 0.2 }}
               variants={{
                 hidden: {},
                 show: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
@@ -1142,7 +1142,7 @@ export function LandingPage() {
               className="mt-12 space-y-3"
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-24px" }}
+              viewport={{ margin: "-24px", amount: 0.2 }}
               variants={{
                 hidden: {},
                 show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
@@ -1189,7 +1189,7 @@ export function LandingPage() {
               className="mt-12 grid gap-6 sm:grid-cols-2"
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
+              viewport={{ margin: "-40px", amount: 0.2 }}
               variants={{
                 hidden: {},
                 show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
@@ -1249,7 +1249,7 @@ export function LandingPage() {
           <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-2">
               <PayPulseLogo className="h-9 w-9 shrink-0 text-[#3DFF8A]" />
-              <span className="font-semibold text-white">PayPulse</span>
+              <span className="font-semibold text-white">PayPulss</span>
             </div>
             <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
               <div>
@@ -1309,7 +1309,7 @@ export function LandingPage() {
             </div>
           </div>
           <p className="mx-auto mt-10 max-w-6xl text-center text-xs text-slate-600">
-            © {new Date().getFullYear()} PayPulse
+            © {new Date().getFullYear()} PayPulss
           </p>
         </footer>
       </main>

@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export const size = {
   width: 32,
@@ -7,7 +9,14 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function Icon() {
+async function logoDataUri() {
+  const logoPath = path.join(process.cwd(), "public", "branding", "paypulse-logo-transparent.png");
+  const logoBuffer = await readFile(logoPath);
+  return `data:image/png;base64,${logoBuffer.toString("base64")}`;
+}
+
+export default async function Icon() {
+  const src = await logoDataUri();
   return new ImageResponse(
     (
       <div
@@ -17,14 +26,12 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-          color: "white",
-          fontSize: 18,
-          fontWeight: 700,
-          borderRadius: 8,
+          padding: "4px",
+          backgroundColor: "transparent",
         }}
       >
-        P
+        {/* Keep original brand logo, only scaled for tab icon. */}
+        <img src={src} alt="PayPulss" width={24} height={24} />
       </div>
     ),
     { ...size },

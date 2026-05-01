@@ -24,6 +24,25 @@ function platformLabel(labels: InstallLabels) {
   return labels.defaultLabel;
 }
 
+function installHintForPlatform(appName: string) {
+  if (typeof navigator === "undefined") return "";
+  const ua = navigator.userAgent.toLowerCase();
+  const isIos = /iphone|ipad|ipod/.test(ua);
+  const isAndroid = /android/.test(ua);
+  const isEdge = /edg\//.test(ua);
+  const isChrome = /chrome\//.test(ua) && !isEdge;
+  const isSafari = /safari/.test(ua) && !/chrome|chromium|crios|edg\//.test(ua);
+
+  if (isIos) {
+    if (!isSafari) return "Sur iPhone/iPad, ouvrez le site dans Safari puis Partager > Sur l'ecran d'accueil.";
+    return "Sur iPhone/iPad: Safari > Partager > Sur l'ecran d'accueil.";
+  }
+  if (isAndroid) return "Sur Android: menu du navigateur > Installer l'application.";
+  if (isEdge) return `Sur Edge (PC): menu ... > Applications > Installer ce site en tant qu'application (${appName}).`;
+  if (isChrome) return `Sur Chrome (PC): menu ... > Installer ${appName} (ou icone Installer dans la barre d'adresse).`;
+  return `Dans votre navigateur (PC): menu en haut a droite > Installer ${appName}.`;
+}
+
 export function PwaInstallButton({ labels }: { labels: InstallLabels }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [hint, setHint] = useState<string>("");
@@ -63,17 +82,7 @@ export function PwaInstallButton({ labels }: { labels: InstallLabels }) {
       setDeferredPrompt(null);
       return;
     }
-    if (typeof navigator === "undefined") return;
-    const ua = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) {
-      setHint("Sur iPhone/iPad: Safari > Partager > Sur l'ecran d'accueil.");
-      return;
-    }
-    if (/android/.test(ua)) {
-      setHint("Sur Android: menu du navigateur > Installer l'application.");
-      return;
-    }
-    setHint("Dans votre navigateur: menu en haut a droite > Installer PayPulse.");
+    setHint(installHintForPlatform("PayPulss"));
   };
 
   return (

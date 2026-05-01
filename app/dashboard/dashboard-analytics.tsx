@@ -153,8 +153,8 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats 
       : `${rolling.pct > 0 ? "+" : ""}${rolling.pct}% ${t.vsRolling}`;
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 sm:gap-4 sm:grid-cols-3">
+    <div className="min-w-0 space-y-6">
+      <div className="grid min-w-0 gap-3 sm:gap-4 sm:grid-cols-3">
         <div
           className="pp-rise pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5 shadow-[0_0_0_1px_rgba(139,92,246,0.06)] hover:border-violet-500/25"
           style={{ "--pp-rise-delay": "0.04s" } as CSSProperties}
@@ -206,7 +206,7 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats 
       </div>
 
       {advancedStats ? (
-        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-3 sm:gap-4 sm:grid-cols-2">
           <div className="pp-dashboard-card-interactive rounded-2xl border border-violet-500/20 bg-violet-500/[0.06] px-4 sm:px-5 py-3.5 sm:py-4 hover:border-violet-400/35">
             <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/90">{t.avgDelay}</p>
             <p className="mt-2 text-xl sm:text-2xl font-bold text-white">
@@ -227,15 +227,15 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats 
       ) : null}
 
       {fullCharts ? (
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
-          <div className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5 lg:col-span-3 hover:border-violet-500/20">
+        <div className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-5">
+          <div className="pp-dashboard-card-interactive min-w-0 rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5 lg:col-span-3 hover:border-violet-500/20">
             <h3 className="text-sm font-semibold text-white">{t.evolution}</h3>
             <p className="mt-0.5 text-[11px] text-slate-500">
               {locale === "fr"
                 ? "Somme des encaissements enregistrés, par mois (historique conservé même si la fiche repasse en impayé)."
                 : "Sum of recorded cash-ins by month (history kept when a row goes back to unpaid)."}
             </p>
-            <div className="mt-4 sm:mt-6 h-36 sm:h-44">
+            <div className="mt-4 sm:mt-6 h-32 sm:h-44">
               <svg viewBox="0 0 400 140" className="h-full w-full" preserveAspectRatio="none" aria-hidden>
                 <defs>
                   <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
@@ -279,17 +279,17 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats 
                   );
                 })()}
               </svg>
-              <div className="mt-1 flex justify-between px-1 text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <div className="mt-1 flex justify-between px-1 text-[8px] sm:text-[10px] font-medium uppercase tracking-wider text-slate-500">
                 {monthLabels.map((m) => (
                   <span key={m}>{m}</span>
                 ))}
               </div>
             </div>
           </div>
-          <div className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5 lg:col-span-2 hover:border-violet-500/20">
+          <div className="pp-dashboard-card-interactive min-w-0 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5 lg:col-span-2 hover:border-violet-500/20">
             <h3 className="text-sm font-semibold text-white">{t.distribution}</h3>
-            <div className="mt-4 flex flex-col items-center gap-3 sm:gap-4 sm:flex-row sm:justify-center sm:gap-8">
-              <div className="relative grid h-28 w-28 sm:h-36 sm:w-36 shrink-0 place-items-center">
+            <div className="mt-4 flex min-w-0 flex-col items-center gap-3 md:flex-row md:justify-center md:gap-8">
+              <div className="relative grid h-28 w-28 sm:h-32 sm:w-32 md:h-36 md:w-36 shrink-0 place-items-center">
                 <div
                   className="col-start-1 row-start-1 h-full w-full rounded-full p-[10px]"
                   style={{
@@ -304,7 +304,7 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats 
                   </div>
                 </div>
               </div>
-              <ul className="space-y-2 text-xs text-slate-300">
+              <ul className="w-full min-w-0 max-w-[220px] space-y-2 text-xs text-slate-300">
                 <li className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-violet-500" />
                   {t.paid} <span className="text-slate-500">({paidPct}%)</span>

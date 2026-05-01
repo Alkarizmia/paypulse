@@ -17,9 +17,9 @@ export default function manifest(): MetadataRoute.Manifest {
   ];
 
   return {
-    name: "PayPulse",
-    short_name: "PayPulse",
-    description: "PayPulse relance vos clients a votre place jusqu'au paiement.",
+    name: "PayPulss",
+    short_name: "PayPulss",
+    description: "PayPulss relance vos clients a votre place jusqu'au paiement.",
     start_url: "/",
     display: "standalone",
     background_color: "#050505",

@@ -17,7 +17,7 @@ function getTierCopy(locale: "fr" | "en") {
     ? {
         relanceTitle: "Relances par e-mail",
         relanceLead:
-          "PayPulse n’envoie pas les e-mails à votre place : le bouton « Envoyer relance » ouvre un brouillon dans votre messagerie (mailto).",
+          "PayPulss n’envoie pas les e-mails à votre place : le bouton « Envoyer relance » ouvre un brouillon dans votre messagerie (mailto).",
         relanceFree:
           "Sur ce plan, ouvrez chaque relance depuis la ligne facture : texte prêt à adapter, envoi depuis votre propre adresse.",
         relanceToggle: "Ligne d’info dans le brouillon",
@@ -37,7 +37,7 @@ function getTierCopy(locale: "fr" | "en") {
     : {
         relanceTitle: "Email reminders",
         relanceLead:
-          "PayPulse does not send mail for you: “Send reminder” opens a draft in your mail app (mailto).",
+          "PayPulss does not send mail for you: “Send reminder” opens a draft in your mail app (mailto).",
         relanceFree:
           "On this plan, open each reminder from the invoice row: editable text, you send from your own address.",
         relanceToggle: "Info line in draft",

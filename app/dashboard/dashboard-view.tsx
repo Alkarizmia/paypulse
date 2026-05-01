@@ -54,97 +54,19 @@ function newId() {
   return String(Date.now());
 }
 
-/** Limite prudente pour `mailto:` (mobiles / IE anciens ; évite les liens tronqués). */
-const MAILTO_SAFE_MAX = 1950;
-
 type ReminderToast = { tone: "info" | "warn"; text: string };
 
-/**
- * Ouvre la messagerie de l’utilisateur (brouillon) — pas d’envoi serveur ; l’expéditeur reste le compte du freelance.
- */
-function openReminderInUserMailClient(params: {
-  to: string;
-  subject: string;
-  body: string;
-  locale: "fr" | "en";
-  setToast: (t: ReminderToast | null) => void;
-  setHardError: (msg: string | null) => void;
-}) {
-  const { to, subject, body, locale, setToast, setHardError } = params;
-  setHardError(null);
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
 
-  const encTo = encodeURIComponent(to.trim());
-  const encSub = encodeURIComponent(subject);
-  const encBody = encodeURIComponent(body);
-  const fullHref = `mailto:${encTo}?subject=${encSub}&body=${encBody}`;
-
-  const msgOpenOk: ReminderToast = {
-    tone: "info",
-    text:
-      locale === "fr"
-        ? "Votre messagerie devrait s’ouvrir avec le brouillon. L’e-mail part depuis votre propre adresse (pas depuis PayPulse)."
-        : "Your mail app should open with the draft. You send from your own address (not from PayPulse).",
-  };
-
-  const msgBodyCopied: ReminderToast = {
-    tone: "warn",
-    text:
-      locale === "fr"
-        ? "Le message est long : le corps a été copié dans le presse-papiers — collez-le (Ctrl+V / Cmd+V) dans le brouillon. Destinataire et objet sont préremplis."
-        : "Long message: the body was copied to the clipboard — paste it (Ctrl+V / Cmd+V). Recipient and subject are pre-filled.",
-  };
-
-  const msgClipFail =
-    locale === "fr"
-      ? "Impossible d’ouvrir ou de copier automatiquement. Ouvrez votre messagerie et copiez l’objet et le texte manuellement."
-      : "Could not open mail or copy automatically. Open your mail app and paste subject and body manually.";
-
-  const pasteBlock = `${subject}\n\n${body}`;
-
-  const openHref = (href: string) => {
-    try {
-      window.location.assign(href);
-    } catch {
-      setHardError(msgClipFail);
-    }
-  };
-
-  if (fullHref.length <= MAILTO_SAFE_MAX) {
-    openHref(fullHref);
-    setToast(msgOpenOk);
-    return;
-  }
-
-  const hrefSubjectOnly = `mailto:${encTo}?subject=${encSub}`;
-  if (hrefSubjectOnly.length <= MAILTO_SAFE_MAX) {
-    void navigator.clipboard
-      .writeText(body)
-      .then(() => {
-        openHref(hrefSubjectOnly);
-        setToast(msgBodyCopied);
-      })
-      .catch(() => {
-        openHref(hrefSubjectOnly);
-        setToast({
-          tone: "warn",
-          text:
-            locale === "fr"
-              ? "Messagerie ouverte avec l’objet — le corps est trop long pour un lien. Rédigez un court message ou utilisez vos modèles."
-              : "Mail opened with subject — body too long for a link. Write a short note or use your templates.",
-        });
-      });
-    return;
-  }
-
-  void navigator.clipboard
-    .writeText(pasteBlock)
-    .then(() => {
-      openHref(`mailto:${encTo}`);
-      setToast(msgBodyCopied);
-    })
-    .catch(() => {
-      setHardError(msgClipFail);
-    });
+function toSimpleHtmlFromText(text: string): string {
+  return `<div>${escapeHtml(text).replaceAll("\n", "<br/>")}</div>`;
 }
 
 export function DashboardView() {
@@ -494,7 +416,7 @@ export function DashboardView() {
     }
   }
 
-  function handleSendReminder(client: Client) {
+  async function handleSendReminder(client: Client) {
     setReminderToast(null);
     setReminderMailHardError(null);
 
@@ -521,7 +443,7 @@ export function DashboardView() {
         `Merci de régulariser la situation ou de nous indiquer un délai.`,
         ``,
         `Cordialement,`,
-        `PayPulse`,
+        `PayPulss`,
       ].join("\n");
     }
     const autoEffective = caps.autoReminders && autoRemindersUserEnabled;
@@ -547,14 +469,36 @@ export function DashboardView() {
       return;
     }
 
-    openReminderInUserMailClient({
-      to,
-      subject: subjectPlain,
-      body: bodyWithExtra,
-      locale,
-      setToast: setReminderToast,
-      setHardError: setReminderMailHardError,
-    });
+    try {
+      const response = await fetch("/api/send-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to,
+          subject: subjectPlain,
+          text: bodyWithExtra,
+          html: toSimpleHtmlFromText(bodyWithExtra),
+        }),
+      });
+      const payload = (await response.json()) as { ok?: boolean; error?: unknown };
+      if (!response.ok || !payload.ok) {
+        const fallback = locale === "fr" ? "Envoi impossible pour le moment." : "Could not send reminder right now.";
+        const detail = typeof payload.error === "string" ? payload.error : fallback;
+        setReminderMailHardError(detail);
+        return;
+      }
+      setReminderToast({
+        tone: "info",
+        text:
+          locale === "fr"
+            ? "Relance envoyée avec succès via PayPulss."
+            : "Reminder sent successfully via PayPulss.",
+      });
+    } catch {
+      setReminderMailHardError(
+        locale === "fr" ? "Erreur réseau pendant l’envoi de la relance." : "Network error while sending reminder.",
+      );
+    }
   }
 
   async function handleMoveToTrash(clientId: string) {
@@ -747,7 +691,7 @@ export function DashboardView() {
   }, [planNoticePrefix, requestedPlan, router, supabase, ws.refreshWorkspaces]);
 
   return (
-    <div className="dark">
+    <div className="dark overflow-x-hidden">
       <DashboardShell
         locale={locale}
         planId={currentPlanId}
@@ -833,7 +777,7 @@ export function DashboardView() {
           </div>
         ) : null}
 
-        <div ref={overviewRef} className="scroll-mt-28 space-y-6">
+        <div ref={overviewRef} className="min-w-0 scroll-mt-28 space-y-6">
           <DashboardAnalytics
             clients={clients}
             locale={locale}
@@ -847,7 +791,7 @@ export function DashboardView() {
           />
         </div>
 
-        <div ref={relancesRef} className="scroll-mt-28 mt-10 space-y-6">
+        <div ref={relancesRef} className="min-w-0 scroll-mt-28 mt-10 space-y-6">
           <DashboardRelancePanel
             locale={locale}
             caps={caps}
@@ -866,7 +810,7 @@ export function DashboardView() {
           />
         </div>
 
-        <div ref={invoicesRef} className="scroll-mt-28 mt-12 space-y-6">
+        <div ref={invoicesRef} className="min-w-0 scroll-mt-28 mt-12 space-y-6">
           {tableLoading ? (
             <div className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] px-6 py-12 text-center text-sm text-slate-400 hover:border-white/15">
               {locale === "fr" ? "Chargement des factures…" : "Loading invoices…"}
@@ -896,7 +840,7 @@ export function DashboardView() {
           )}
         </div>
 
-        <div ref={clientsRef} className="scroll-mt-28 mt-12">
+        <div ref={clientsRef} className="min-w-0 scroll-mt-28 mt-12">
           <AddClientForm
             onAdd={handleAdd}
             disabled={tableLoading || memberReadOnly}
@@ -926,7 +870,7 @@ export function DashboardView() {
           />
         </div>
 
-        <div ref={paiementsRef} className="scroll-mt-28 mt-12">
+        <div ref={paiementsRef} className="min-w-0 scroll-mt-28 mt-12">
           <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-6 hover:border-violet-500/25">
             <h2 className="text-base sm:text-lg font-semibold text-white">{copy.paiementsTitle}</h2>
             <p className="mt-1 text-xs sm:text-sm text-slate-400">{copy.paiementsSub}</p>

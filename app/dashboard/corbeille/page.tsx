@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TrashView } from "./trash-view";
 
 export const metadata: Metadata = {
-  title: "Corbeille | PayPulse",
+  title: "Corbeille | PayPulss",
   description: "Factures supprimées — restaurer ou effacer définitivement.",
 };
 

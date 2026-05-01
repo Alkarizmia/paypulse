@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
 import { PayPulseLogo } from "./pay-pulse-logo";
@@ -211,6 +211,7 @@ export function DashboardShell({
   const { setLocale } = useLocale();
   const pathname = usePathname() ?? "";
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isDashHome = pathname === "/dashboard" || pathname === "/dashboard/";
   const t =
     locale === "fr"
@@ -251,6 +252,10 @@ export function DashboardShell({
     router.push("/dashboard");
   }
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   function renderScrollableItem(item: NavItem) {
     const active = isDashHome && activeNav === item.id;
     if (navScrollMode && isDashHome) {
@@ -270,11 +275,11 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#08080c] text-slate-100">
+    <div className="flex min-h-screen overflow-x-hidden bg-[#08080c] text-slate-100">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-white/[0.06] bg-[#0c0c12] px-3 py-6 lg:flex">
         <div className="flex items-center gap-2 px-2">
           <PayPulseLogo className="h-8 w-8 shrink-0 text-violet-400" />
-          <span className="text-sm font-bold tracking-tight text-white">PAYPULSE</span>
+          <span className="text-sm font-bold tracking-tight text-white">PAYPULSS</span>
         </div>
         <nav className="mt-10 flex flex-1 flex-col gap-0.5">
           {topItems.map((item) => renderScrollableItem(item))}
@@ -328,17 +333,35 @@ export function DashboardShell({
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-1 flex-col lg:pl-56">
-        <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-[#08080c]/90 px-4 py-3 backdrop-blur-md sm:px-6">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:pl-56">
+        <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-[#08080c]/90 px-3 py-3 backdrop-blur-md sm:px-6">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2 lg:hidden">
               <PayPulseLogo className="h-7 w-7 text-violet-400" />
             </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white lg:hidden"
+              aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="dashboard-mobile-drawer"
+            >
+              {mobileMenuOpen ? (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                </svg>
+              )}
+            </button>
             <h1 className="truncate text-lg font-semibold text-white">{t.overview}</h1>
             <DashboardAccountSelect locale={locale} />
             <DashboardWorkspaceSelect locale={locale} />
           </div>
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex w-full min-w-0 items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
             <Link
               href="/#pricing"
               className="hidden rounded-full border border-violet-500/40 bg-violet-600/20 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-600/30 sm:inline-flex"
@@ -369,7 +392,7 @@ export function DashboardShell({
               </svg>
             </button>
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 text-xs font-bold text-white shadow-lg shadow-violet-900/40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 text-xs font-bold text-white shadow-lg shadow-violet-900/40"
               title={userEmail ?? ""}
             >
               {initial}
@@ -393,61 +416,100 @@ export function DashboardShell({
           </div>
         </header>
 
-        <div className="border-b border-white/[0.06] px-3 py-2 lg:hidden">
-          <div className="flex gap-1 overflow-x-auto pb-1">
-            {topItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => scrollOrHome(item.id)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  isDashHome && activeNav === item.id ? "bg-violet-600 text-white" : "bg-white/[0.06] text-slate-400"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+        {mobileMenuOpen ? (
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 z-30 bg-black/45 lg:hidden"
+            aria-label="Fermer le menu mobile"
+          />
+        ) : null}
+        <aside
+          id="dashboard-mobile-drawer"
+          className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[86vw] border-r border-white/[0.08] bg-[#0c0c12] px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+          aria-hidden={!mobileMenuOpen}
+        >
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <PayPulseLogo className="h-7 w-7 text-violet-400" />
+              <span className="text-sm font-bold tracking-tight text-white">PAYPULSS</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+              aria-label="Fermer le menu"
+            >
+              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <nav className="mt-6 flex flex-col gap-1">
+            {topItems.map((item) => {
+              const active = isDashHome && activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    scrollOrHome(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={shellBtn(active)}
+                >
+                  <span className={active ? "text-violet-300" : "text-slate-500"}>{item.icon}</span>
+                  {item.label}
+                </button>
+              );
+            })}
             <Link
               href="/dashboard/bilan"
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                pathname.startsWith("/dashboard/bilan") ? "bg-violet-600 text-white" : "bg-white/[0.06] text-slate-400"
-              }`}
+              onClick={() => setMobileMenuOpen(false)}
+              className={shellLink(pathname.startsWith("/dashboard/bilan"))}
             >
+              <span className={pathname.startsWith("/dashboard/bilan") ? "text-violet-300" : "text-slate-500"}>{bilanIcon}</span>
               {t.bilan}
             </Link>
             <button
               type="button"
-              onClick={() => scrollOrHome("paiements")}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                isDashHome && activeNav === "paiements" ? "bg-violet-600 text-white" : "bg-white/[0.06] text-slate-400"
-              }`}
+              onClick={() => {
+                scrollOrHome("paiements");
+                setMobileMenuOpen(false);
+              }}
+              className={shellBtn(isDashHome && activeNav === "paiements")}
             >
+              <span className={isDashHome && activeNav === "paiements" ? "text-violet-300" : "text-slate-500"}>{paiementsItem.icon}</span>
               {paiementsItem.label}
             </button>
             {hideTrashNav ? null : (
               <Link
                 href="/dashboard/corbeille"
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  pathname.startsWith("/dashboard/corbeille") ? "bg-violet-600 text-white" : "bg-white/[0.06] text-slate-400"
-                }`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={shellLink(pathname.startsWith("/dashboard/corbeille"))}
               >
+                <span className={pathname.startsWith("/dashboard/corbeille") ? "text-violet-300" : "text-slate-500"}>{trashNavIcon}</span>
                 {t.corbeille}
               </Link>
             )}
             {showTemplatesNav ? (
               <Link
                 href="/dashboard/modeles-relance"
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  pathname.startsWith("/dashboard/modeles-relance") ? "bg-violet-600 text-white" : "bg-white/[0.06] text-slate-400"
-                }`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={shellLink(pathname.startsWith("/dashboard/modeles-relance"))}
               >
+                <span className={pathname.startsWith("/dashboard/modeles-relance") ? "text-violet-300" : "text-slate-500"}>
+                  {templatesNavIcon}
+                </span>
                 {t.modelesRelance}
               </Link>
             ) : null}
-          </div>
-        </div>
+          </nav>
+        </aside>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
     </div>
   );

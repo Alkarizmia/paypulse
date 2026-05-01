@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ReminderTemplatesView } from "./reminder-templates-view";
 
 export const metadata: Metadata = {
-  title: "Modèles de relance | PayPulse",
+  title: "Modèles de relance | PayPulss",
   description: "Personnalisez vos brouillons et modèles d’e-mails de relance (Pro / Agence).",
 };
 

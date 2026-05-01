@@ -14,36 +14,36 @@ const font = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PayPulse — Factures et relances pour freelances",
+  title: "PayPulss — Factures et relances pour freelances",
   description:
-    "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulse.",
+    "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "PayPulse — Factures et relances pour freelances",
+    title: "PayPulss — Factures et relances pour freelances",
     description:
-      "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulse.",
+      "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
     url: "/",
-    siteName: "PayPulse",
+    siteName: "PayPulss",
     locale: "fr_FR",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PayPulse — Factures et relances pour freelances",
+    title: "PayPulss — Factures et relances pour freelances",
     description:
-      "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulse.",
+      "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
   },
   robots: {
     index: true,
     follow: true,
   },
   manifest: "/manifest.webmanifest",
-  applicationName: "PayPulse",
+  applicationName: "PayPulss",
   appleWebApp: {
-    title: "PayPulse",
+    title: "PayPulss",
     capable: true,
     statusBarStyle: "black-translucent",
   },

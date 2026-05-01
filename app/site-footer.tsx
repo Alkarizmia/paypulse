@@ -25,7 +25,7 @@ export function SiteFooter() {
         </section>
       </div>
       <div className="mx-auto mt-6 flex w-full max-w-7xl flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:flex-row">
-        <p>© PayPulse</p>
+        <p>© PayPulss</p>
         <nav className="flex flex-wrap items-center justify-center gap-4">
           <Link href="/legal" className="transition hover:text-slate-800">
             Informations légales

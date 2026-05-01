@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Informations légales | PayPulse",
-  description: "Index des pages légales PayPulse : confidentialité, CGU, sécurité, mentions légales.",
+  title: "Informations légales | PayPulss",
+  description: "Index des pages légales PayPulss : confidentialité, CGU, sécurité, mentions légales.",
 };
 
 const links = [
@@ -34,7 +34,7 @@ export default function LegalPage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900">Informations légales</h1>
       <p className="mt-3 max-w-3xl text-slate-600">
-        PayPulse est un logiciel en ligne de suivi de factures et de relances pour freelances. Les documents ci-dessous
+        PayPulss est un logiciel en ligne de suivi de factures et de relances pour freelances. Les documents ci-dessous
         encadrent l&apos;usage du service. Les champs entre crochets […] sur certaines pages sont des{" "}
         <strong>placeholders</strong> à remplacer par vos données réelles avant toute mise en production publique ; une
         relecture juridique est recommandée.

@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import { DashboardView } from "./dashboard-view";
 
 export const metadata: Metadata = {
-  title: "Dashboard | PayPulse",
-  description: "Suivez vos clients, vos impayes et envoyez vos relances depuis PayPulse.",
+  title: "Dashboard | PayPulss",
+  description: "Suivez vos clients, vos impayes et envoyez vos relances depuis PayPulss.",
 };
 
 export default function DashboardPage() {

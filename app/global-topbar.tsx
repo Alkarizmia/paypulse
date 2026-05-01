@@ -72,7 +72,7 @@ export function GlobalTopBar() {
           >
             <PayPulseLogo className={`h-8 w-8 shrink-0 ${isHome ? "text-[#3DFF8A]" : "text-blue-600"}`} />
             <span className={`truncate text-sm font-semibold tracking-tight ${isHome ? "text-white" : "text-slate-900"}`}>
-              PayPulse
+              PayPulss
             </span>
           </Link>
           {isHome ? (

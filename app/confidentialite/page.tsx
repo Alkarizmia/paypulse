@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Politique de confidentialité | PayPulse",
+  title: "Politique de confidentialité | PayPulss",
   description:
-    "Politique de confidentialité PayPulse : données personnelles, finalités, sous-traitants, droits RGPD.",
+    "Politique de confidentialité PayPulss : données personnelles, finalités, sous-traitants, droits RGPD.",
 };
 
 export default function ConfidentialitePage() {
   return (
     <LegalLayout title="Politique de confidentialité" updated="21 avril 2026">
       <p>
-        La présente politique décrit comment <strong>PayPulse</strong> (ci-après « nous », « le service ») traite les
+        La présente politique décrit comment <strong>PayPulss</strong> (ci-après « nous », « le service ») traite les
         données personnelles dans le cadre du logiciel en ligne de suivi de factures et de relances pour freelances et
         indépendants.
       </p>
