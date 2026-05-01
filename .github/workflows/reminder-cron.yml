@@ -1,0 +1,23 @@
+name: Reminder Cron Runner
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  call-reminder-runner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/reminders/run
+        env:
+          REMINDER_RUN_URL: ${{ secrets.REMINDER_RUN_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$REMINDER_RUN_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing REMINDER_RUN_URL or CRON_SECRET secret."
+            exit 1
+          fi
+          curl --fail --show-error --silent \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "$REMINDER_RUN_URL"
