@@ -28,6 +28,15 @@ import { REMINDER_DRAFT_TONE_IDS, type ReminderDraftTone } from "@/lib/reminder-
 import type { Client } from "@/app/dashboard/types";
 import { EnvelopeSendButton } from "./envelope-send-button";
 
+type ReminderHistoryRow = {
+  id: string;
+  event_type: string;
+  created_at: string;
+  client_email: string | null;
+  subject: string | null;
+  error_message: string | null;
+};
+
 export function ReminderTemplatesView() {
   const { locale } = useLocale();
   const { signOut, user } = useAuth();
@@ -45,7 +54,15 @@ export function ReminderTemplatesView() {
   const [aiDaysAfter, setAiDaysAfter] = useState<string>("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiBanner, setAiBanner] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyRows, setHistoryRows] = useState<ReminderHistoryRow[]>([]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const planId = plan?.planId ?? "free";
+  const memberReadOnly =
+    Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const allowed = hasProReminderEditor(planId);
+  const maxTemplates = getMaxEmailTemplates(planId);
+  const caps = useMemo(() => getPlanCapabilities(planId), [planId]);
 
   const refreshPlan = useCallback(async () => {
     setLoading(true);
@@ -113,6 +130,30 @@ export function ReminderTemplatesView() {
     };
   }, [loading, plan, supabase, tplStorageKey]);
 
+  useEffect(() => {
+    if (loading || !supabase || !user?.id || !allowed) return;
+    let cancelled = false;
+    setHistoryLoading(true);
+    void (async () => {
+      const { data, error } = await supabase
+        .from("reminder_events")
+        .select("id,event_type,created_at,client_email,subject,error_message")
+        .eq("owner_user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(25);
+      if (cancelled) return;
+      if (error) {
+        setHistoryRows([]);
+      } else {
+        setHistoryRows((data ?? []) as ReminderHistoryRow[]);
+      }
+      setHistoryLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [allowed, loading, supabase, user?.id]);
+
   const scheduleSave = useCallback(
     (next: ReminderTemplatesData) => {
       if (!tplStorageKey) return;
@@ -134,13 +175,6 @@ export function ReminderTemplatesView() {
     const { error: e } = await signOut();
     if (!e) router.push("/");
   }
-
-  const planId = plan?.planId ?? "free";
-  const memberReadOnly =
-    Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
-  const allowed = hasProReminderEditor(planId);
-  const maxTemplates = getMaxEmailTemplates(planId);
-  const caps = useMemo(() => getPlanCapabilities(planId), [planId]);
 
   const t =
     locale === "fr"
@@ -223,6 +257,15 @@ export function ReminderTemplatesView() {
           aiGenerate: "Générer par IA",
           aiGenerating: "Génération…",
           aiError: "Le service de génération a échoué. Réessayez.",
+          historyTitle: "Historique des relances automatiques",
+          historyEmpty: "Aucun événement pour le moment.",
+          historyLoading: "Chargement de l’historique…",
+          historySent: "Envoyée",
+          historyFailed: "Échec",
+          historyProcessing: "Traitement",
+          historyQueued: "Planifiée",
+          historyRetry: "Nouvel essai planifié",
+          historySkipped: "Ignorée",
         }
       : {
           pageTitle: "Reminder templates",
@@ -303,6 +346,15 @@ export function ReminderTemplatesView() {
           aiGenerate: "Generate with AI",
           aiGenerating: "Generating…",
           aiError: "Generation failed. Please try again.",
+          historyTitle: "Automatic reminder history",
+          historyEmpty: "No events yet.",
+          historyLoading: "Loading history…",
+          historySent: "Sent",
+          historyFailed: "Failed",
+          historyProcessing: "Processing",
+          historyQueued: "Queued",
+          historyRetry: "Retry scheduled",
+          historySkipped: "Skipped",
         };
 
   const envelopeLabels = {
@@ -705,6 +757,49 @@ export function ReminderTemplatesView() {
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="rounded-2xl border border-white/[0.08] bg-[#14141c] p-6">
+            <h3 className="text-sm font-semibold text-white">{t.historyTitle}</h3>
+            {historyLoading ? (
+              <p className="mt-3 text-xs text-slate-400">{t.historyLoading}</p>
+            ) : historyRows.length === 0 ? (
+              <p className="mt-3 text-xs text-slate-500">{t.historyEmpty}</p>
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {historyRows.map((row) => {
+                  const eventLabel =
+                    row.event_type === "sent"
+                      ? t.historySent
+                      : row.event_type === "failed"
+                        ? t.historyFailed
+                        : row.event_type === "processing"
+                          ? t.historyProcessing
+                          : row.event_type === "queued"
+                            ? t.historyQueued
+                            : row.event_type === "retry_scheduled"
+                              ? t.historyRetry
+                              : t.historySkipped;
+                  const toneClass =
+                    row.event_type === "sent"
+                      ? "text-emerald-300"
+                      : row.event_type === "failed"
+                        ? "text-red-300"
+                        : "text-slate-300";
+                  return (
+                    <li key={row.id} className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2 text-xs text-slate-300">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className={`font-semibold ${toneClass}`}>{eventLabel}</span>
+                        <span className="text-slate-500">{new Date(row.created_at).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}</span>
+                      </div>
+                      <p className="mt-1 break-all text-slate-400">{row.client_email ?? "—"}</p>
+                      {row.subject ? <p className="mt-1 text-slate-400">{row.subject}</p> : null}
+                      {row.error_message ? <p className="mt-1 text-red-300">{row.error_message}</p> : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
 
           <p className="text-xs text-slate-500">{t.localHint}</p>

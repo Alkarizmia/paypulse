@@ -18,6 +18,8 @@ import {
 import { WorkspacesSettings } from "@/app/settings/workspaces-settings";
 import { AccountTeamSettings } from "@/app/settings/account-team-settings";
 import type { PlanId } from "@/lib/plans";
+import { useWorkspace } from "@/app/workspace-context";
+import { getReminderRule, upsertReminderRule } from "@/lib/reminder-rules";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -39,6 +41,7 @@ function emptyProfile(locale: "fr" | "en"): ProfileForm {
 export default function SettingsPage() {
   const { locale, setLocale } = useLocale();
   const { user, loading, isAuthenticated, signOut } = useAuth();
+  const ws = useWorkspace();
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
@@ -52,6 +55,11 @@ export default function SettingsPage() {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [autoRuleEnabled, setAutoRuleEnabled] = useState(true);
+  const [autoRuleDays, setAutoRuleDays] = useState<number[]>([3, 7, 21]);
+  const [autoRuleMax, setAutoRuleMax] = useState(50);
+  const [ruleSaving, setRuleSaving] = useState(false);
+  const [ruleMessage, setRuleMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -97,6 +105,25 @@ export default function SettingsPage() {
       mounted = false;
     };
   }, [supabase, user]);
+
+  useEffect(() => {
+    if (!supabase || !user?.id || !ws.activeWorkspaceId || !ws.ready) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rule = await getReminderRule(supabase, ws.activeWorkspaceId!);
+        if (cancelled || !rule) return;
+        setAutoRuleEnabled(rule.enabled);
+        setAutoRuleDays(rule.daysAfterDue);
+        setAutoRuleMax(rule.maxJobsPerRun);
+      } catch {
+        // table may not be migrated yet
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user?.id, ws.activeWorkspaceId, ws.ready]);
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -146,6 +173,40 @@ export default function SettingsPage() {
       return;
     }
     setPageError(error);
+  }
+
+  function toggleRuleDay(day: number) {
+    setAutoRuleDays((prev) => {
+      const has = prev.includes(day);
+      if (has) return prev.filter((v) => v !== day);
+      return [...prev, day].sort((a, b) => a - b);
+    });
+  }
+
+  async function handleSaveAutomationRule(e: React.FormEvent) {
+    e.preventDefault();
+    setRuleMessage(null);
+    if (!supabase || !user?.id || !ws.activeWorkspaceId) return;
+    if (autoRuleDays.length === 0) {
+      setRuleMessage(locale === "fr" ? "Choisissez au moins un délai." : "Pick at least one schedule day.");
+      return;
+    }
+    setRuleSaving(true);
+    try {
+      await upsertReminderRule(supabase, {
+        workspaceId: ws.activeWorkspaceId,
+        ownerUserId: user.id,
+        enabled: autoRuleEnabled,
+        timezone: "Europe/Paris",
+        daysAfterDue: autoRuleDays,
+        maxJobsPerRun: Math.max(1, Math.min(500, autoRuleMax)),
+      });
+      setRuleMessage(locale === "fr" ? "Règles automatiques mises à jour." : "Automation rules updated.");
+    } catch (e) {
+      setRuleMessage(e instanceof Error ? e.message : locale === "fr" ? "Mise à jour impossible." : "Update failed.");
+    } finally {
+      setRuleSaving(false);
+    }
   }
 
   if (loading || !user) {
@@ -250,6 +311,25 @@ export default function SettingsPage() {
                 <option value="en">English</option>
               </select>
             </label>
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {locale === "fr" ? "Relances automatiques" : "Automatic reminders"}
+              </span>
+              <div className="mt-2 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <input
+                  id="auto-reminders-enabled"
+                  type="checkbox"
+                  checked={profile.autoRemindersEnabled}
+                  onChange={(e) => setProfile((p) => ({ ...p, autoRemindersEnabled: e.target.checked }))}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                <label htmlFor="auto-reminders-enabled" className="text-sm text-slate-700">
+                  {locale === "fr"
+                    ? "Autoriser le scheduler à envoyer les relances planifiées."
+                    : "Allow the scheduler to send planned reminder emails."}
+                </label>
+              </div>
+            </label>
             <div className="sm:col-span-2">
               <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
               <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">{user.email}</p>
@@ -345,6 +425,61 @@ export default function SettingsPage() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">{locale === "fr" ? "Relances automatiques (scheduler)" : "Automatic reminders (scheduler)"}</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          {locale === "fr"
+            ? "Ces paramètres pilotent le runner serveur /api/reminders/run pour le portefeuille actif."
+            : "These settings drive the server runner /api/reminders/run for the active workspace."}
+        </p>
+        <form onSubmit={handleSaveAutomationRule} className="mt-4 space-y-4">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" checked={autoRuleEnabled} onChange={(e) => setAutoRuleEnabled(e.target.checked)} />
+            {locale === "fr" ? "Activer l'automatisation" : "Enable automation"}
+          </label>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {locale === "fr" ? "Jours après échéance" : "Days after due date"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[3, 7, 21].map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => toggleRuleDay(day)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                    autoRuleDays.includes(day)
+                      ? "border-blue-500 bg-blue-600 text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  J+{day}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="block text-sm text-slate-700">
+            {locale === "fr" ? "Maximum d’envois par run" : "Max sends per run"}
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={autoRuleMax}
+              onChange={(e) => setAutoRuleMax(Number.parseInt(e.target.value, 10) || 1)}
+              className="mt-1 w-32 rounded-lg border border-slate-200 px-3 py-2"
+            />
+          </label>
+          {ruleMessage ? <p className="text-sm text-slate-700">{ruleMessage}</p> : null}
+          <button
+            type="submit"
+            disabled={ruleSaving || !ws.activeWorkspaceId}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            {ruleSaving ? "..." : locale === "fr" ? "Enregistrer les règles" : "Save automation rules"}
+          </button>
+        </form>
       </section>
     </main>
   );
