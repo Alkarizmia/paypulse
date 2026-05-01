@@ -1,6 +1,6 @@
 /** Brouillon + modèles de relance — stockage navigateur (en attendant profil Supabase). */
 
-export const SCHEDULE_DAY_OPTIONS = [3, 7, 21] as const;
+export const SCHEDULE_DAY_OPTIONS = [1, 3, 7, 21] as const;
 export type ScheduleDays = (typeof SCHEDULE_DAY_OPTIONS)[number];
 
 /** Cible de statut pour la relance auto (quand la planification par modèle existera) et pour choisir le modèle sur le tableau de bord. */
@@ -53,7 +53,8 @@ function newTemplateId(): string {
 }
 
 function coerceScheduleDays(v: unknown, fallback: ScheduleDays): ScheduleDays {
-  if (v === 3 || v === 7 || v === 21) return v;
+  const n = typeof v === "string" ? Number.parseInt(v, 10) : v;
+  if (n === 1 || n === 3 || n === 7 || n === 21) return n;
   return fallback;
 }
 

@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeDaysAfterDue } from "@/lib/reminder-rules";
 
 type ClientRow = {
   id: string;
@@ -68,13 +69,6 @@ function addDays(isoDay: string, days: number): string {
 
 function scheduledForIso(isoDay: string): string {
   return `${isoDay}T08:00:00.000Z`;
-}
-
-function normalizeDays(values: number[] | null | undefined): number[] {
-  if (!Array.isArray(values)) return [3, 7, 21];
-  const valid = values.filter((v) => Number.isInteger(v) && v >= 0 && v <= 120);
-  if (valid.length === 0) return [3, 7, 21];
-  return [...new Set(valid)].sort((a, b) => a - b);
 }
 
 function normalizeAmount(value: number | string): number {
@@ -169,7 +163,7 @@ export async function enqueueDueReminderJobs(supabase: SupabaseClient): Promise<
     const rule = await getRuleByWorkspace(supabase, client.workspace_id);
     const enabled = rule?.enabled ?? true;
     if (!enabled) continue;
-    const days = normalizeDays(rule?.days_after_due);
+    const days = normalizeDaysAfterDue(rule?.days_after_due);
     const ownerUserId = rule?.owner_user_id ?? client.user_id;
 
     for (const scheduleDays of days) {

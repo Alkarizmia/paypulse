@@ -19,7 +19,7 @@ import { WorkspacesSettings } from "@/app/settings/workspaces-settings";
 import { AccountTeamSettings } from "@/app/settings/account-team-settings";
 import type { PlanId } from "@/lib/plans";
 import { useWorkspace } from "@/app/workspace-context";
-import { getReminderRule, upsertReminderRule } from "@/lib/reminder-rules";
+import { getReminderRule, normalizeDaysAfterDue, upsertReminderRule } from "@/lib/reminder-rules";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -114,7 +114,7 @@ export default function SettingsPage() {
         const rule = await getReminderRule(supabase, ws.activeWorkspaceId!);
         if (cancelled || !rule) return;
         setAutoRuleEnabled(rule.enabled);
-        setAutoRuleDays(rule.daysAfterDue);
+        setAutoRuleDays(normalizeDaysAfterDue(rule.daysAfterDue));
         setAutoRuleMax(rule.maxJobsPerRun);
       } catch {
         // table may not be migrated yet
@@ -175,12 +175,18 @@ export default function SettingsPage() {
     setPageError(error);
   }
 
+  const scheduleChipDays = [1, 3, 7, 21] as const;
+
   function toggleRuleDay(day: number) {
     setAutoRuleDays((prev) => {
       const has = prev.includes(day);
-      if (has) return prev.filter((v) => v !== day);
-      return [...prev, day].sort((a, b) => a - b);
+      const next = has ? prev.filter((v) => v !== day) : [...prev, day];
+      return next.sort((a, b) => a - b);
     });
+  }
+
+  function applySchedulePreset(days: number[]) {
+    setAutoRuleDays(normalizeDaysAfterDue(days));
   }
 
   async function handleSaveAutomationRule(e: React.FormEvent) {
@@ -198,9 +204,10 @@ export default function SettingsPage() {
         ownerUserId: user.id,
         enabled: autoRuleEnabled,
         timezone: "Europe/Paris",
-        daysAfterDue: autoRuleDays,
+        daysAfterDue: normalizeDaysAfterDue(autoRuleDays),
         maxJobsPerRun: Math.max(1, Math.min(500, autoRuleMax)),
       });
+      setAutoRuleDays(normalizeDaysAfterDue(autoRuleDays));
       setRuleMessage(locale === "fr" ? "Règles automatiques mises à jour." : "Automation rules updated.");
     } catch (e) {
       setRuleMessage(e instanceof Error ? e.message : locale === "fr" ? "Mise à jour impossible." : "Update failed.");
@@ -443,21 +450,60 @@ export default function SettingsPage() {
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {locale === "fr" ? "Jours après échéance" : "Days after due date"}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[3, 7, 21].map((day) => (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => toggleRuleDay(day)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-                    autoRuleDays.includes(day)
-                      ? "border-blue-500 bg-blue-600 text-white"
-                      : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  J+{day}
-                </button>
-              ))}
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              {locale === "fr" ? (
+                <>
+                  Calendrier côté serveur en jour UTC (<code className="rounded bg-slate-100 px-1">scheduled_for</code> à{" "}
+                  <code className="rounded bg-slate-100 px-1">08:00 UTC</code>). Exemple : avec <strong>J+1</strong>, une facture dont{" "}
+                  <code className="rounded bg-slate-100 px-1">due_date</code> est <strong>aujourd’hui UTC</strong> peut être mise en file le{" "}
+                  <strong>lendemain</strong>, puis envoyée après ce créneau (cron quotidien ou appel manuel à{" "}
+                  <code className="rounded bg-slate-100 px-1">/api/reminders/run</code>).
+                </>
+              ) : (
+                <>
+                  Runner uses UTC dates (<code className="rounded bg-slate-100 px-1">scheduled_for</code> at{" "}
+                  <code className="rounded bg-slate-100 px-1">08:00 UTC</code>). Example: with <strong>J+1</strong>, if{" "}
+                  <code className="rounded bg-slate-100 px-1">due_date</code> is <strong>today UTC</strong>, enqueue happens the{" "}
+                  <strong>next day</strong>, then email sends after that window—via daily cron or a manual GET to{" "}
+                  <code className="rounded bg-slate-100 px-1">/api/reminders/run</code>.
+                </>
+              )}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => applySchedulePreset([3, 7, 21])}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {locale === "fr" ? "Préréglage : J+3 · 7 · 21" : "Preset: J+3 · 7 · 21"}
+              </button>
+              <button
+                type="button"
+                onClick={() => applySchedulePreset([1, 3, 7, 21])}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {locale === "fr" ? "Préréglage : J+1 · 3 · 7 · 21" : "Preset: J+1 · 3 · 7 · 21"}
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={locale === "fr" ? "Délais par relance" : "Reminder delays"}>
+              {scheduleChipDays.map((day) => {
+                const selected = autoRuleDays.includes(day);
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleRuleDay(day)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                      selected
+                        ? "border-blue-500 bg-blue-600 text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    J+{day}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <label className="block text-sm text-slate-700">
