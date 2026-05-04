@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { clientIpFromRequest } from "@/lib/client-ip";
+import { isRateLimited } from "@/lib/route-rate-limit";
+import { sendResendReminderEmail } from "@/lib/resend-reminder-send";
+import { serverStructuredLog } from "@/lib/server-log";
+import { getUserIdFromAuthorizationHeader } from "@/lib/supabase-route-auth";
 
 type ReminderRequest = {
   to?: string;
@@ -12,15 +16,27 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export async function POST(request: Request) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.MAIL_FROM;
+const MAX_SUBJECT_CHARS = 500;
+const MAX_BODY_CHARS = 120_000;
 
-  if (!apiKey) {
-    return NextResponse.json({ ok: false, error: "Missing RESEND_API_KEY." }, { status: 500 });
+export async function POST(request: Request) {
+  const ip = clientIpFromRequest(request);
+  if (isRateLimited(`send-reminder:ip:${ip}`, 40, 3_600_000)) {
+    serverStructuredLog("api_send_reminder_rate_limit", { scope: "ip" });
+    return NextResponse.json({ ok: false, error: "Too many requests." }, { status: 429 });
   }
-  if (!from) {
-    return NextResponse.json({ ok: false, error: "Missing MAIL_FROM." }, { status: 500 });
+
+  const userId = await getUserIdFromAuthorizationHeader(request);
+  if (!userId) {
+    serverStructuredLog("api_send_reminder_unauthorized");
+    return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
+  }
+
+  if (
+    isRateLimited(`send-reminder:user:${userId}`, Number(process.env.API_SEND_REMINDER_MAX_PER_USER_PER_HOUR ?? 30), 3_600_000)
+  ) {
+    serverStructuredLog("api_send_reminder_rate_limit", { scope: "user", userPrefix: userId.slice(0, 8) });
+    return NextResponse.json({ ok: false, error: "Too many requests." }, { status: 429 });
   }
 
   let payload: ReminderRequest;
@@ -31,9 +47,9 @@ export async function POST(request: Request) {
   }
 
   const to = typeof payload.to === "string" ? normalizeEmail(payload.to) : "";
-  const subject = typeof payload.subject === "string" ? payload.subject.trim() : "";
-  const html = typeof payload.html === "string" ? payload.html.trim() : "";
-  const text = typeof payload.text === "string" ? payload.text.trim() : "";
+  const subject = typeof payload.subject === "string" ? payload.subject.trim().slice(0, MAX_SUBJECT_CHARS) : "";
+  const html = typeof payload.html === "string" ? payload.html.trim().slice(0, MAX_BODY_CHARS) : "";
+  const text = typeof payload.text === "string" ? payload.text.trim().slice(0, MAX_BODY_CHARS) : "";
 
   if (!to || !subject || (!html && !text)) {
     return NextResponse.json(
@@ -42,19 +58,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const resend = new Resend(apiKey);
-  const message = {
-    from,
+  const result = await sendResendReminderEmail({
     to,
     subject,
     text: text || " ",
     ...(html ? { html } : {}),
-  } as const;
-  const { data, error } = await resend.emails.send(message);
+  });
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  if (!result.ok) {
+    if (result.error === "Missing RESEND_API_KEY." || result.error === "Missing MAIL_FROM.") {
+      return NextResponse.json({ ok: false, error: result.error }, { status: 500 });
+    }
+    return NextResponse.json(
+      result.hint ? { ok: false, error: result.error, hint: result.hint } : { ok: false, error: result.error },
+      { status: 400 },
+    );
   }
 
-  return NextResponse.json({ ok: true, id: data?.id ?? null });
+  serverStructuredLog("api_send_reminder_ok", { userPrefix: userId.slice(0, 8) });
+  return NextResponse.json({ ok: true, id: result.id });
 }

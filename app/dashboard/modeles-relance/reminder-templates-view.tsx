@@ -8,25 +8,30 @@ import { useWorkspace } from "@/app/workspace-context";
 import { useLocale } from "@/app/locale-context";
 import { DashboardShell } from "@/app/dashboard/dashboard-shell";
 import {
-  SCHEDULE_DAY_OPTIONS,
   clearReminderTemplates,
-  createEmptyTemplate,
   getDefaultReminderTemplates,
   loadReminderTemplates,
   saveReminderTemplates,
-  REMINDER_STATUS_SCOPES,
-  type ReminderTemplateEntry,
   type ReminderTemplatesData,
-  type ScheduleDays,
 } from "@/lib/reminder-templates-storage";
 import { fetchClients } from "@/lib/clients";
 import { getActiveLocalClients } from "@/lib/local-clients";
-import { getMaxEmailTemplates, getPlanCapabilities, hasProReminderEditor } from "@/lib/plans";
+import { getPlanCapabilities, hasProReminderEditor, type PlanId } from "@/lib/plans";
 import { getCurrentSubscription, type UserSubscription } from "@/lib/subscriptions";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { REMINDER_DRAFT_TONE_IDS, type ReminderDraftTone } from "@/lib/reminder-draft-tone";
 import type { Client } from "@/app/dashboard/types";
 import { EnvelopeSendButton } from "./envelope-send-button";
+import { AutomationTemplatesPanel } from "./automation-templates-panel";
+import { getProfile } from "@/lib/profile";
+import {
+  usePrefersColorSchemeDark,
+  resolveUiTheme,
+  readStoredUiThemePreference,
+  subscribeUiThemePreferenceChange,
+  writeStoredUiThemePreference,
+  type UiThemePreference,
+} from "@/lib/ui-theme";
 
 type ReminderHistoryRow = {
   id: string;
@@ -57,11 +62,16 @@ export function ReminderTemplatesView() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyRows, setHistoryRows] = useState<ReminderHistoryRow[]>([]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const systemDark = usePrefersColorSchemeDark();
+  const [uiThemePref, setUiThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "dark");
+  const shellAppearance = useMemo(() => (resolveUiTheme(uiThemePref, systemDark) === "light" ? "light" : "dark"), [
+    uiThemePref,
+    systemDark,
+  ]);
   const planId = plan?.planId ?? "free";
   const memberReadOnly =
     Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
   const allowed = hasProReminderEditor(planId);
-  const maxTemplates = getMaxEmailTemplates(planId);
   const caps = useMemo(() => getPlanCapabilities(planId), [planId]);
 
   const refreshPlan = useCallback(async () => {
@@ -100,10 +110,37 @@ export function ReminderTemplatesView() {
     const planId = plan?.planId ?? "free";
     if (!hasProReminderEditor(planId)) return;
     if (tplStorageKey === null) return;
-    const maxTpl = getMaxEmailTemplates(planId);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from localStorage after plan gate
-    setData(loadReminderTemplates(locale, maxTpl, tplStorageKey));
+    const maxTpl = 15;
+    let cancelled = false;
+    void (async () => {
+      const loaded = loadReminderTemplates(locale, maxTpl, tplStorageKey);
+      if (!cancelled) setData({ ...loaded, templates: [] });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [loading, locale, plan, tplStorageKey]);
+
+  useEffect(() => {
+    if (!supabase || !user?.id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const p = await getProfile(supabase, user.id);
+        if (!cancelled && p) {
+          setUiThemePref(p.uiTheme);
+          writeStoredUiThemePreference(p.uiTheme);
+        }
+      } catch {
+        /* colonne absente tant que migration SQL non appliquée */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user?.id]);
+
+  useEffect(() => subscribeUiThemePreferenceChange((pref) => setUiThemePref(pref)), []);
 
   useEffect(() => {
     if (loading) return;
@@ -133,8 +170,8 @@ export function ReminderTemplatesView() {
   useEffect(() => {
     if (loading || !supabase || !user?.id || !allowed) return;
     let cancelled = false;
-    setHistoryLoading(true);
     void (async () => {
+      setHistoryLoading(true);
       const { data, error } = await supabase
         .from("reminder_events")
         .select("id,event_type,created_at,client_email,subject,error_message")
@@ -205,7 +242,7 @@ export function ReminderTemplatesView() {
           scopeUnpaid: "Impayé",
           scopePaid: "Payé",
           scopeBoth: "Les deux",
-          daysShort: (d: ScheduleDays) => `${d} j`,
+          daysShort: (d: number) => `${d} j`,
           sendNow: "Envoyer maintenant",
           envelopeAria: "Ouvrir l’envoi du brouillon par e-mail",
           modalTitle: "Envoyer le brouillon",
@@ -266,6 +303,7 @@ export function ReminderTemplatesView() {
           historyQueued: "Planifiée",
           historyRetry: "Nouvel essai planifié",
           historySkipped: "Ignorée",
+          historyDupEmail: "Doublon e-mail (non envoyé)",
         }
       : {
           pageTitle: "Reminder templates",
@@ -295,7 +333,7 @@ export function ReminderTemplatesView() {
           scopeUnpaid: "Unpaid",
           scopePaid: "Paid",
           scopeBoth: "Both",
-          daysShort: (d: ScheduleDays) => `${d} d`,
+          daysShort: (d: number) => `${d} d`,
           sendNow: "Send now",
           envelopeAria: "Open draft email in your mail app",
           modalTitle: "Send draft",
@@ -355,6 +393,7 @@ export function ReminderTemplatesView() {
           historyQueued: "Queued",
           historyRetry: "Retry scheduled",
           historySkipped: "Skipped",
+          historyDupEmail: "Duplicate email (not sent)",
         };
 
   const envelopeLabels = {
@@ -390,7 +429,7 @@ export function ReminderTemplatesView() {
   const workspaceWait = Boolean(supabase && allowed && tplStorageKey === null);
   if (loading || workspaceWait || (allowed && !data)) {
     return (
-      <div className="dark">
+      <div>
         <DashboardShell
           locale={locale}
           planId={planId}
@@ -400,6 +439,7 @@ export function ReminderTemplatesView() {
           userEmail={user?.email}
           onLogout={handleLogout}
           hideTrashNav={memberReadOnly}
+          appearance={shellAppearance}
         >
           <p className="text-sm text-slate-400">…</p>
         </DashboardShell>
@@ -409,7 +449,7 @@ export function ReminderTemplatesView() {
 
   if (!allowed) {
     return (
-      <div className="dark">
+      <div>
         <DashboardShell
           locale={locale}
           planId={planId}
@@ -419,6 +459,7 @@ export function ReminderTemplatesView() {
           userEmail={user?.email}
           onLogout={handleLogout}
           hideTrashNav={memberReadOnly}
+          appearance={shellAppearance}
         >
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -454,40 +495,11 @@ export function ReminderTemplatesView() {
     });
   }
 
-  function patchTemplateById(id: string, partial: Partial<Omit<ReminderTemplateEntry, "id">>) {
-    setData((prev) => {
-      if (!prev) return prev;
-      const templates = prev.templates.map((row) => (row.id === id ? { ...row, ...partial } : row));
-      const next = { ...prev, templates };
-      scheduleSave(next);
-      return next;
-    });
-  }
-
-  function addTemplate() {
-    setData((prev) => {
-      if (!prev) return prev;
-      if (prev.templates.length >= maxTemplates) return prev;
-      const next = { ...prev, templates: [...prev.templates, createEmptyTemplate(locale)] };
-      scheduleSave(next);
-      return next;
-    });
-  }
-
-  function removeTemplate(id: string) {
-    setData((prev) => {
-      if (!prev || prev.templates.length <= 1) return prev;
-      const next = { ...prev, templates: prev.templates.filter((row) => row.id !== id) };
-      scheduleSave(next);
-      return next;
-    });
-  }
-
   function handleReset() {
     if (!tplStorageKey) return;
     clearReminderTemplates(tplStorageKey);
     const base = getDefaultReminderTemplates(locale);
-    const next = { ...base, templates: base.templates.slice(0, maxTemplates) };
+    const next: ReminderTemplatesData = { ...base, templates: [] };
     setData(next);
     saveReminderTemplates(next, tplStorageKey);
   }
@@ -495,13 +507,18 @@ export function ReminderTemplatesView() {
   async function handleAiGenerate() {
     setAiLoading(true);
     setAiBanner(null);
-    const firstDays = d.templates[0]?.daysAfterDue;
     const parsedDays = parseInt(aiDaysAfter.trim(), 10);
-    const daysAfterDue = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : firstDays;
+    const daysAfterDue = Number.isFinite(parsedDays) && parsedDays > 0 ? parsedDays : 7;
     try {
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (supabase) {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (token) headers.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch("/api/reminder-draft-ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           locale,
           senderCompany: aiSender.trim() || undefined,
@@ -526,7 +543,7 @@ export function ReminderTemplatesView() {
   }
 
   return (
-    <div className="dark">
+    <div>
       <DashboardShell
         locale={locale}
         planId={planId}
@@ -536,24 +553,49 @@ export function ReminderTemplatesView() {
         userEmail={user?.email}
         onLogout={handleLogout}
         hideTrashNav={memberReadOnly}
+        appearance={shellAppearance}
       >
         <div className="space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-white">{t.pageTitle}</h2>
-            <Link href="/dashboard" className="text-sm font-medium text-violet-300 hover:text-violet-200">
+            <h2 className={`text-xl font-bold ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
+              {t.pageTitle}
+            </h2>
+            <Link
+              href="/dashboard"
+              className={
+                shellAppearance === "light"
+                  ? "text-sm font-medium text-violet-700 hover:text-violet-600"
+                  : "text-sm font-medium text-violet-300 hover:text-violet-200"
+              }
+            >
               ← {t.back}
             </Link>
           </div>
+
+          {supabase && user ? (
+            <AutomationTemplatesPanel
+              supabase={supabase}
+              userId={ws.effectiveOwnerUserId ?? user.id}
+              planId={planId as PlanId}
+              memberReadOnly={memberReadOnly}
+            />
+          ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={handleReset}
-              className="rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+              className={
+                shellAppearance === "light"
+                  ? "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  : "rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+              }
             >
               {t.reset}
             </button>
-            <span className="text-xs text-slate-500">{t.saved}</span>
+            <span className={`text-xs ${shellAppearance === "light" ? "text-slate-500" : "text-slate-500"}`}>
+              {t.saved}
+            </span>
           </div>
 
           <section className="rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/40 to-violet-950/30 p-6">
@@ -659,107 +701,6 @@ export function ReminderTemplatesView() {
           </section>
 
           <section className="rounded-2xl border border-white/[0.08] bg-[#14141c] p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-white">{t.templatesTitle}</h3>
-                <p className="mt-1 text-[11px] text-slate-500">{t.templateQuota(d.templates.length, maxTemplates)}</p>
-              </div>
-              <button
-                type="button"
-                onClick={addTemplate}
-                disabled={d.templates.length >= maxTemplates}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-600/20 px-3 py-2 text-xs font-semibold text-violet-100 hover:bg-violet-600/30 disabled:pointer-events-none disabled:opacity-40"
-              >
-                <span className="text-base leading-none" aria-hidden>
-                  +
-                </span>
-                {t.addTemplate}
-              </button>
-            </div>
-
-            <ul className="mt-6 space-y-6">
-              {d.templates.map((row, index) => (
-                <li key={row.id} className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-violet-300">
-                      {t.templateLabel} {index + 1}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase text-violet-400/80">Pro</span>
-                      <button
-                        type="button"
-                        onClick={() => removeTemplate(row.id)}
-                        disabled={d.templates.length <= 1}
-                        className="rounded-lg border border-white/[0.1] px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-red-950/40 hover:text-red-200 disabled:pointer-events-none disabled:opacity-30"
-                        aria-label={t.removeTemplate}
-                      >
-                        −
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="text-xs font-medium text-slate-400">{t.scheduleLabel}</p>
-                  <p className="mt-1 text-[11px] leading-snug text-slate-500">{t.scheduleHelp}</p>
-                  <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={t.scheduleLabel}>
-                    {SCHEDULE_DAY_OPTIONS.map((days) => (
-                      <button
-                        key={days}
-                        type="button"
-                        onClick={() => patchTemplateById(row.id, { daysAfterDue: days })}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                          row.daysAfterDue === days
-                            ? "bg-violet-600 text-white shadow-[0_0_12px_-4px_rgba(139,92,246,0.8)]"
-                            : "border border-white/[0.1] bg-black/20 text-slate-300 hover:border-violet-500/30 hover:text-white"
-                        }`}
-                      >
-                        {t.daysShort(days)}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-xs tabular-nums text-violet-300/90">
-                    {locale === "fr" ? "Réglage actif : J+" : "Active: D+"}
-                    {row.daysAfterDue}
-                  </p>
-
-                  <p className="mt-4 text-xs font-medium text-slate-400">{t.scopeLabel}</p>
-                  <p className="mt-1 text-[11px] leading-snug text-slate-500">{t.scopeHelp}</p>
-                  <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={t.scopeLabel}>
-                    {REMINDER_STATUS_SCOPES.map((scope) => (
-                      <button
-                        key={scope}
-                        type="button"
-                        onClick={() => patchTemplateById(row.id, { statusScope: scope })}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                          row.statusScope === scope
-                            ? "bg-violet-600 text-white shadow-[0_0_12px_-4px_rgba(139,92,246,0.8)]"
-                            : "border border-white/[0.1] bg-black/20 text-slate-300 hover:border-violet-500/30 hover:text-white"
-                        }`}
-                      >
-                        {scope === "unpaid" ? t.scopeUnpaid : scope === "paid" ? t.scopePaid : t.scopeBoth}
-                      </button>
-                    ))}
-                  </div>
-
-                  <label className="mt-4 block text-xs text-slate-500">{t.titleField}</label>
-                  <input
-                    type="text"
-                    value={row.title}
-                    onChange={(e) => patchTemplateById(row.id, { title: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-[#0c0c12] px-3 py-2 text-sm text-slate-100 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
-                  />
-                  <label className="mt-3 block text-xs text-slate-500">{t.bodyLabel}</label>
-                  <textarea
-                    value={row.body}
-                    onChange={(e) => patchTemplateById(row.id, { body: e.target.value })}
-                    rows={5}
-                    className="mt-1 w-full resize-y rounded-lg border border-white/10 bg-[#0c0c12] p-3 font-mono text-[12px] leading-relaxed text-slate-200 focus:border-violet-500/40 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
-                  />
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="rounded-2xl border border-white/[0.08] bg-[#14141c] p-6">
             <h3 className="text-sm font-semibold text-white">{t.historyTitle}</h3>
             {historyLoading ? (
               <p className="mt-3 text-xs text-slate-400">{t.historyLoading}</p>
@@ -779,13 +720,17 @@ export function ReminderTemplatesView() {
                             ? t.historyQueued
                             : row.event_type === "retry_scheduled"
                               ? t.historyRetry
-                              : t.historySkipped;
+                              : row.event_type === "skipped_duplicate_email"
+                                ? t.historyDupEmail
+                                : t.historySkipped;
                   const toneClass =
                     row.event_type === "sent"
                       ? "text-emerald-300"
                       : row.event_type === "failed"
                         ? "text-red-300"
-                        : "text-slate-300";
+                        : row.event_type === "skipped_duplicate_email"
+                          ? "text-amber-300"
+                          : "text-slate-300";
                   return (
                     <li key={row.id} className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2 text-xs text-slate-300">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -802,7 +747,11 @@ export function ReminderTemplatesView() {
             )}
           </section>
 
-          <p className="text-xs text-slate-500">{t.localHint}</p>
+          <p className="text-xs text-slate-500">
+            {locale === "fr"
+              ? "Brouillon ci-dessus : enregistré localement dans ce navigateur. Modèles planifiés : base Supabase (portefeuille actif)."
+              : "Draft above: stored in this browser. Scheduled templates: Supabase (active workspace)."}
+          </p>
         </div>
       </DashboardShell>
     </div>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { cronBearerVerify } from "@/lib/cron-bearer-verify";
 import { enqueueDueReminderJobs, processDueReminderJobs } from "@/lib/reminder-automation";
+import { serverStructuredLog } from "@/lib/server-log";
 import { getSupabaseServerClient } from "@/lib/server-supabase";
 
 export async function GET(request: Request) {
@@ -9,8 +11,8 @@ export async function GET(request: Request) {
   }
 
   const authHeader = request.headers.get("authorization");
-  const expected = `Bearer ${secret}`;
-  if (authHeader !== expected) {
+  if (!cronBearerVerify(secret, authHeader)) {
+    serverStructuredLog("cron_reminders_unauthorized");
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 

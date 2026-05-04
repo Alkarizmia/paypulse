@@ -14,6 +14,8 @@ const dateFmt = new Intl.DateTimeFormat("fr-FR", {
 type ClientListProps = {
   clients: Client[];
   onSendReminder: (client: Client) => void;
+  /** Timestamp (ms): remind button disabled for that client until `Date.now() >= value`. */
+  remindCooldownUntil?: Record<string, number>;
   onDelete: (clientId: string) => void;
   onMarkPaid: (clientId: string) => void;
   /** Prochaine facture : repasse en impayé, conserve l’historique d’encaissement. */
@@ -46,6 +48,7 @@ function UturnIcon({ className }: { className?: string }) {
 export function ClientList({
   clients,
   onSendReminder,
+  remindCooldownUntil,
   onDelete,
   onMarkPaid,
   onAdvanceNextCycle,
@@ -72,11 +75,16 @@ export function ClientList({
           {labels?.title ?? "Vos clients"}
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          {labels?.subtitle ?? "Statut des montants et relances (simulation email)."}
+          {labels?.subtitle ?? "Statut des montants et relances — relance via votre messagerie (mailto)."}
         </p>
       </div>
       <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-        {clients.map((client) => (
+        {clients.map((client) => {
+          const cooldownUntil = remindCooldownUntil?.[client.id];
+          const remindLocked =
+            client.status === "paid" ||
+            (typeof cooldownUntil === "number" && Date.now() < cooldownUntil);
+          return (
           <article
             key={client.id}
             className="pp-dashboard-card-interactive min-w-0 rounded-2xl border border-white/[0.08] bg-[#1a1a22] p-4 sm:p-5 hover:border-violet-500/30"
@@ -136,8 +144,10 @@ export function ClientList({
                 ) : null}
                 <button
                   type="button"
-                  disabled={client.status === "paid"}
-                  onClick={() => onSendReminder(client)}
+                  disabled={remindLocked}
+                  onClick={() => {
+                    if (!remindLocked) onSendReminder(client);
+                  }}
                   className="inline-flex w-full items-center justify-center rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-violet-900/40 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500 disabled:shadow-none sm:w-auto"
                 >
                   {labels?.remind ?? "Envoyer relance"}
@@ -154,7 +164,8 @@ export function ClientList({
               </div>
             </div>
           </article>
-        ))}
+        );
+        })}
       </div>
     </section>
   );

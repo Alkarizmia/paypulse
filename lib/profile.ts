@@ -1,4 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { UiThemePreference } from "@/lib/ui-theme";
+
+export type { UiThemePreference };
 
 export type UserProfile = {
   userId: string;
@@ -9,6 +12,8 @@ export type UserProfile = {
   country: string;
   language: "fr" | "en";
   autoRemindersEnabled: boolean;
+  /** Thème interface dashboard (paramètres). */
+  uiTheme: UiThemePreference;
   /** Dernier portefeuille (workspace) actif sur le dashboard. */
   activeWorkspaceId: string | null;
 };
@@ -22,8 +27,14 @@ type ProfileRow = {
   country: string | null;
   language: "fr" | "en" | null;
   auto_reminders_enabled: boolean | null;
+  ui_theme: string | null;
   active_workspace_id: string | null;
 };
+
+function coerceUiTheme(v: string | null | undefined): UiThemePreference {
+  if (v === "light" || v === "system") return v;
+  return "dark";
+}
 
 function mapProfile(row: ProfileRow): UserProfile {
   return {
@@ -35,6 +46,7 @@ function mapProfile(row: ProfileRow): UserProfile {
     country: row.country ?? "",
     language: row.language === "en" ? "en" : "fr",
     autoRemindersEnabled: row.auto_reminders_enabled !== false,
+    uiTheme: coerceUiTheme(row.ui_theme),
     activeWorkspaceId: row.active_workspace_id ?? null,
   };
 }
@@ -42,7 +54,9 @@ function mapProfile(row: ProfileRow): UserProfile {
 export async function getProfile(supabase: SupabaseClient, userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,active_workspace_id")
+    .select(
+      "user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,ui_theme,active_workspace_id",
+    )
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -66,11 +80,14 @@ export async function upsertProfile(
         country: input.country || null,
         language: input.language,
         auto_reminders_enabled: input.autoRemindersEnabled,
+        ui_theme: input.uiTheme,
         active_workspace_id: input.activeWorkspaceId ?? null,
       },
       { onConflict: "user_id" },
     )
-    .select("user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,active_workspace_id")
+    .select(
+      "user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,ui_theme,active_workspace_id",
+    )
     .single();
   if (error) throw error;
   return mapProfile(data as ProfileRow);
@@ -91,6 +108,7 @@ export async function updateProfileAutoReminders(
     user_id: userId,
     language: "fr",
     auto_reminders_enabled: enabled,
+    ui_theme: "dark",
     active_workspace_id: null,
   });
   if (error) throw error;
@@ -115,6 +133,7 @@ export async function setProfileActiveWorkspace(
     user_id: userId,
     language: "fr",
     auto_reminders_enabled: true,
+    ui_theme: "dark",
     active_workspace_id: workspaceId,
   });
   if (error) throw error;

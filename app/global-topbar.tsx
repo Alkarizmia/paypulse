@@ -12,6 +12,8 @@ export function GlobalTopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isDarkTopbar = isHome || isAuthPage;
   const isDashboard = pathname === "/dashboard" || pathname?.startsWith("/dashboard/") || false;
 
   const t =
@@ -57,7 +59,7 @@ export function GlobalTopBar() {
   return (
     <div
       className={
-        isHome
+        isDarkTopbar
           ? "sticky top-0 z-50 border-b border-white/10 bg-[#071528]/92 backdrop-blur-md"
           : "sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur"
       }
@@ -67,11 +69,11 @@ export function GlobalTopBar() {
           <Link
             href="/"
             className={`flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 ${
-              isHome ? "text-[#3DFF8A] ring-[#3DFF8A]/35" : "text-blue-600 ring-blue-500/40"
+              isDarkTopbar ? "text-[#3DFF8A] ring-[#3DFF8A]/35" : "text-blue-600 ring-blue-500/40"
             }`}
           >
-            <PayPulseLogo className={`h-8 w-8 shrink-0 ${isHome ? "text-[#3DFF8A]" : "text-blue-600"}`} />
-            <span className={`truncate text-sm font-semibold tracking-tight ${isHome ? "text-white" : "text-slate-900"}`}>
+            <PayPulseLogo className={`h-8 w-8 shrink-0 ${isDarkTopbar ? "text-[#3DFF8A]" : "text-blue-600"}`} />
+            <span className={`truncate text-sm font-semibold tracking-tight ${isDarkTopbar ? "text-white" : "text-slate-900"}`}>
               PayPulss
             </span>
           </Link>
@@ -107,7 +109,7 @@ export function GlobalTopBar() {
 
         <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           <nav
-            className={`flex flex-wrap items-center gap-2 text-xs font-medium ${isHome ? "text-slate-300" : "text-slate-600"}`}
+            className={`flex flex-wrap items-center gap-2 text-xs font-medium ${isDarkTopbar ? "text-slate-300" : "text-slate-600"}`}
           >
             {isHome ? (
               <>
@@ -130,14 +132,14 @@ export function GlobalTopBar() {
                 <Link href="/dashboard" className={isHome ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
                   {t.dashboard}
                 </Link>
-                <Link href="/settings" className={isHome ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
+                <Link href="/settings" className={isDarkTopbar ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
                   {t.settings}
                 </Link>
                 <button
                   type="button"
                   onClick={handleSignOut}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    isHome
+                    isDarkTopbar
                       ? "border border-white/30 text-white hover:bg-white/10"
                       : "border border-slate-300 text-slate-700 hover:bg-slate-100"
                   }`}
@@ -147,16 +149,16 @@ export function GlobalTopBar() {
               </>
             ) : (
               <>
-                <Link href="/dashboard" className={isHome ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
+                <Link href="/dashboard" className={isDarkTopbar ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
                   {t.dashboard}
                 </Link>
-                <Link href="/login" className={isHome ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
+                <Link href="/login" className={isDarkTopbar ? "rounded-lg px-2 py-1 hover:text-white" : "rounded-lg px-2 py-1 hover:text-slate-900"}>
                   {t.login}
                 </Link>
                 <Link
                   href="/signup"
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    isHome
+                    isDarkTopbar
                       ? "bg-[#3DFF8A] text-[#041018] hover:bg-[#5cff9e]"
                       : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}
@@ -169,7 +171,7 @@ export function GlobalTopBar() {
           {isAuthenticated && user?.email && (
             <span
               className={`max-w-[180px] truncate rounded-full px-2 py-1 text-[10px] ${
-                isHome ? "bg-white/10 text-slate-200" : "bg-slate-100 text-slate-600"
+                isDarkTopbar ? "bg-white/10 text-slate-200" : "bg-slate-100 text-slate-600"
               }`}
               title={user.email}
             >
@@ -178,7 +180,7 @@ export function GlobalTopBar() {
           )}
           <div
             className={`inline-flex overflow-hidden rounded-full border text-xs font-semibold ${
-              isHome ? "border-white/15 bg-white/5 text-slate-200" : "border-slate-200 bg-white text-slate-600"
+              isDarkTopbar ? "border-white/15 bg-white/5 text-slate-200" : "border-slate-200 bg-white text-slate-600"
             }`}
           >
             <button
@@ -186,10 +188,10 @@ export function GlobalTopBar() {
               onClick={() => setLocale("fr")}
               className={`px-3 py-1 ${
                 locale === "fr"
-                  ? isHome
+                  ? isDarkTopbar
                     ? "bg-[#3DFF8A] text-[#041018]"
                     : "bg-blue-600 text-white"
-                  : isHome
+                  : isDarkTopbar
                     ? "hover:bg-white/10"
                     : "hover:bg-slate-50"
               }`}
@@ -201,10 +203,10 @@ export function GlobalTopBar() {
               onClick={() => setLocale("en")}
               className={`px-3 py-1 ${
                 locale === "en"
-                  ? isHome
+                  ? isDarkTopbar
                     ? "bg-[#3DFF8A] text-[#041018]"
                     : "bg-blue-600 text-white"
-                  : isHome
+                  : isDarkTopbar
                     ? "hover:bg-white/10"
                     : "hover:bg-slate-50"
               }`}

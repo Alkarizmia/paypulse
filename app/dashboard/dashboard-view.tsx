@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { readAutoRemindersEnabled, writeAutoRemindersEnabled } from "@/lib/auto-reminders";
@@ -24,10 +25,17 @@ import {
   getPlanCapabilities,
   usesAgencyWorkspaceUi,
 } from "@/lib/plans";
-import { loadReminderTemplates, pickFirstMatchingReminderTemplate } from "@/lib/reminder-templates-storage";
+import { loadReminderTemplates } from "@/lib/reminder-templates-storage";
 import { getProfile, updateProfileAutoReminders } from "@/lib/profile";
+import {
+  usePrefersColorSchemeDark,
+  resolveUiTheme,
+  readStoredUiThemePreference,
+  subscribeUiThemePreferenceChange,
+  writeStoredUiThemePreference,
+  type UiThemePreference,
+} from "@/lib/ui-theme";
 import { getSupabaseBrowserClient, getSupabaseEnvHint, isSupabaseReady } from "@/lib/supabase";
-import { AdvanceNextCycleModal } from "./advance-next-cycle-modal";
 import { AddClientForm } from "./add-client-form";
 import { ClientList } from "./client-list";
 import { DashboardAnalytics } from "./dashboard-analytics";
@@ -39,6 +47,17 @@ import { useAuth } from "@/app/auth-context";
 import { useWorkspace } from "@/app/workspace-context";
 import { getCurrentSubscription, setCurrentSubscriptionPlan, type UserSubscription } from "@/lib/subscriptions";
 import type { PlanId } from "@/lib/plans";
+import { buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
+import { createMemberActionNotifications } from "@/lib/notifications";
+
+const ReminderSendModal = dynamic(
+  () => import("./reminder-send-modal").then((m) => ({ default: m.ReminderSendModal })),
+  { ssr: false },
+);
+const AdvanceNextCycleModal = dynamic(
+  () => import("./advance-next-cycle-modal").then((m) => ({ default: m.AdvanceNextCycleModal })),
+  { ssr: false },
+);
 
 function parsePlanParam(value: string | null): PlanId | null {
   if (value === "free" || value === "starter" || value === "pro" || value === "agency") {
@@ -56,17 +75,46 @@ function newId() {
 
 type ReminderToast = { tone: "info" | "warn"; text: string };
 
-function escapeHtml(text: string): string {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function toSimpleHtmlFromText(text: string): string {
-  return `<div>${escapeHtml(text).replaceAll("\n", "<br/>")}</div>`;
+function buildManualReminderDraftFields(
+  client: Client,
+  options: {
+    locale: "fr" | "en";
+    aiReminderDrafts: boolean;
+    currentPlanId: PlanId;
+    templateWorkspaceKey: string;
+  },
+): { subject: string; body: string } {
+  const { locale, aiReminderDrafts, currentPlanId, templateWorkspaceKey } = options;
+  if (aiReminderDrafts) {
+    const st = loadReminderTemplates(locale, getMaxEmailTemplates(currentPlanId), templateWorkspaceKey);
+    return { subject: st.draftSubject, body: st.draftBody };
+  }
+  if (locale === "fr") {
+    return {
+      subject: `Rappel : facture en attente — ${client.name}`,
+      body: [
+        `Bonjour,`,
+        ``,
+        `Nous vous contactons concernant un montant de ${client.amountDue} € dû pour le ${client.dueDate}.`,
+        `Merci de régulariser la situation ou de nous indiquer un délai.`,
+        ``,
+        `Cordialement,`,
+        `PayPulss`,
+      ].join("\n"),
+    };
+  }
+  return {
+    subject: `Reminder: pending invoice — ${client.name}`,
+    body: [
+      `Hello,`,
+      ``,
+      `We're reaching out about an amount of ${client.amountDue} EUR due on ${client.dueDate}.`,
+      `Please settle when you can or let us know a timeline.`,
+      ``,
+      `Regards,`,
+      `PayPulss`,
+    ].join("\n"),
+  };
 }
 
 export function DashboardView() {
@@ -97,6 +145,27 @@ export function DashboardView() {
   const [addTargetWorkspaceId, setAddTargetWorkspaceId] = useState<string | null>(null);
   const [reminderToast, setReminderToast] = useState<ReminderToast | null>(null);
   const [reminderMailHardError, setReminderMailHardError] = useState<string | null>(null);
+  const remindCooldownTimerRef = useRef<Map<string, number>>(new Map());
+  const reminderAlertRef = useRef<HTMLDivElement>(null);
+  const [reminderModalClient, setReminderModalClient] = useState<Client | null>(null);
+  const [remindCooldownUntil, setRemindCooldownUntil] = useState<Record<string, number>>({});
+
+  const startRemindCooldown = useCallback((clientId: string) => {
+    const prev = remindCooldownTimerRef.current.get(clientId);
+    if (prev !== undefined) window.clearTimeout(prev);
+    const until = Date.now() + 7000;
+    setRemindCooldownUntil((p) => ({ ...p, [clientId]: until }));
+    const tid = window.setTimeout(() => {
+      remindCooldownTimerRef.current.delete(clientId);
+      setRemindCooldownUntil((p) => {
+        const next = { ...p };
+        delete next[clientId];
+        return next;
+      });
+    }, 7000);
+    remindCooldownTimerRef.current.set(clientId, tid);
+  }, []);
+
   type AdvanceModalState = {
     clientId: string;
     clientName: string;
@@ -104,11 +173,16 @@ export function DashboardView() {
     defaultDueDate: string;
   };
   const [advanceModal, setAdvanceModal] = useState<AdvanceModalState | null>(null);
+  const systemDark = usePrefersColorSchemeDark();
+  const [uiThemePref, setUiThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "dark");
+  const shellAppearance = useMemo(() => (resolveUiTheme(uiThemePref, systemDark) === "light" ? "light" : "dark"), [
+    uiThemePref,
+    systemDark,
+  ]);
 
   useEffect(() => {
-    if (ws.activeWorkspaceId) {
-      setAddTargetWorkspaceId(ws.activeWorkspaceId);
-    }
+    if (!ws.activeWorkspaceId) return;
+    queueMicrotask(() => setAddTargetWorkspaceId(ws.activeWorkspaceId));
   }, [ws.activeWorkspaceId]);
 
   useEffect(() => {
@@ -119,6 +193,14 @@ export function DashboardView() {
     }, 12000);
     return () => window.clearTimeout(id);
   }, [reminderToast, reminderMailHardError]);
+
+  useEffect(() => {
+    if (!reminderToast) return;
+    const id = window.requestAnimationFrame(() => {
+      reminderAlertRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [reminderToast]);
 
   const refreshClients = useCallback(async () => {
     setLoadError(null);
@@ -138,12 +220,12 @@ export function DashboardView() {
           setTrashedClients([]);
           return;
         }
-        const currentPlan = await getCurrentSubscription(supabase, billUserId);
-        setPlan(currentPlan);
-        const [list, trash] = await Promise.all([
+        const [currentPlan, list, trash] = await Promise.all([
+          getCurrentSubscription(supabase, billUserId),
           fetchClients(supabase, ws.activeWorkspaceId),
           fetchTrashedClients(supabase, ws.activeWorkspaceId),
         ]);
+        setPlan(currentPlan);
         setClients(list);
         setTrashedClients(trash);
       } else {
@@ -181,6 +263,8 @@ export function DashboardView() {
         if (!cancelled && p) {
           setAutoRemindersUserEnabled(p.autoRemindersEnabled);
           writeAutoRemindersEnabled(p.autoRemindersEnabled);
+          setUiThemePref(p.uiTheme);
+          writeStoredUiThemePreference(p.uiTheme);
         }
       } catch {
         /* colonne absente tant que migration SQL non appliquée */
@@ -190,6 +274,8 @@ export function DashboardView() {
       cancelled = true;
     };
   }, [supabase, user?.id]);
+
+  useEffect(() => subscribeUiThemePreferenceChange((pref) => setUiThemePref(pref)), []);
 
   const moneyFmt = useMemo(
     () =>
@@ -223,6 +309,17 @@ export function DashboardView() {
   );
   const freeInvoiceLimitReached = isFreePlan && clientCount >= FREE_TIER_MAX_INVOICES;
 
+  const reminderModalDraft = useMemo(() => {
+    if (!reminderModalClient) return null;
+    const tplWs = supabase && ws.activeWorkspaceId ? ws.activeWorkspaceId : "default";
+    return buildManualReminderDraftFields(reminderModalClient, {
+      locale,
+      aiReminderDrafts: caps.aiReminderDrafts,
+      currentPlanId,
+      templateWorkspaceKey: tplWs,
+    });
+  }, [reminderModalClient, locale, caps.aiReminderDrafts, currentPlanId, supabase, ws.activeWorkspaceId]);
+
   const scrollToSection = useCallback((id: DashboardNavId) => {
     const map: Record<DashboardNavId, RefObject<HTMLDivElement | null>> = {
       overview: overviewRef,
@@ -248,7 +345,7 @@ export function DashboardView() {
         modeLocal: "Mode local",
         title: "Dashboard analytics",
         clientsTitle: "Vos clients",
-        clientsSubtitle: "Statut des montants et relances (simulation email).",
+        clientsSubtitle: "Statut des montants et relances — « Envoyer relance » ouvre votre messagerie (mailto).",
         emptyTitle: "Aucun client pour le moment, ajoute ton premier client",
         emptyBody: "Ajoute ta première fiche client pour démarrer le suivi des paiements.",
         paid: "Payé",
@@ -286,13 +383,24 @@ export function DashboardView() {
         planUpdated: "Abonnement mis à jour :",
         paiementsTitle: "Synthèse paiements",
         paiementsSub: "Vue agrégée des montants marqués payés et en attente.",
+        reminderModalTitle: "Envoyer une relance",
+        reminderModalRecipient: "Destinataire",
+        reminderModalSubject: "Objet",
+        reminderModalBody: "Message",
+        reminderModalCancel: "Annuler",
+        reminderModalSend: "Ouvrir ma messagerie",
+        reminderModalSending: "Ouverture…",
+        reminderModalSubjectRequired: "L’objet est obligatoire.",
+        reminderModalMailtoTooLong:
+          "Le message est trop long pour un lien mailto. Raccourcissez le corps ou l’objet, puis réessayez.",
+        reminderModalMailtoDone: "Votre application de messagerie devrait s’ouvrir avec le brouillon prêt à envoyer.",
       }
     : {
         upgrade: "Upgrade plan",
         modeLocal: "Local mode",
         title: "Analytics dashboard",
         clientsTitle: "Your clients",
-        clientsSubtitle: "Payment status and reminders (email simulation).",
+        clientsSubtitle: "Payment status and reminders — “Send reminder” opens your mail app (mailto).",
         emptyTitle: "No clients yet, add your first client",
         emptyBody: "Add your first client to start tracking your cashflow.",
         paid: "Paid",
@@ -329,12 +437,37 @@ export function DashboardView() {
         planUpdated: "Subscription updated:",
         paiementsTitle: "Payments summary",
         paiementsSub: "Aggregated view of marked paid vs pending amounts.",
+        reminderModalTitle: "Send a reminder",
+        reminderModalRecipient: "Recipient",
+        reminderModalSubject: "Subject",
+        reminderModalBody: "Message",
+        reminderModalCancel: "Cancel",
+        reminderModalSend: "Open my mail app",
+        reminderModalSending: "Opening…",
+        reminderModalSubjectRequired: "Subject is required.",
+        reminderModalMailtoTooLong:
+          "The message is too long for a mailto link. Shorten the body or subject and try again.",
+        reminderModalMailtoDone: "Your mail app should open with the draft ready to send.",
       };
 
   const planNoticePrefix = copy.planUpdated;
 
   const memberReadOnly =
     Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+
+  async function notifyMemberAction(title: string, body: string, payload?: Record<string, unknown>) {
+    if (!supabase || !user?.id) return;
+    const ownerId = ws.effectiveOwnerUserId ?? user.id;
+    await createMemberActionNotifications(supabase, {
+      ownerUserId: ownerId,
+      actorUserId: user.id,
+      workspaceId: ws.activeWorkspaceId,
+      title,
+      body,
+      payload,
+      notificationKeyBase: `member_action:${Date.now()}:${Math.random().toString(16).slice(2)}`,
+    });
+  }
 
   const agencyPortfolioOptions = useMemo(() => {
     if (!usesAgencyWorkspaceUi(currentPlanId) || !supabase || !ws.ready || ws.workspaces.length === 0) {
@@ -383,6 +516,11 @@ export function DashboardView() {
         const ownerRowUserId = ws.effectiveOwnerUserId ?? user.id;
         const created = await insertClient(supabase, { ...data, userId: ownerRowUserId, workspaceId: wsId });
         setClients((prev) => [created, ...prev]);
+        await notifyMemberAction(
+          locale === "fr" ? "Client ajouté" : "Client added",
+          locale === "fr" ? `${created.name} a été ajouté au dashboard.` : `${created.name} was added to dashboard.`,
+          { clientId: created.id, action: "client_created" },
+        );
       } catch (e) {
         const rawMessage =
           typeof e === "object" && e !== null && "message" in e ? String((e as { message?: unknown }).message ?? "") : "";
@@ -416,51 +554,24 @@ export function DashboardView() {
     }
   }
 
-  async function handleSendReminder(client: Client) {
-    setReminderToast(null);
+  function handleRequestSendReminder(client: Client) {
     setReminderMailHardError(null);
-
-    let subjectPlain: string;
-    let bodyPlain: string;
-    if (caps.aiReminderDrafts) {
-      // Brouillon manuel (page Modèles de relance). Les entrées `templates[]` (délais J+3/7/21) ne sont pas encore liées à cette action — à brancher quand la planification par modèle existera.
-      const tplWs = supabase && ws.activeWorkspaceId ? ws.activeWorkspaceId : "default";
-      const st = loadReminderTemplates(locale, getMaxEmailTemplates(currentPlanId), tplWs);
-      const matched = pickFirstMatchingReminderTemplate(st.templates, client.status);
-      const mainBody = matched?.body ?? st.draftBody;
-      subjectPlain = st.draftSubject;
-      const footer =
-        locale === "fr"
-          ? `\n\n—\n${client.name} · ${client.amountDue} € · échéance ${client.dueDate}`
-          : `\n\n—\n${client.name} · ${client.amountDue} € · due ${client.dueDate}`;
-      bodyPlain = `${mainBody}${footer}`;
-    } else {
-      subjectPlain = `Rappel : facture en attente — ${client.name}`;
-      bodyPlain = [
-        `Bonjour,`,
-        ``,
-        `Nous vous contactons concernant un montant de ${client.amountDue} € dû pour le ${client.dueDate}.`,
-        `Merci de régulariser la situation ou de nous indiquer un délai.`,
-        ``,
-        `Cordialement,`,
-        `PayPulss`,
-      ].join("\n");
+    setReminderToast(null);
+    if (client.status !== "unpaid") return;
+    const cooldownEnd = remindCooldownUntil[client.id];
+    if (typeof cooldownEnd === "number" && Date.now() < cooldownEnd) return;
+    if (!client.email?.trim()) {
+      setReminderMailHardError(
+        locale === "fr" ? "Adresse e-mail du client manquante." : "Client email is missing.",
+      );
+      return;
     }
-    const autoEffective = caps.autoReminders && autoRemindersUserEnabled;
-    let extra = "";
-    if (autoEffective && !caps.basicRemindersOnly && !caps.aiReminderDrafts) {
-      extra =
-        locale === "fr"
-          ? "\n\nProchaine relance programmée dans 3 jours si aucun paiement."
-          : "\n\nNext reminder scheduled in 3 days if unpaid.";
-    } else if (autoEffective && caps.aiReminderDrafts) {
-      extra =
-        locale === "fr"
-          ? "\n\nBrouillon IA généré (ton professionnel bienveillant)."
-          : "\n\nAI draft generated (warm professional tone).";
-    }
-    const bodyWithExtra = `${bodyPlain}${extra}`;
+    setReminderModalClient(client);
+  }
 
+  async function handleReminderModalSend(payload: { subject: string; body: string }) {
+    const client = reminderModalClient;
+    if (!client) return;
     const to = client.email?.trim();
     if (!to) {
       setReminderMailHardError(
@@ -469,36 +580,44 @@ export function DashboardView() {
       return;
     }
 
-    try {
-      const response = await fetch("/api/send-reminder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to,
-          subject: subjectPlain,
-          text: bodyWithExtra,
-          html: toSimpleHtmlFromText(bodyWithExtra),
-        }),
-      });
-      const payload = (await response.json()) as { ok?: boolean; error?: unknown };
-      if (!response.ok || !payload.ok) {
-        const fallback = locale === "fr" ? "Envoi impossible pour le moment." : "Could not send reminder right now.";
-        const detail = typeof payload.error === "string" ? payload.error : fallback;
-        setReminderMailHardError(detail);
-        return;
-      }
-      setReminderToast({
-        tone: "info",
-        text:
-          locale === "fr"
-            ? "Relance envoyée avec succès via PayPulss."
-            : "Reminder sent successfully via PayPulss.",
-      });
-    } catch {
-      setReminderMailHardError(
-        locale === "fr" ? "Erreur réseau pendant l’envoi de la relance." : "Network error while sending reminder.",
-      );
+    const footer =
+      locale === "fr"
+        ? `\n\n—\n${client.name} · ${client.amountDue} € · échéance ${client.dueDate}`
+        : `\n\n—\n${client.name} · ${client.amountDue} € · due ${client.dueDate}`;
+
+    const autoEffective = caps.autoReminders && autoRemindersUserEnabled;
+    let extra = "";
+    if (autoEffective && !caps.basicRemindersOnly && !caps.aiReminderDrafts) {
+      extra =
+        locale === "fr"
+          ? "\n\nProchaine relance programmée dans 3 jours si aucun paiement."
+          : "\n\nNext reminder scheduled in 3 days if unpaid.";
     }
+    const bodyWithFooter = `${payload.body}${footer}${extra}`;
+    const href = buildMailtoSingleRecipient(to, payload.subject, bodyWithFooter);
+    if (href.length > MAILTO_HREF_SAFE_MAX) {
+      setReminderMailHardError(copy.reminderModalMailtoTooLong);
+      return;
+    }
+
+    setReminderModalClient(null);
+    setReminderMailHardError(null);
+    try {
+      const a = document.createElement("a");
+      a.href = href;
+      a.rel = "noopener noreferrer";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      window.location.href = href;
+    }
+    setReminderToast({
+      tone: "info",
+      text: copy.reminderModalMailtoDone,
+    });
+    startRemindCooldown(client.id);
   }
 
   async function handleMoveToTrash(clientId: string) {
@@ -526,6 +645,11 @@ export function DashboardView() {
       setClients((prev) => prev.filter((c) => c.id !== clientId));
       if (row) {
         setTrashedClients((prev) => [{ ...row, deletedAt: now }, ...prev]);
+        await notifyMemberAction(
+          locale === "fr" ? "Client déplacé en corbeille" : "Client moved to trash",
+          locale === "fr" ? `${row.name} a été déplacé en corbeille.` : `${row.name} was moved to trash.`,
+          { clientId: row.id, action: "client_trashed" },
+        );
       }
     } catch (e) {
       const message =
@@ -553,6 +677,11 @@ export function DashboardView() {
     try {
       const updated = await updateClientStatus(supabase, clientId, "paid");
       setClients((prev) => prev.map((client) => (client.id === clientId ? updated : client)));
+      await notifyMemberAction(
+        locale === "fr" ? "Facture marquée payée" : "Invoice marked paid",
+        locale === "fr" ? `${updated.name} a été marqué payé.` : `${updated.name} was marked paid.`,
+        { clientId: updated.id, action: "client_mark_paid" },
+      );
     } catch (e) {
       const message =
         typeof e === "object" && e !== null && "message" in e ? String((e as { message?: unknown }).message ?? "") : "";
@@ -628,6 +757,13 @@ export function DashboardView() {
     try {
       const created = await advanceClientToNextInvoiceCycle(supabase, draft.clientId, payload);
       setClients((prev) => [created, ...prev]);
+      await notifyMemberAction(
+        locale === "fr" ? "Cycle suivant créé" : "Next cycle created",
+        locale === "fr"
+          ? `Nouvelle ligne ${created.name} créée pour le cycle suivant.`
+          : `New row ${created.name} created for next cycle.`,
+        { clientId: created.id, action: "client_advance_cycle" },
+      );
       setAdvanceModal(null);
     } catch (e) {
       const raw =
@@ -691,7 +827,7 @@ export function DashboardView() {
   }, [planNoticePrefix, requestedPlan, router, supabase, ws.refreshWorkspaces]);
 
   return (
-    <div className="dark overflow-x-hidden">
+    <div>
       <DashboardShell
         locale={locale}
         planId={currentPlanId}
@@ -700,6 +836,7 @@ export function DashboardView() {
         userEmail={user?.email}
         onLogout={handleLogout}
         hideTrashNav={memberReadOnly}
+        appearance={shellAppearance}
       >
         {envHint ? (
           <div
@@ -735,17 +872,33 @@ export function DashboardView() {
 
         {reminderToast ? (
           <div
-            className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+            ref={reminderAlertRef}
+            className={`scroll-mt-24 mb-6 rounded-xl border px-4 py-3 text-sm ${
               reminderToast.tone === "info"
                 ? "border-emerald-500/35 bg-emerald-950/40 text-emerald-100"
                 : "border-amber-500/40 bg-amber-950/35 text-amber-50"
             }`}
             role="status"
+            aria-live="polite"
           >
-            <strong className="font-semibold">
-              {locale === "fr" ? "Relance — " : "Reminder — "}
+            <strong className="block font-semibold text-white">
+              {reminderToast.tone === "info"
+                ? locale === "fr"
+                  ? "Relance envoyée"
+                  : "Reminder sent"
+                : locale === "fr"
+                  ? "Relance"
+                  : "Reminder"}
             </strong>
-            {reminderToast.text}
+            <span
+              className={
+                reminderToast.tone === "info"
+                  ? "mt-1 block text-emerald-100/95"
+                  : "mt-1 block text-amber-50/95"
+              }
+            >
+              {reminderToast.text}
+            </span>
           </div>
         ) : null}
 
@@ -818,7 +971,8 @@ export function DashboardView() {
           ) : (
               <ClientList
                 clients={clients}
-                onSendReminder={handleSendReminder}
+                onSendReminder={handleRequestSendReminder}
+                remindCooldownUntil={remindCooldownUntil}
                 onDelete={handleMoveToTrash}
                 onMarkPaid={handleMarkPaid}
                 onAdvanceNextCycle={memberReadOnly ? undefined : openAdvanceCycleModal}
@@ -931,6 +1085,27 @@ export function DashboardView() {
           onConfirm={(p) => {
             void handleAdvanceCycleConfirm(p);
           }}
+        />
+      ) : null}
+      {reminderModalClient && reminderModalDraft ? (
+        <ReminderSendModal
+          key={reminderModalClient.id}
+          open
+          recipientEmail={reminderModalClient.email.trim()}
+          initialSubject={reminderModalDraft.subject}
+          initialBody={reminderModalDraft.body}
+          labels={{
+            title: copy.reminderModalTitle,
+            recipient: copy.reminderModalRecipient,
+            subject: copy.reminderModalSubject,
+            body: copy.reminderModalBody,
+            cancel: copy.reminderModalCancel,
+            send: copy.reminderModalSend,
+            sending: copy.reminderModalSending,
+            subjectRequired: copy.reminderModalSubjectRequired,
+          }}
+          onClose={() => setReminderModalClient(null)}
+          onSend={handleReminderModalSend}
         />
       ) : null}
     </div>

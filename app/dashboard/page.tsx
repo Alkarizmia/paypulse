@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { DashboardRouteSkeleton } from "./dashboard-route-skeleton";
 import { DashboardView } from "./dashboard-view";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#08080c] px-4 py-16 text-center text-sm text-slate-400">Chargement…</div>}>
+    <Suspense fallback={<DashboardRouteSkeleton />}>
       <DashboardView />
     </Suspense>
   );

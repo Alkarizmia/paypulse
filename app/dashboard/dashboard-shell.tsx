@@ -8,6 +8,14 @@ import { useLocale } from "@/app/locale-context";
 import { PayPulseLogo } from "./pay-pulse-logo";
 import { hasProReminderEditor, usesAgencyWorkspaceUi, type PlanId } from "@/lib/plans";
 import { useWorkspaceOptional } from "@/app/workspace-context";
+import {
+  readStoredUiThemePreference,
+  resolveUiTheme,
+  subscribeUiThemePreferenceChange,
+  usePrefersColorSchemeDark,
+  type UiThemePreference,
+} from "@/lib/ui-theme";
+import { useNotifications } from "./use-notifications";
 
 export type DashboardNavId = "overview" | "invoices" | "clients" | "relances" | "paiements";
 
@@ -103,20 +111,38 @@ type DashboardShellProps = {
   onLogout?: () => void;
   /** Membre invité lecture seule : masque la corbeille dans la navigation. */
   hideTrashNav?: boolean;
+  /** Arrière-plan et navigation : sombre (défaut) ou clair. */
+  appearance?: "dark" | "light";
   children: ReactNode;
 };
 
-const shellBtn = (active: boolean) =>
-  `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+function shellNavBtn(active: boolean, light: boolean) {
+  if (light) {
+    return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+      active
+        ? "bg-violet-100 text-violet-900 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]"
+        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    }`;
+  }
+  return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
     active ? "bg-violet-600/20 text-violet-200 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
   }`;
+}
 
-const shellLink = (active: boolean) =>
-  `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+function shellNavLink(active: boolean, light: boolean) {
+  if (light) {
+    return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+      active
+        ? "bg-violet-100 text-violet-900 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]"
+        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+    }`;
+  }
+  return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
     active ? "bg-violet-600/20 text-violet-200 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
   }`;
+}
 
-function DashboardWorkspaceSelect({ locale }: { locale: "fr" | "en" }) {
+function DashboardWorkspaceSelect({ locale, light }: { locale: "fr" | "en"; light: boolean }) {
   const ws = useWorkspaceOptional();
   if (!ws?.supabaseMode || !ws.ready || ws.workspaces.length === 0) return null;
   if (!usesAgencyWorkspaceUi(ws.planId)) return null;
@@ -130,7 +156,11 @@ function DashboardWorkspaceSelect({ locale }: { locale: "fr" | "en" }) {
       <select
         value={ws.activeWorkspaceId ?? ""}
         onChange={(e) => void ws.setActiveWorkspaceId(e.target.value)}
-        className="truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs font-medium text-slate-100 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+        className={
+          light
+            ? "truncate rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-900 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+            : "truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs font-medium text-slate-100 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+        }
         aria-label={t.label}
       >
         {ws.workspaces.map((w) => (
@@ -139,14 +169,17 @@ function DashboardWorkspaceSelect({ locale }: { locale: "fr" | "en" }) {
           </option>
         ))}
       </select>
-      <Link href="/settings#workspaces" className="text-[10px] text-violet-400/90 hover:text-violet-300">
+      <Link
+        href="/settings#workspaces"
+        className={light ? "text-[10px] text-violet-700 hover:text-violet-600" : "text-[10px] text-violet-400/90 hover:text-violet-300"}
+      >
         {t.settingsHint}
       </Link>
     </div>
   );
 }
 
-function DashboardAccountSelect({ locale }: { locale: "fr" | "en" }) {
+function DashboardAccountSelect({ locale, light }: { locale: "fr" | "en"; light: boolean }) {
   const ws = useWorkspaceOptional();
   const { user } = useAuth();
   const ownerIds = useMemo(() => {
@@ -180,7 +213,11 @@ function DashboardAccountSelect({ locale }: { locale: "fr" | "en" }) {
           if (v === user.id) ws.switchToOwnAccount();
           else ws.switchToMemberAccount(v);
         }}
-        className="truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs font-medium text-slate-100 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+        className={
+          light
+            ? "truncate rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-900 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+            : "truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs font-medium text-slate-100 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+        }
         aria-label={t.label}
       >
         <option value={user.id}>{t.my}</option>
@@ -206,12 +243,25 @@ export function DashboardShell({
   userEmail,
   onLogout,
   hideTrashNav = false,
+  appearance,
   children,
 }: DashboardShellProps) {
+  const systemDark = usePrefersColorSchemeDark();
+  const [storedThemePref, setStoredThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "dark");
+  const resolvedAppearance = useMemo<"light" | "dark">(() => {
+    if (appearance) return appearance;
+    return resolveUiTheme(storedThemePref, systemDark) === "light" ? "light" : "dark";
+  }, [appearance, storedThemePref, systemDark]);
+  const light = resolvedAppearance === "light";
   const { setLocale } = useLocale();
+  const { user } = useAuth();
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [showFoldersHint, setShowFoldersHint] = useState(false);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  const { items: notifications, unreadCount, markOneRead, markAllRead } = useNotifications(user?.id);
   const isDashHome = pathname === "/dashboard" || pathname === "/dashboard/";
   const t =
     locale === "fr"
@@ -225,6 +275,13 @@ export function DashboardShell({
           bilan: "Bilan",
           corbeille: "Corbeille",
           modelesRelance: "Modèles de relance",
+          dossiers: "Dossiers",
+          foldersHintTitle: "Nouveau : Dossiers",
+          foldersHintBody: "Organisez vos clients en dossiers, ajoutez des notes et gardez tout au même endroit.",
+          foldersHintCta: "Découvrir",
+          closeHint: "Fermer",
+          noNotifications: "Aucune notification pour le moment.",
+          markAllRead: "Tout marquer comme lu",
         }
       : {
           overview: "Overview",
@@ -236,6 +293,13 @@ export function DashboardShell({
           bilan: "Summary",
           corbeille: "Trash",
           modelesRelance: "Reminder templates",
+          dossiers: "Folders",
+          foldersHintTitle: "New: Folders",
+          foldersHintBody: "Organize clients in folders, add notes, and keep everything in one place.",
+          foldersHintCta: "Open",
+          closeHint: "Dismiss",
+          noNotifications: "No notifications yet.",
+          markAllRead: "Mark all as read",
         };
 
   const items = navItems(locale);
@@ -256,65 +320,132 @@ export function DashboardShell({
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowTs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => subscribeUiThemePreferenceChange((pref) => setStoredThemePref(pref)), []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = window.localStorage.getItem("paypulss_folders_hint_seen_v1");
+    if (!seen && !pathname.startsWith("/dashboard/dossiers")) {
+      setShowFoldersHint(true);
+    }
+  }, [pathname]);
+
+  const navIconActive = light ? "text-violet-600" : "text-violet-300";
+  const navIconIdle = "text-slate-500";
+
   function renderScrollableItem(item: NavItem) {
     const active = isDashHome && activeNav === item.id;
     if (navScrollMode && isDashHome) {
       return (
-        <button key={item.id} type="button" onClick={() => onNav(item.id)} className={shellBtn(active)}>
-          <span className={active ? "text-violet-300" : "text-slate-500"}>{item.icon}</span>
+        <button key={item.id} type="button" onClick={() => onNav(item.id)} className={shellNavBtn(active, light)}>
+          <span className={active ? navIconActive : navIconIdle}>{item.icon}</span>
           {item.label}
         </button>
       );
     }
     return (
-      <Link key={item.id} href="/dashboard" className={shellLink(false)}>
-        <span className="text-slate-500">{item.icon}</span>
+      <Link key={item.id} href="/dashboard" className={shellNavLink(false, light)}>
+        <span className={navIconIdle}>{item.icon}</span>
         {item.label}
       </Link>
     );
   }
 
+  function formatRelative(dateIso: string): string {
+    const diffSec = Math.max(1, Math.floor((nowTs - new Date(dateIso).getTime()) / 1000));
+    if (locale === "fr") {
+      if (diffSec < 60) return `il y a ${diffSec}s`;
+      const m = Math.floor(diffSec / 60);
+      if (m < 60) return `il y a ${m} min`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `il y a ${h} h`;
+      const d = Math.floor(h / 24);
+      return `il y a ${d} j`;
+    }
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const m = Math.floor(diffSec / 60);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    return `${d}d ago`;
+  }
+
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-[#08080c] text-slate-100">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-white/[0.06] bg-[#0c0c12] px-3 py-6 lg:flex">
+    <div
+      className={
+        light
+          ? "flex min-h-screen overflow-x-hidden bg-slate-100 text-slate-900"
+          : "flex min-h-screen overflow-x-hidden bg-[#08080c] text-slate-100"
+      }
+    >
+      <aside
+        className={
+          light
+            ? "fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-slate-200 bg-white px-3 py-6 lg:flex"
+            : "fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-white/[0.06] bg-[#0c0c12] px-3 py-6 lg:flex"
+        }
+      >
         <div className="flex items-center gap-2 px-2">
           <PayPulseLogo className="h-8 w-8 shrink-0 text-violet-400" />
-          <span className="text-sm font-bold tracking-tight text-white">PAYPULSS</span>
+          <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PAYPULSS</span>
         </div>
         <nav className="mt-10 flex flex-1 flex-col gap-0.5">
           {topItems.map((item) => renderScrollableItem(item))}
           <Link
             href="/dashboard/bilan"
-            className={shellLink(pathname.startsWith("/dashboard/bilan"))}
+            className={shellNavLink(pathname.startsWith("/dashboard/bilan"), light)}
           >
-            <span className={pathname.startsWith("/dashboard/bilan") ? "text-violet-300" : "text-slate-500"}>{bilanIcon}</span>
+            <span className={pathname.startsWith("/dashboard/bilan") ? navIconActive : navIconIdle}>{bilanIcon}</span>
             {t.bilan}
           </Link>
           {renderScrollableItem(paiementsItem)}
           {hideTrashNav ? null : (
             <Link
               href="/dashboard/corbeille"
-              className={shellLink(pathname.startsWith("/dashboard/corbeille"))}
+              className={shellNavLink(pathname.startsWith("/dashboard/corbeille"), light)}
             >
-              <span className={pathname.startsWith("/dashboard/corbeille") ? "text-violet-300" : "text-slate-500"}>{trashNavIcon}</span>
+              <span className={pathname.startsWith("/dashboard/corbeille") ? navIconActive : navIconIdle}>{trashNavIcon}</span>
               {t.corbeille}
             </Link>
           )}
           {showTemplatesNav ? (
             <Link
               href="/dashboard/modeles-relance"
-              className={shellLink(pathname.startsWith("/dashboard/modeles-relance"))}
+              className={shellNavLink(pathname.startsWith("/dashboard/modeles-relance"), light)}
             >
-              <span className={pathname.startsWith("/dashboard/modeles-relance") ? "text-violet-300" : "text-slate-500"}>
+              <span className={pathname.startsWith("/dashboard/modeles-relance") ? navIconActive : navIconIdle}>
                 {templatesNavIcon}
               </span>
               {t.modelesRelance}
             </Link>
           ) : null}
+          <Link href="/dashboard/dossiers" className={shellNavLink(pathname.startsWith("/dashboard/dossiers"), light)}>
+            <span className={pathname.startsWith("/dashboard/dossiers") ? navIconActive : navIconIdle}>
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.75}
+                  d="M3.75 7.5A1.5 1.5 0 015.25 6h4.19a1.5 1.5 0 011.06.44l1.06 1.06H18.75a1.5 1.5 0 011.5 1.5v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V7.5z"
+                />
+              </svg>
+            </span>
+            {t.dossiers}
+          </Link>
         </nav>
         <Link
           href="/settings"
-          className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+          className={
+            light
+              ? "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              : "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+          }
         >
           <svg className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
             <path
@@ -327,14 +458,26 @@ export function DashboardShell({
           </svg>
           {t.settings}
         </Link>
-        <div className="mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+        <div
+          className={
+            light
+              ? "mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+              : "mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
+          }
+        >
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t.plan}</p>
-          <p className="text-xs font-bold text-violet-300">{planId.toUpperCase()}</p>
+          <p className={`text-xs font-bold ${light ? "text-violet-700" : "text-violet-300"}`}>{planId.toUpperCase()}</p>
         </div>
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:pl-56">
-        <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-[#08080c]/90 px-3 py-3 backdrop-blur-md sm:px-6">
+        <header
+          className={
+            light
+              ? "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:px-6"
+              : "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-[#08080c]/90 px-3 py-3 backdrop-blur-md sm:px-6"
+          }
+        >
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2 lg:hidden">
               <PayPulseLogo className="h-7 w-7 text-violet-400" />
@@ -342,7 +485,11 @@ export function DashboardShell({
             <button
               type="button"
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white lg:hidden"
+              className={
+                light
+                  ? "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+                  : "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white lg:hidden"
+              }
               aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-drawer"
@@ -357,9 +504,9 @@ export function DashboardShell({
                 </svg>
               )}
             </button>
-            <h1 className="truncate text-lg font-semibold text-white">{t.overview}</h1>
-            <DashboardAccountSelect locale={locale} />
-            <DashboardWorkspaceSelect locale={locale} />
+            <h1 className={`truncate text-lg font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.overview}</h1>
+            <DashboardAccountSelect locale={locale} light={light} />
+            <DashboardWorkspaceSelect locale={locale} light={light} />
           </div>
           <div className="flex w-full min-w-0 items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
             <Link
@@ -372,49 +519,147 @@ export function DashboardShell({
               <button
                 type="button"
                 onClick={onLogout}
-                className="rounded-full border border-white/[0.08] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+                className={
+                  light
+                    ? "rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                    : "rounded-full border border-white/[0.08] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+                }
               >
                 {t.logout}
               </button>
             ) : null}
-            <button
-              type="button"
-              className="rounded-full border border-white/[0.08] p-2 text-slate-400 transition hover:bg-white/[0.05] hover:text-white"
-              aria-label={t.notif}
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.75}
-                  d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.001 3.465-.368 5.071-1.09M15 9.75V9a3 3 0 10-6 0v.75m6 0H9"
-                />
-              </svg>
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setNotifOpen((v) => !v)}
+                className={
+                  light
+                    ? "relative rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    : "relative rounded-full border border-white/[0.08] p-2 text-slate-400 transition hover:bg-white/[0.05] hover:text-white"
+                }
+                aria-label={t.notif}
+                aria-expanded={notifOpen}
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.75}
+                    d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.001 3.465-.368 5.071-1.09M15 9.75V9a3 3 0 10-6 0v.75m6 0H9"
+                  />
+                </svg>
+                {unreadCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-fuchsia-500 px-1.5 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                ) : null}
+              </button>
+              {notifOpen ? (
+                <div
+                  className={
+                    light
+                      ? "absolute right-0 z-30 mt-2 w-[min(92vw,360px)] rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+                      : "absolute right-0 z-30 mt-2 w-[min(92vw,360px)] rounded-xl border border-white/10 bg-[#0e1018] p-2 shadow-2xl"
+                  }
+                >
+                  <div className="mb-2 flex items-center justify-between px-1">
+                    <p className={light ? "text-xs font-semibold uppercase tracking-wide text-slate-500" : "text-xs font-semibold uppercase tracking-wide text-slate-400"}>{t.notif}</p>
+                    <button
+                      type="button"
+                      onClick={() => void markAllRead()}
+                      className={light ? "text-[11px] text-violet-700 hover:text-violet-600" : "text-[11px] text-violet-300 hover:text-violet-200"}
+                    >
+                      {t.markAllRead}
+                    </button>
+                  </div>
+                  <div className="max-h-80 space-y-1 overflow-auto">
+                    {notifications.length === 0 ? (
+                      <p className={light ? "px-2 py-2 text-sm text-slate-500" : "px-2 py-2 text-sm text-slate-400"}>{t.noNotifications}</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          onClick={() => void markOneRead(n.id)}
+                          className={`w-full rounded-lg px-2 py-2 text-left transition ${
+                            light ? "hover:bg-slate-50" : "hover:bg-white/[0.04]"
+                          } ${n.readAt ? "" : light ? "bg-violet-50/80" : "bg-violet-500/10"}`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={light ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>{n.title}</p>
+                            <span className={light ? "text-[10px] text-slate-500" : "text-[10px] text-slate-500"}>{formatRelative(n.createdAt)}</span>
+                          </div>
+                          <p className={light ? "mt-0.5 text-xs text-slate-600" : "mt-0.5 text-xs text-slate-300"}>{n.body}</p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <div
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 text-xs font-bold text-white shadow-lg shadow-violet-900/40"
               title={userEmail ?? ""}
             >
               {initial}
             </div>
-            <div className="hidden items-center overflow-hidden rounded-full border border-white/10 text-[10px] font-semibold text-slate-300 sm:inline-flex">
+            <div
+              className={
+                light
+                  ? "hidden items-center overflow-hidden rounded-full border border-slate-200 text-[10px] font-semibold text-slate-600 sm:inline-flex"
+                  : "hidden items-center overflow-hidden rounded-full border border-white/10 text-[10px] font-semibold text-slate-300 sm:inline-flex"
+              }
+            >
               <button
                 type="button"
                 onClick={() => setLocale("fr")}
-                className={`px-2.5 py-1 ${locale === "fr" ? "bg-violet-600 text-white" : "hover:bg-white/5"}`}
+                className={`px-2.5 py-1 ${locale === "fr" ? "bg-violet-600 text-white" : light ? "hover:bg-slate-100" : "hover:bg-white/5"}`}
               >
                 FR
               </button>
               <button
                 type="button"
                 onClick={() => setLocale("en")}
-                className={`px-2.5 py-1 ${locale === "en" ? "bg-violet-600 text-white" : "hover:bg-white/5"}`}
+                className={`px-2.5 py-1 ${locale === "en" ? "bg-violet-600 text-white" : light ? "hover:bg-slate-100" : "hover:bg-white/5"}`}
               >
                 EN
               </button>
             </div>
           </div>
         </header>
+
+        {showFoldersHint ? (
+          <div className={light ? "border-b border-slate-200 bg-violet-50 px-3 py-3 sm:px-6" : "border-b border-white/[0.06] bg-violet-500/10 px-3 py-3 sm:px-6"}>
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className={light ? "text-sm font-semibold text-violet-900" : "text-sm font-semibold text-violet-100"}>{t.foldersHintTitle}</p>
+                <p className={light ? "text-xs text-violet-700" : "text-xs text-violet-200/90"}>{t.foldersHintBody}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard/dossiers"
+                  className={light ? "rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700" : "rounded-lg bg-violet-500/25 px-3 py-1.5 text-xs font-semibold text-violet-100 ring-1 ring-violet-400/35 hover:bg-violet-500/35"}
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
+                    setShowFoldersHint(false);
+                  }}
+                >
+                  {t.foldersHintCta}
+                </Link>
+                <button
+                  type="button"
+                  className={light ? "rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100" : "rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 hover:bg-white/5"}
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
+                    setShowFoldersHint(false);
+                  }}
+                >
+                  {t.closeHint}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {mobileMenuOpen ? (
           <button
@@ -426,20 +671,26 @@ export function DashboardShell({
         ) : null}
         <aside
           id="dashboard-mobile-drawer"
-          className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[86vw] border-r border-white/[0.08] bg-[#0c0c12] px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
-            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[86vw] px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
+            light
+              ? "border-r border-slate-200 bg-white"
+              : "border-r border-white/[0.08] bg-[#0c0c12]"
+          } ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
           aria-hidden={!mobileMenuOpen}
         >
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <PayPulseLogo className="h-7 w-7 text-violet-400" />
-              <span className="text-sm font-bold tracking-tight text-white">PAYPULSS</span>
+              <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PAYPULSS</span>
             </div>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+              className={
+                light
+                  ? "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                  : "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+              }
               aria-label="Fermer le menu"
             >
               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -458,9 +709,9 @@ export function DashboardShell({
                     scrollOrHome(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={shellBtn(active)}
+                  className={shellNavBtn(active, light)}
                 >
-                  <span className={active ? "text-violet-300" : "text-slate-500"}>{item.icon}</span>
+                  <span className={active ? navIconActive : navIconIdle}>{item.icon}</span>
                   {item.label}
                 </button>
               );
@@ -468,9 +719,9 @@ export function DashboardShell({
             <Link
               href="/dashboard/bilan"
               onClick={() => setMobileMenuOpen(false)}
-              className={shellLink(pathname.startsWith("/dashboard/bilan"))}
+              className={shellNavLink(pathname.startsWith("/dashboard/bilan"), light)}
             >
-              <span className={pathname.startsWith("/dashboard/bilan") ? "text-violet-300" : "text-slate-500"}>{bilanIcon}</span>
+              <span className={pathname.startsWith("/dashboard/bilan") ? navIconActive : navIconIdle}>{bilanIcon}</span>
               {t.bilan}
             </Link>
             <button
@@ -479,18 +730,18 @@ export function DashboardShell({
                 scrollOrHome("paiements");
                 setMobileMenuOpen(false);
               }}
-              className={shellBtn(isDashHome && activeNav === "paiements")}
+              className={shellNavBtn(isDashHome && activeNav === "paiements", light)}
             >
-              <span className={isDashHome && activeNav === "paiements" ? "text-violet-300" : "text-slate-500"}>{paiementsItem.icon}</span>
+              <span className={isDashHome && activeNav === "paiements" ? navIconActive : navIconIdle}>{paiementsItem.icon}</span>
               {paiementsItem.label}
             </button>
             {hideTrashNav ? null : (
               <Link
                 href="/dashboard/corbeille"
                 onClick={() => setMobileMenuOpen(false)}
-                className={shellLink(pathname.startsWith("/dashboard/corbeille"))}
+                className={shellNavLink(pathname.startsWith("/dashboard/corbeille"), light)}
               >
-                <span className={pathname.startsWith("/dashboard/corbeille") ? "text-violet-300" : "text-slate-500"}>{trashNavIcon}</span>
+                <span className={pathname.startsWith("/dashboard/corbeille") ? navIconActive : navIconIdle}>{trashNavIcon}</span>
                 {t.corbeille}
               </Link>
             )}
@@ -498,14 +749,31 @@ export function DashboardShell({
               <Link
                 href="/dashboard/modeles-relance"
                 onClick={() => setMobileMenuOpen(false)}
-                className={shellLink(pathname.startsWith("/dashboard/modeles-relance"))}
+                className={shellNavLink(pathname.startsWith("/dashboard/modeles-relance"), light)}
               >
-                <span className={pathname.startsWith("/dashboard/modeles-relance") ? "text-violet-300" : "text-slate-500"}>
+                <span className={pathname.startsWith("/dashboard/modeles-relance") ? navIconActive : navIconIdle}>
                   {templatesNavIcon}
                 </span>
                 {t.modelesRelance}
               </Link>
             ) : null}
+            <Link
+              href="/dashboard/dossiers"
+              onClick={() => setMobileMenuOpen(false)}
+              className={shellNavLink(pathname.startsWith("/dashboard/dossiers"), light)}
+            >
+              <span className={pathname.startsWith("/dashboard/dossiers") ? navIconActive : navIconIdle}>
+                <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.75}
+                    d="M3.75 7.5A1.5 1.5 0 015.25 6h4.19a1.5 1.5 0 011.06.44l1.06 1.06H18.75a1.5 1.5 0 011.5 1.5v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V7.5z"
+                  />
+                </svg>
+              </span>
+              {t.dossiers}
+            </Link>
           </nav>
         </aside>
 

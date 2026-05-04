@@ -58,50 +58,54 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       return;
     }
     setReady(false);
+    const client = supabase;
+    const memberUserId = user.id;
     try {
       const actingOwner = getActingOwnerUserId();
       const ownerUserIdForData =
-        actingOwner && actingOwner.length > 0 && actingOwner !== user.id ? actingOwner : user.id;
-      const isActing = ownerUserIdForData !== user.id;
+        actingOwner && actingOwner.length > 0 && actingOwner !== memberUserId ? actingOwner : memberUserId;
+      const isActing = ownerUserIdForData !== memberUserId;
 
       const [sub, memberships] = await Promise.all([
-        getCurrentSubscription(supabase, ownerUserIdForData),
-        fetchMembershipsForMember(supabase, user.id).catch(() => [] as AccountMember[]),
+        getCurrentSubscription(client, ownerUserIdForData),
+        fetchMembershipsForMember(client, memberUserId).catch(() => [] as AccountMember[]),
       ]);
       setPlanId(sub.planId);
       setMyMemberships(memberships);
 
       const uniqueOwners = [...new Set(memberships.map((m) => m.ownerUserId))];
-      const summaries: SharedAccountSummary[] = [];
-      for (const ownerId of uniqueOwners) {
+
+      async function summaryForOwner(ownerId: string): Promise<SharedAccountSummary> {
         let displayName = `Compte ${ownerId.slice(0, 6)}…`;
         try {
-          const p = await getProfile(supabase, ownerId);
+          const p = await getProfile(client, ownerId);
           const n = p?.companyName?.trim() || p?.fullName?.trim();
           if (n) displayName = n;
         } catch {
           /* profil absent */
         }
-        summaries.push({ ownerUserId: ownerId, displayName });
+        return { ownerUserId: ownerId, displayName };
       }
-      setSharedAccountSummaries(summaries);
 
-      let list = await fetchWorkspaces(supabase, ownerUserIdForData);
-      if (list.length === 0) {
-        list = await ensureAtLeastOneWorkspace(supabase, ownerUserIdForData, user.id);
-      }
+      const [summaries, list, ownProfile] = await Promise.all([
+        Promise.all(uniqueOwners.map((oid) => summaryForOwner(oid))),
+        (async () => {
+          let w = await fetchWorkspaces(client, ownerUserIdForData);
+          if (w.length === 0) {
+            w = await ensureAtLeastOneWorkspace(client, ownerUserIdForData, memberUserId);
+          }
+          return w;
+        })(),
+        isActing ? Promise.resolve(null) : getProfile(client, memberUserId).catch(() => null),
+      ]);
+      setSharedAccountSummaries(summaries);
       setWorkspaces(list);
 
       let preferred: string | null = null;
       if (isActing) {
         preferred = getActingWorkspaceId();
       } else {
-        try {
-          const profile = await getProfile(supabase, user.id);
-          preferred = profile?.activeWorkspaceId ?? null;
-        } catch {
-          /* profil ou colonne absente */
-        }
+        preferred = ownProfile?.activeWorkspaceId ?? null;
       }
 
       const valid = preferred && list.some((w) => w.id === preferred) ? preferred : list[0]?.id ?? null;
@@ -111,7 +115,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
       if (!isActing && valid && preferred !== valid) {
         try {
-          await setProfileActiveWorkspace(supabase, user.id, valid);
+          await setProfileActiveWorkspace(client, memberUserId, valid);
         } catch {
           /* ignore */
         }
@@ -126,7 +130,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [supabase, user?.id, actingVersion]);
 
   useEffect(() => {
-    void refreshWorkspaces();
+    queueMicrotask(() => void refreshWorkspaces());
   }, [refreshWorkspaces]);
 
   const switchToOwnAccount = useCallback(() => {
@@ -161,7 +165,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         /* colonne absente */
       }
     },
-    [supabase, user?.id, workspaces],
+    [supabase, user, workspaces],
   );
 
   const effectiveOwnerUserId = useMemo(() => {

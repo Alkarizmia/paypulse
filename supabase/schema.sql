@@ -58,6 +58,15 @@ alter table public.profiles add column if not exists language text not null defa
 alter table public.profiles
   add column if not exists auto_reminders_enabled boolean not null default true;
 
+alter table public.profiles
+  add column if not exists ui_theme text not null default 'dark';
+
+alter table public.profiles
+  drop constraint if exists profiles_ui_theme_check;
+
+alter table public.profiles
+  add constraint profiles_ui_theme_check check (ui_theme in ('dark', 'light', 'system'));
+
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,

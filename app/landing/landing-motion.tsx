@@ -61,6 +61,70 @@ export function LandingStarfield() {
   );
 }
 
+/** Positions déterministes (SSR stable) — champ étoilé dense pour le hero plein écran. */
+const HERO_STAR_DOTS = Array.from({ length: 96 }, (_, i) => {
+  const x = ((i * 47 + 11) * 17) % 100;
+  const y = ((i * 31 + 7) * 23) % 100;
+  const s = 0.5 + ((i * 17) % 9) / 10;
+  const d = 4.2 + ((i * 13) % 48) / 10;
+  const o = 0.055 + ((i * 23) % 15) / 100;
+  return { x, y, s, d, o };
+});
+
+/**
+ * Ciel étoilé continu + dérive lente (classe `pp-hero-starfield-drift` dans globals.css).
+ * Réservé au hero landing — sensation « premium » sans surcharge CPU.
+ */
+export function HeroDenseStarfield() {
+  const reduce = useReducedMotion();
+  if (reduce) {
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.35]" aria-hidden>
+        {HERO_STAR_DOTS.slice(0, 48).map((dot, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: `${dot.x}%`,
+              top: `${dot.y}%`,
+              width: dot.s * 1.4,
+              height: dot.s * 1.4,
+              opacity: dot.o * 0.9,
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden pp-hero-starfield-drift" aria-hidden>
+      {HERO_STAR_DOTS.map((dot, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full bg-white shadow-[0_0_4px_rgba(147,197,253,0.22)]"
+          style={{
+            left: `${dot.x}%`,
+            top: `${dot.y}%`,
+            width: dot.s * 1.35,
+            height: dot.s * 1.35,
+          }}
+          initial={{ opacity: dot.o * 0.4 }}
+          animate={{
+            opacity: [dot.o * 0.35, dot.o * 1.15, dot.o * 0.4, dot.o * 0.95, dot.o * 0.35],
+            scale: [1, 1.12, 1, 1.06, 1],
+          }}
+          transition={{
+            duration: dot.d,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: (i % 24) * 0.06,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 type RevealProps = {
   children: ReactNode;
   className?: string;
@@ -183,6 +247,65 @@ export function HeroWingAurora() {
   );
 }
 
+/** Large violet / cyan orb behind hero copy — slow float, GPU-friendly (opacity + scale). */
+export function HeroBlurOrb() {
+  const reduce = useReducedMotion();
+  if (reduce) {
+    return (
+      <div
+        className="pointer-events-none absolute left-1/2 top-[4%] z-[2] h-[min(380px,52vw)] w-[min(600px,92vw)] -translate-x-1/2 rounded-full opacity-[0.34]"
+        style={{
+          background:
+            "radial-gradient(circle at 42% 40%, rgba(139, 92, 246, 0.55), rgba(56, 189, 248, 0.2) 45%, transparent 70%)",
+          filter: "blur(72px)",
+        }}
+        aria-hidden
+      />
+    );
+  }
+  return (
+    <motion.div
+      className="pointer-events-none absolute left-1/2 top-[2%] z-[2] h-[min(420px,56vw)] w-[min(640px,96vw)] -translate-x-1/2 rounded-full"
+      style={{
+        background:
+          "radial-gradient(circle at 40% 42%, rgba(167, 139, 250, 0.5), rgba(59, 130, 246, 0.22) 46%, transparent 72%)",
+        filter: "blur(76px)",
+        willChange: "opacity, transform",
+      }}
+      aria-hidden
+      animate={{
+        opacity: [0.26, 0.4, 0.3, 0.38, 0.26],
+        scale: [1, 1.07, 0.97, 1.05, 1],
+      }}
+      transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
+/** Hero load-in: fade + rise + blur resolve (Linear-style). */
+export function HeroEntrance({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const reduce = useReducedMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 40, filter: "blur(14px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 1.42, delay, ease: EASE }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /** Pulsing soft glow under hero headline */
 export function HeroHeadlineGlow() {
   const reduce = useReducedMotion();
@@ -202,7 +325,7 @@ export function HeroHeadlineGlow() {
       transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
       style={{
         background:
-          "radial-gradient(ellipse 88% 58% at 50% 0%, rgba(61, 255, 138, 0.24), rgba(139, 92, 246, 0.12) 45%, transparent 72%)",
+          "radial-gradient(ellipse 88% 58% at 50% 0%, rgba(59, 130, 246, 0.28), rgba(99, 102, 241, 0.14) 42%, rgba(37, 99, 235, 0.06) 58%, transparent 74%)",
         filter: "blur(22px)",
       }}
     />
@@ -223,9 +346,9 @@ export function MotionKicker({ text, className }: { text: string; className?: st
           {i > 0 ? "\u00a0" : null}
           <motion.span
             className="inline-block"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.052, duration: 0.44, ease: EASE }}
+            transition={{ delay: i * 0.1, duration: 0.68, ease: EASE }}
           >
             {w}
           </motion.span>

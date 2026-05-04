@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
+import { clientIpFromRequest } from "@/lib/client-ip";
+import { isRateLimited } from "@/lib/route-rate-limit";
 import { type ReminderDraftTone, parseReminderDraftTone } from "@/lib/reminder-draft-tone";
+import { serverStructuredLog } from "@/lib/server-log";
+import { getUserIdFromAuthorizationHeader } from "@/lib/supabase-route-auth";
 
 export type ReminderDraftAiRequest = {
   locale?: "fr" | "en";
@@ -231,6 +235,25 @@ async function openAiDraft(input: ReminderDraftAiRequest): Promise<ReminderDraft
 }
 
 export async function POST(req: Request) {
+  const ip = clientIpFromRequest(req);
+  if (isRateLimited(`reminder-ai:ip:${ip}`, 60, 3600_000)) {
+    serverStructuredLog("api_reminder_ai_rate_limit", { scope: "ip" });
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
+  const userId = await getUserIdFromAuthorizationHeader(req);
+  if (!userId) {
+    serverStructuredLog("api_reminder_ai_unauthorized");
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  if (
+    isRateLimited(`reminder-ai:user:${userId}`, Number(process.env.API_REMINDER_AI_MAX_PER_USER_PER_10MIN ?? 24), 600_000)
+  ) {
+    serverStructuredLog("api_reminder_ai_rate_limit", { scope: "user", userPrefix: userId.slice(0, 8) });
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   try {
     const raw = (await req.json()) as ReminderDraftAiRequest;
     const locale = raw.locale === "en" ? "en" : "fr";
@@ -242,10 +265,12 @@ export async function POST(req: Request) {
 
     const fromOpenAi = await openAiDraft({ ...input, locale });
     if (fromOpenAi) {
+      serverStructuredLog("api_reminder_ai_ok", { source: "openai", userPrefix: userId.slice(0, 8) });
       return NextResponse.json(fromOpenAi);
     }
 
     const out = heuristicDraft({ ...input, locale, tone: input.tone ?? "neutral" });
+    serverStructuredLog("api_reminder_ai_ok", { source: "heuristic", userPrefix: userId.slice(0, 8) });
     return NextResponse.json(out);
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

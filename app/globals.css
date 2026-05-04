@@ -182,6 +182,108 @@ body {
   }
 }
 
+/* Landing hero — fond custom : flux de dégradé, sheen, grille */
+@keyframes pp-hero-gradient-flow {
+  0%,
+  100% {
+    background-position: 0% 40%;
+  }
+  50% {
+    background-position: 100% 60%;
+  }
+}
+
+.pp-hero-gradient-flow {
+  background-size: 240% 240%;
+  animation: pp-hero-gradient-flow 22s ease-in-out infinite;
+}
+
+@keyframes pp-hero-sheen {
+  0% {
+    transform: translateX(-55%) skewX(-14deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.14;
+  }
+  88% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: translateX(55%) skewX(-14deg);
+    opacity: 0;
+  }
+}
+
+.pp-hero-sheen {
+  animation: pp-hero-sheen 12s ease-in-out infinite;
+}
+
+.pp-hero-sheen--delayed {
+  animation-delay: -5.5s;
+  animation-duration: 14s;
+}
+
+@keyframes pp-hero-grid-drift {
+  to {
+    background-position: 72px 72px;
+  }
+}
+
+.pp-hero-grid-drift {
+  animation: pp-hero-grid-drift 32s linear infinite;
+}
+
+@keyframes pp-hero-noise-breathe {
+  0%,
+  100% {
+    opacity: 0.03;
+  }
+  50% {
+    opacity: 0.055;
+  }
+}
+
+.pp-hero-noise-breathe {
+  animation: pp-hero-noise-breathe 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-hero-gradient-flow,
+  .pp-hero-sheen,
+  .pp-hero-sheen--delayed,
+  .pp-hero-grid-drift,
+  .pp-hero-noise-breathe {
+    animation: none !important;
+  }
+}
+
+/* Hero premium : dérive très lente du champ d’étoiles (sensation continue) */
+@keyframes pp-hero-starfield-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(0.6%, -0.4%) scale(1.01);
+  }
+  66% {
+    transform: translate(-0.45%, 0.35%) scale(1);
+  }
+}
+
+.pp-hero-starfield-drift {
+  animation: pp-hero-starfield-drift 140s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-hero-starfield-drift {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
 .pp-landing-ambient {
   pointer-events: none;
   position: absolute;

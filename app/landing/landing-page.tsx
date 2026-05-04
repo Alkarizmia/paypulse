@@ -9,19 +9,20 @@ import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
 import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
 import { PwaInstallButton } from "@/app/pwa-install-button";
+import { HeroAmbientVisual } from "@/app/landing/hero-ambient-visual";
 import {
+  HeroBlurOrb,
+  HeroEntrance,
   HeroHeadlineGlow,
   HeroWingAurora,
-  LandingStarfield,
-  MotionHeroTitle,
-  MotionKicker,
+  HeroDenseStarfield,
   Reveal,
-  SoftFloat,
   SoftFloatDashboard,
 } from "@/app/landing/landing-motion";
+import { ProofStatsSection } from "@/app/landing/proof-stats-section";
 
 const ACCENT = "#3DFF8A";
-const BG = "#050505";
+const BG = "#0a0a0a";
 const FOUNDER_NAME = "El Fahmi Bilal";
 const FOUNDER_IMAGE_SRC = "/images/founder-bilal.png";
 const RECURRING_CYCLE_IMAGE_SRC = "/images/recurring-cycle-illustration.png";
@@ -401,15 +402,30 @@ export function LandingPage() {
     locale === "fr"
       ? {
           product: "Factures et relances pour freelances",
-          title: "Recuperez votre argent. Automatiquement.",
-          body: "PayPulss relance vos clients a votre place jusqu'au paiement.",
+          title: "PayPulss — relances et trésorerie pour freelances",
+          heroBadge: "Factures · relances · trésorerie",
+          heroSubline:
+            "Suivez l’impayé, cadencez vos relances et gardez une image pro — sans tableur dispersé.",
+          heroLine1: "La machine de relances",
+          heroLine2: "que votre trésorerie attendait.",
+          body: "PayPulss relance vos clients, automatise vos paiements et vous fait gagner du temps.",
+          microNoCard: "Aucune carte requise",
+          socialProof: "Déjà utilisé par plus de 100 freelances",
+          statsTitle: "Une solution qui change le quotidien",
+          statsSub: "Synthèse des retours utilisateurs — ordres de grandeur indicatifs.",
+          stat1Val: "−35 %",
+          stat1Lab: "de relances oubliées",
+          stat2Val: "+18 %",
+          stat2Lab: "d’encaissement plus rapide",
+          stat3Val: "4 h",
+          stat3Lab: "gagnées en moyenne / sem.",
           ctaTrial: "Commencer gratuitement",
           ctaDashboard: "Aller au dashboard",
-          ctaPricing: "Voir comment ca marche",
+          ctaPricing: "Voir comment ça marche",
           demoAnchor: "demo",
           pricingAnchor: "pricing",
-          featuresTitle: "Tout ce qu’il faut pour suivre l’argent",
-          featuresSub: "Six briques pensées pour les indépendants : de la saisie à la relance, sans tableur.",
+          featuresTitle: "Moins d’impayés. Plus de cash. Plus de temps pour vous.",
+          featuresSub: "Ce que PayPulss sécurise pour vous, sans jargon ni tableur dispersé.",
           recurringTitle: "Même client, mois après mois — sans tout recréer",
           recurringBody:
             "Quand une facture est payée, une petite flèche demi-tour à côté du badge « Payé » crée une nouvelle ligne pour le mois suivant (nom « x2 », « x3 »…), impayée avec la nouvelle échéance, sans toucher à l’ancienne ligne qui reste « Payée » avec sa date. Le bilan et les graphiques gardent ainsi une ligne par période, lisible pour vous et pour le client.",
@@ -528,6 +544,17 @@ export function LandingPage() {
             "PayPulss detecte les echeances et prepare les relances.",
             "Vous encaissez plus vite avec un suivi automatique.",
           ],
+          aboutTitle: "Apprenez à nous connaître !",
+          aboutBody:
+            "Je suis El Fahmi Bilal, fondateur de PayPulss. Le produit vient d’un constat simple : trop d’indépendants perdent du temps — et de la trésorerie — sur le suivi des factures et des relances. PayPulss existe pour vous redonner de la clarté : une liste lisible, des statuts fiables, des relances alignées avec votre image, sans charge mentale inutile. Mes valeurs : transparence (données sous contrôle), exécution soignée, et un outil qui reste simple mois après mois.",
+          aboutExpertiseTitle: "Expertise :",
+          aboutBullets: [
+            "Conception produit & UX — factures, relances, tableau de bord",
+            "Ingénierie web moderne (Next.js) et intégrations (Supabase, e-mail)",
+            "Automatisation des suivis d’échéance et parcours d’envoi de relances",
+            "Qualité & itérations rapides, sans sacrifier la lisibilité pour l’utilisateur",
+            "Vision long terme : un SaaS utile au quotidien, pas un gadget",
+          ],
           finalCtaTitle: "Arretez de courir apres votre argent",
           finalCtaButton: "Commencer gratuitement",
           features: [
@@ -541,15 +568,30 @@ export function LandingPage() {
         }
       : {
           product: "Invoices and nudges for freelancers",
-          title: "Recover your cash. Automatically.",
-          body: "PayPulss follows up with your clients until you get paid.",
+          title: "PayPulss — payment nudges and cashflow for freelancers",
+          heroBadge: "Invoices · nudges · cashflow",
+          heroSubline:
+            "Track what’s overdue, time your follow-ups, and stay on-brand—without spreadsheet chaos.",
+          heroLine1: "The reminder engine",
+          heroLine2: "your cashflow deserves.",
+          body: "PayPulss nudges your clients, automates payment follow-up, and gives you your time back.",
+          microNoCard: "No credit card required",
+          socialProof: "Trusted by 100+ freelancers already",
+          statsTitle: "Outcomes you can feel",
+          statsSub: "Based on user feedback — illustrative ranges.",
+          stat1Val: "−35%",
+          stat1Lab: "fewer forgotten follow-ups",
+          stat2Val: "+18%",
+          stat2Lab: "faster cash-in (typical)",
+          stat3Val: "4h",
+          stat3Lab: "saved per week on average",
           ctaTrial: "Start free",
           ctaDashboard: "Go to dashboard",
           ctaPricing: "See how it works",
           demoAnchor: "demo",
           pricingAnchor: "pricing",
-          featuresTitle: "Everything you need to track cash",
-          featuresSub: "Six building blocks for independents—from capture to nudges, without spreadsheet chaos.",
+          featuresTitle: "Fewer late invoices. More cash. More time for you.",
+          featuresSub: "What PayPulss quietly handles—without spreadsheet chaos.",
           recurringTitle: "Same client, month after month—without re-creating rows",
           recurringBody:
             "Once an invoice is paid, a small U-turn next to the Paid badge creates a new row for the next period (name suffix x2, x3…), unpaid with the new due date, while the previous row stays Paid with its paid-on date. Charts and the Summary report keep one line per period—clear for you and your client.",
@@ -666,6 +708,17 @@ export function LandingPage() {
             "PayPulss detects due dates and prepares reminders.",
             "Get paid faster with automatic follow-up.",
           ],
+          aboutTitle: "Get to know us",
+          aboutBody:
+            "I’m El Fahmi Bilal, founder of PayPulss. The product comes from a simple observation: too many independents lose time—and cash flow—chasing invoices and awkward follow-ups. PayPulss is built to give you clarity: a readable case list, trustworthy statuses, reminders that match your brand, with less mental overhead. My values: transparency (you control where data lives), polished execution, and a tool that stays simple month after month.",
+          aboutExpertiseTitle: "Expertise",
+          aboutBullets: [
+            "Product & UX — invoices, nudges, cashflow dashboard",
+            "Modern web engineering (Next.js) and integrations (Supabase, email)",
+            "Due-date follow-up automation and reminder workflows",
+            "Quality and fast iteration without sacrificing clarity",
+            "Long-term focus: a SaaS you rely on daily—not a gimmick",
+          ],
           finalCtaTitle: "Stop chasing your money",
           finalCtaButton: "Start free",
           features: [
@@ -694,10 +747,9 @@ export function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-x-hidden antialiased text-white" style={{ backgroundColor: BG }}>
       <div className="pp-landing-ambient" aria-hidden>
-        <LandingStarfield />
         <div
           className="pp-landing-ambient__blob left-[-20%] top-[-25%] h-[min(520px,55vw)] w-[min(520px,55vw)]"
-          style={{ background: "radial-gradient(circle, rgba(61,255,138,0.32) 0%, rgba(61,255,138,0.08) 42%, transparent 72%)" }}
+          style={{ background: "radial-gradient(circle, rgba(124,58,237,0.28) 0%, rgba(99,102,241,0.12) 42%, transparent 72%)" }}
         />
         <div
           className="pp-landing-ambient__blob pp-landing-ambient__blob--2 right-[-15%] bottom-[10%] h-[min(480px,50vw)] w-[min(480px,50vw)]"
@@ -714,124 +766,125 @@ export function LandingPage() {
       </div>
 
       <main className="relative z-[1]">
-        <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:pb-28">
-          <HeroWingAurora />
+        {/* Section 1 — Hero plein viewport, fond noir + animation continue */}
+        <section className="relative isolate flex min-h-[100svh] flex-col justify-center overflow-hidden bg-black px-5 pb-24 pt-12 sm:px-10 sm:pb-32 sm:pt-16 lg:pb-40">
+          <HeroAmbientVisual />
+          <HeroDenseStarfield />
+          <div className="pointer-events-none absolute inset-0 z-[2]">
+            <HeroWingAurora />
+            <HeroBlurOrb />
+          </div>
           <div
-            className="pointer-events-none absolute inset-0 z-[1] opacity-90"
+            className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black via-black/75 to-black/20"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 z-[4] opacity-[0.55]"
             style={{
               background:
-                "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(61,255,138,0.1), transparent)",
+                "radial-gradient(ellipse 88% 58% at 50% 38%, rgba(37,99,235,0.12), transparent 55%), radial-gradient(ellipse 70% 48% at 50% 100%, rgba(99,102,241,0.1), transparent 58%)",
             }}
+            aria-hidden
           />
-          <div className="relative z-10 mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
-            <div className="min-w-0 max-w-full">
-              <MotionKicker
-                text={t.product}
-                className="text-xs font-semibold uppercase tracking-[0.2em] text-[#3DFF8A]"
-              />
-              <div className="relative mt-6 pb-5 sm:pb-7">
-                <HeroHeadlineGlow />
-                {locale === "fr" ? (
-                  <h1 className="relative z-10 max-w-xl text-balance text-4xl font-bold tracking-tight text-white hyphens-none sm:text-5xl lg:text-[3.1rem] lg:leading-[1.12]">
-                    Recuperez votre argent.
-                    <span className="block bg-gradient-to-r from-violet-200 via-fuchsia-200 to-violet-400 bg-clip-text text-transparent [text-shadow:0_0_28px_rgba(168,85,247,0.45)]">
-                      Automatiquement.
-                    </span>
-                  </h1>
-                ) : (
-                  <MotionHeroTitle
-                    title={t.title}
-                    className="relative z-10 max-w-xl text-balance text-4xl font-bold tracking-tight text-white hyphens-none sm:text-5xl lg:text-[3.1rem] lg:leading-[1.12]"
-                  />
-                )}
+          <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center px-2 text-center sm:px-4">
+            <HeroEntrance>
+              <div className="mb-6 flex flex-col items-center gap-5 drop-shadow-[0_2px_20px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-center gap-2.5">
+                  <PayPulseLogo className="h-9 w-9 shrink-0 opacity-95 sm:h-10 sm:w-10" />
+                  <span className="text-sm font-semibold tracking-tight text-white/95 sm:text-base">PayPulss</span>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-white/[0.14] bg-white/[0.04] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-200/95 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-md sm:text-xs">
+                  {t.heroBadge}
+                </span>
               </div>
-              <Reveal className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300" delay={0.06}>
-                {t.body}
-              </Reveal>
-              <Reveal className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center" delay={0.12}>
-                <motion.div
-                  className="inline-flex w-full sm:w-auto"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 420, damping: 22 }}
+            </HeroEntrance>
+
+            <HeroEntrance delay={0.14} className="relative mt-2 w-full">
+              <HeroHeadlineGlow />
+              <h1 className="relative z-10 mx-auto max-w-[min(100%,44rem)] text-balance text-4xl font-semibold leading-[1.12] tracking-tight text-white drop-shadow-[0_6px_32px_rgba(0,0,0,0.92)] sm:text-5xl sm:leading-[1.1] lg:text-6xl lg:leading-[1.06]">
+                {t.heroLine1}
+                <span className="mt-2 block bg-gradient-to-r from-sky-200 via-blue-200 to-indigo-200 bg-clip-text text-transparent [text-shadow:0_0_60px_rgba(59,130,246,0.35)]">
+                  {t.heroLine2}
+                </span>
+              </h1>
+            </HeroEntrance>
+
+            <HeroEntrance delay={0.28} className="mt-8 max-w-2xl px-1">
+              <p className="text-[15px] font-light leading-relaxed text-slate-300/95 drop-shadow-[0_1px_14px_rgba(0,0,0,0.85)] sm:text-lg sm:leading-relaxed">
+                {t.heroSubline}
+              </p>
+            </HeroEntrance>
+
+            <HeroEntrance delay={0.38} className="mt-7 max-w-xl px-1">
+              <p className="text-sm leading-relaxed text-slate-400/95 sm:text-base">{t.body}</p>
+            </HeroEntrance>
+
+            <HeroEntrance delay={0.5} className="mt-12 flex w-full max-w-2xl flex-col items-stretch gap-4 sm:flex-row sm:justify-center sm:gap-5">
+              <motion.div
+                className="inline-flex w-full sm:w-auto sm:min-w-[220px]"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 380, damping: 24 }}
+              >
+                <Link
+                  href={isAuthenticated ? "/dashboard" : "/signup"}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-8 py-4 text-sm font-semibold text-white shadow-[0_20px_50px_-12px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition hover:bg-[#1d4ed8] hover:shadow-[0_24px_56px_-10px_rgba(29,78,216,0.5)] sm:w-auto"
                 >
-                  <Link
-                    href={isAuthenticated ? "/dashboard" : "/signup"}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#3DFF8A] to-[#5cff9e] px-8 py-3.5 text-sm font-semibold text-[#041018] shadow-[0_12px_40px_rgba(61,255,138,0.28),0_0_0_1px_rgba(255,255,255,0.12)] transition hover:shadow-[0_16px_48px_rgba(61,255,138,0.38),0_0_32px_rgba(139,92,246,0.15)] sm:w-auto"
-                  >
-                    {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
-                  </Link>
-                </motion.div>
-                <motion.div
-                  className="inline-flex w-full sm:w-auto"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 24 }}
+                  {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
+                  <svg className="h-4 w-4 shrink-0 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
+                  </svg>
+                </Link>
+              </motion.div>
+              <motion.div
+                className="inline-flex w-full sm:w-auto sm:min-w-[200px]"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 380, damping: 24 }}
+              >
+                <a
+                  href={`#${t.demoAnchor}`}
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-white/[0.14] bg-white/[0.04] px-8 py-4 text-sm font-semibold text-white shadow-inner shadow-black/30 backdrop-blur-md transition hover:border-white/25 hover:bg-white/[0.08] sm:w-auto"
                 >
-                  <a
-                    href={`#${t.pricingAnchor}`}
-                    className="inline-flex w-full items-center justify-center rounded-full border border-white/20 bg-white/[0.06] px-8 py-3.5 text-sm font-semibold text-white shadow-inner shadow-white/[0.03] backdrop-blur-sm transition hover:border-violet-400/35 hover:bg-white/10 hover:shadow-[0_0_24px_rgba(139,92,246,0.12)] sm:w-auto"
-                  >
-                    {t.ctaPricing}
-                  </a>
-                </motion.div>
-              </Reveal>
+                  {t.ctaPricing}
+                </a>
+              </motion.div>
+            </HeroEntrance>
+
+            <HeroEntrance delay={0.62} className="mt-4">
+              <p className="text-xs font-medium text-slate-500 sm:text-sm">{t.microNoCard}</p>
+            </HeroEntrance>
+
+            <div className="mt-10 flex w-full justify-center">
               <PwaInstallButton labels={t.installLabels} />
             </div>
-            <motion.div
-              className="relative min-w-0"
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ margin: "-80px", amount: 0.2 }}
-              transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={
-                reduceMotion
-                  ? undefined
-                  : {
-                      rotateX: 2,
-                      rotateY: -2,
-                      scale: 1.01,
-                      transition: { type: "spring", stiffness: 260, damping: 22 },
-                    }
-              }
-              style={{ perspective: 1200 }}
-            >
-              <SoftFloat>
-                <motion.div
-                  className="relative mx-auto w-full max-w-[520px] [transform-style:preserve-3d]"
-                  whileHover={{
-                    filter: "drop-shadow(0 28px 56px rgba(0,0,0,0.55)) drop-shadow(0 12px 36px rgba(139,92,246,0.12))",
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0 -z-10 rounded-[3rem] bg-[radial-gradient(circle_at_45%_35%,rgba(139,92,246,0.48),rgba(139,92,246,0.16)_38%,transparent_68%)] blur-3xl" />
-                  <div className="pointer-events-none absolute -inset-x-4 bottom-6 -z-10 h-20 rounded-full bg-violet-500/35 blur-2xl" />
-                  <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.03] p-4 shadow-[0_30px_90px_-24px_rgba(0,0,0,0.72),0_0_90px_-36px_rgba(139,92,246,0.62)] backdrop-blur-xl">
-                    <div className="absolute inset-0 bg-[linear-gradient(130deg,rgba(255,255,255,0.08),transparent_38%,rgba(139,92,246,0.2))]" />
-                    <div className="relative aspect-[4/5] w-full">
-                      <Image
-                        src={FOUNDER_IMAGE_SRC}
-                        alt={FOUNDER_NAME}
-                        fill
-                        className="object-cover object-top"
-                        sizes="(max-width: 1024px) 90vw, 42vw"
-                        unoptimized
-                      />
-                    </div>
-                    <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-2xl border border-white/15 bg-black/20 px-4 py-3 backdrop-blur-md">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-transparent bg-gradient-to-r from-violet-100/80 via-fuchsia-200/85 to-violet-300/80 bg-clip-text">
-                        {t.founderKicker}
-                      </p>
-                      <p className="mt-1 text-lg font-semibold text-white/90">{FOUNDER_NAME}</p>
-                      <p className="text-sm text-slate-300/85">{t.founderRole}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              </SoftFloat>
+          </div>
+        </section>
+
+        {/* Section 2 & 3 — Problème + Solution */}
+        <section id="story" className="scroll-mt-24 border-t border-white/[0.06] bg-[#060606] px-4 py-20 sm:px-6 sm:py-28">
+          <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 lg:gap-10">
+            <motion.div whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 280, damping: 22 }}>
+              <Reveal className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-8 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:p-10">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-300/80">01</p>
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">{t.problemTitle}</h2>
+                <p className="mt-5 text-sm leading-relaxed text-slate-400 sm:text-base">{t.problemBody}</p>
+              </Reveal>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 280, damping: 22 }}>
+              <Reveal
+                className="rounded-3xl border border-violet-400/25 bg-[linear-gradient(165deg,rgba(139,92,246,0.18),rgba(10,10,10,0.92))] p-8 shadow-[0_28px_90px_-36px_rgba(139,92,246,0.45)] backdrop-blur-xl sm:p-10"
+                delay={0.08}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3DFF8A]/90">02</p>
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">{t.solutionTitle}</h2>
+                <p className="mt-5 text-sm leading-relaxed text-slate-200/90 sm:text-base">{t.solutionBody}</p>
+              </Reveal>
             </motion.div>
           </div>
         </section>
 
-        <section id="features" className="scroll-mt-28 border-t border-white/10 bg-[#06101f] px-4 py-16 sm:px-6">
+        <section id="features" className="scroll-mt-28 border-t border-white/10 bg-[#050a17] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <Reveal className="text-center">
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.featuresTitle}</h2>
@@ -880,7 +933,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="recurring-cycle" className="scroll-mt-28 border-t border-white/10 bg-[#071528] px-4 py-16 sm:px-6">
+        <section id="recurring-cycle" className="scroll-mt-28 border-t border-white/10 bg-[#060c1d] px-4 py-16 sm:px-6">
           <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
             <Reveal className="flex min-w-0 flex-col justify-center lg:py-2">
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.recurringTitle}</h2>
@@ -929,7 +982,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id={t.demoAnchor} className="scroll-mt-28 border-t border-white/10 bg-[#071528] px-4 py-16 sm:px-6">
+        <section id={t.demoAnchor} className="scroll-mt-28 border-t border-white/10 bg-[#060c1d] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <Reveal className="text-center">
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.demoTitle}</h2>
@@ -997,23 +1050,69 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t border-white/10 bg-[#07070a] px-4 py-16 sm:px-6">
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
-            <Reveal className="rounded-2xl border border-white/10 bg-white/[0.03] p-7 shadow-[0_20px_56px_-18px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-200/80">Probleme</p>
-              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-white">{t.problemTitle}</h3>
-              <p className="mt-4 text-sm leading-relaxed text-slate-300">{t.problemBody}</p>
+        {/* Fondateur + valeurs (après l’explication produit) */}
+        <section id="about" className="scroll-mt-28 border-t border-white/[0.08] bg-black px-4 py-20 sm:px-6 sm:py-24">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+            <Reveal className="relative mx-auto w-full max-w-md lg:mx-0">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0a0a0a] shadow-[0_40px_100px_-40px_rgba(139,92,246,0.35),0_24px_64px_-24px_rgba(0,0,0,0.85)]">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                <Image
+                  src={FOUNDER_IMAGE_SRC}
+                  alt={FOUNDER_NAME}
+                  fill
+                  className="object-contain object-bottom"
+                  sizes="(max-width: 1024px) 90vw, 448px"
+                  unoptimized
+                />
+                <div className="absolute inset-x-0 bottom-0 border-t border-white/[0.08] bg-black/55 px-5 py-4 backdrop-blur-md lg:hidden">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#3DFF8A]/90">{t.founderKicker}</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{FOUNDER_NAME}</p>
+                  <p className="text-sm text-slate-400">{t.founderRole}</p>
+                </div>
+              </div>
             </Reveal>
-            <Reveal
-              className="rounded-2xl border border-violet-300/20 bg-[linear-gradient(160deg,rgba(139,92,246,0.16),rgba(17,24,39,0.78))] p-7 shadow-[0_22px_64px_-20px_rgba(139,92,246,0.5)] backdrop-blur-xl"
-              delay={0.07}
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-100/90">Solution</p>
-              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-white">{t.solutionTitle}</h3>
-              <p className="mt-4 text-sm leading-relaxed text-slate-200">{t.solutionBody}</p>
-            </Reveal>
+            <div className="min-w-0 text-left">
+              <Reveal>
+                <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t.aboutTitle}</h2>
+              </Reveal>
+              <Reveal className="mt-6 text-base leading-relaxed text-slate-300 sm:text-lg" delay={0.06}>
+                <p>{t.aboutBody}</p>
+              </Reveal>
+              <Reveal className="mt-10" delay={0.1}>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#3DFF8A]">{t.aboutExpertiseTitle}</p>
+                <ul className="mt-4 space-y-3">
+                  {t.aboutBullets.map((line) => (
+                    <li key={line} className="flex gap-3 text-sm leading-relaxed text-slate-300 sm:text-base">
+                      <span
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.6)]"
+                        aria-hidden
+                      />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+              <Reveal className="mt-10 hidden border-t border-white/[0.08] pt-8 lg:block" delay={0.12}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">{t.founderKicker}</p>
+                <p className="mt-2 text-xl font-semibold text-white">{FOUNDER_NAME}</p>
+                <p className="text-sm text-slate-400">{t.founderRole}</p>
+              </Reveal>
+            </div>
           </div>
         </section>
+
+        {/* Section 5 — Preuve sociale + stats (comptage à l’entrée viewport) */}
+        <ProofStatsSection
+          locale={locale === "fr" ? "fr" : "en"}
+          copy={{
+            socialProof: t.socialProof,
+            statsTitle: t.statsTitle,
+            statsSub: t.statsSub,
+            stat1Lab: t.stat1Lab,
+            stat2Lab: t.stat2Lab,
+            stat3Lab: t.stat3Lab,
+          }}
+        />
 
         <section className="border-t border-white/10 bg-[#050505] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-5xl">
@@ -1130,7 +1229,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-28 border-t border-white/10 bg-[#06101f] px-4 py-16 sm:px-6">
+        <section id="faq" className="scroll-mt-28 border-t border-white/10 bg-[#050a17] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-3xl">
             <Reveal className="text-center">
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{t.faqTitle}</h2>
@@ -1174,7 +1273,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t border-white/10 bg-[#071528] px-4 py-16 sm:px-6">
+        <section className="border-t border-white/10 bg-[#060c1d] px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-4xl">
             <Reveal className="text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Persona</p>
@@ -1275,14 +1374,16 @@ export function LandingPage() {
                       {t.footerLinks.faq}
                     </a>
                   </li>
+                  <li>
+                    <a href="#about" className="transition hover:text-[#3DFF8A]">
+                      {t.footerLinks.about}
+                    </a>
+                  </li>
                 </ul>
               </div>
               <div>
                 <p className="font-semibold text-slate-400">{t.footerCompany}</p>
                 <ul className="mt-3 space-y-2 text-slate-500">
-                  <li>
-                    <span className="cursor-default">{t.footerLinks.about}</span>
-                  </li>
                   <li>
                     <span className="cursor-default">{t.footerLinks.careers}</span>
                   </li>

@@ -144,10 +144,10 @@ export function hasProReminderEditor(planId: PlanId): boolean {
   return planId === "pro" || planId === "agency";
 }
 
-/** Nombre max de modèles d’e-mail enregistrés (Pro / Agency). */
+/** Nombre max de modèles d’e-mail enregistrés (Pro / Agency). J+1,3,7,21 = 4 créneaux. */
 export function getMaxEmailTemplates(planId: PlanId): number {
   if (planId === "pro") return 4;
-  if (planId === "agency") return 5;
+  if (planId === "agency") return 8;
   return 15;
 }
 

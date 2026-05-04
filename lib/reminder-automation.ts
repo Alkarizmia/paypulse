@@ -1,6 +1,19 @@
-import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sendResendReminderEmail } from "@/lib/resend-reminder-send";
+import {
+  listReminderEmailTemplates,
+  type ReminderEmailTemplate,
+  type ReminderEmailTemplateRow,
+  scheduleDaysFromTemplates,
+} from "@/lib/reminder-email-templates";
 import { normalizeDaysAfterDue } from "@/lib/reminder-rules";
+import {
+  reminderBodyToHtml,
+  reminderBodyToPlainText,
+  substituteReminderTemplate,
+  type ReminderSubstitutionContext,
+} from "@/lib/reminder-template-substitution";
+import { createNotificationServer, listAccountRecipientIds } from "@/lib/notifications-server";
 
 type ClientRow = {
   id: string;
@@ -12,6 +25,7 @@ type ClientRow = {
   due_date: string;
   status: "paid" | "unpaid";
   deleted_at: string | null;
+  created_at: string;
 };
 
 type ReminderRuleRow = {
@@ -52,7 +66,8 @@ type EventType =
   | "failed"
   | "skipped_paid"
   | "skipped_not_due"
-  | "retry_scheduled";
+  | "retry_scheduled"
+  | "skipped_duplicate_email";
 
 function toIsoDay(input: Date): string {
   const y = input.getUTCFullYear();
@@ -76,11 +91,55 @@ function normalizeAmount(value: number | string): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-function reminderSubject(clientName: string, scheduleDays: number): string {
+function normalizeReminderEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Même créneau (e-mail + J+n + jour d’envoi) : une seule fiche « gagne » l’envoi.
+ * Ordre : échéance (due_date) la plus ancienne → montant dû le plus élevé → created_at le plus ancien → id client (stable).
+ */
+function compareClientsForReminderWinner(a: ClientRow, b: ClientRow): number {
+  if (a.due_date !== b.due_date) return a.due_date.localeCompare(b.due_date);
+  const am = normalizeAmount(a.amount_due);
+  const bm = normalizeAmount(b.amount_due);
+  if (am !== bm) return bm - am;
+  const at = a.created_at ?? "";
+  const bt = b.created_at ?? "";
+  if (at !== bt) return at.localeCompare(bt);
+  return a.id.localeCompare(b.id);
+}
+
+type ReminderQueueCandidate = {
+  client: ClientRow;
+  scheduleDays: number;
+  fireDay: string;
+  scheduledFor: string;
+  ownerUserId: string;
+  subject: string;
+  templateId: string | null;
+  idempotencyKey: string;
+};
+
+function isGlobalReminderEmailDedupEnabled(): boolean {
+  const v = process.env.REMINDER_GLOBAL_EMAIL_DEDUP?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+function reminderDedupGroupKey(candidate: ReminderQueueCandidate, globalMode: boolean): string {
+  const em = normalizeReminderEmail(candidate.client.email);
+  if (globalMode) {
+    return `${em}|${candidate.scheduleDays}|${candidate.fireDay}`;
+  }
+  const ws = candidate.client.workspace_id ?? "";
+  return `${ws}|${em}|${candidate.scheduleDays}|${candidate.fireDay}`;
+}
+
+function defaultReminderSubject(clientName: string, scheduleDays: number): string {
   return `Rappel J+${scheduleDays} — facture en attente (${clientName})`;
 }
 
-function reminderText(client: ClientRow, scheduleDays: number): string {
+function defaultReminderText(client: ClientRow, scheduleDays: number): string {
   const amount = normalizeAmount(client.amount_due);
   return [
     "Bonjour,",
@@ -94,14 +153,41 @@ function reminderText(client: ClientRow, scheduleDays: number): string {
   ].join("\n");
 }
 
-function reminderHtml(text: string): string {
-  const escaped = text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-  return `<div>${escaped.replaceAll("\n", "<br/>")}</div>`;
+function substitutionCtx(client: ClientRow, scheduleDays: number): ReminderSubstitutionContext {
+  const amount = normalizeAmount(client.amount_due);
+  return {
+    clientName: client.name,
+    amountFormatted: amount.toFixed(2),
+    dueDate: client.due_date,
+    scheduleDays,
+  };
+}
+
+function mapTemplateRow(r: ReminderEmailTemplateRow): ReminderEmailTemplate {
+  return {
+    id: r.id,
+    workspaceId: r.workspace_id,
+    ownerUserId: r.owner_user_id,
+    daysAfterDue: Number(r.days_after_due),
+    subjectTemplate: r.subject_template,
+    bodyTemplate: r.body_template,
+    paymentLink: r.payment_link,
+    sortOrder: Number(r.sort_order),
+  };
+}
+
+function pickAutomationTemplate(
+  templates: ReminderEmailTemplate[],
+  scheduleDays: number,
+): ReminderEmailTemplate | null {
+  const n = Number(scheduleDays);
+  if (!Number.isFinite(n)) return null;
+  const sorted = [...templates].sort((a, b) => a.sortOrder - b.sortOrder || a.daysAfterDue - b.daysAfterDue);
+  const exact = sorted.find((t) => Number(t.daysAfterDue) === n);
+  if (exact) return exact;
+  // Fallback: si aucun modèle exact J+n n'existe, utiliser le premier modèle enregistré
+  // pour éviter l'envoi du texte générique par défaut.
+  return sorted[0] ?? null;
 }
 
 async function insertEvent(
@@ -130,7 +216,6 @@ async function insertEvent(
     details: payload.details ?? {},
   });
   if (error) {
-    // Do not fail the whole run on event log issues.
     console.error("[reminders] reminder_events insert failed:", error.message);
   }
 }
@@ -145,65 +230,189 @@ async function getRuleByWorkspace(supabase: SupabaseClient, workspaceId: string)
   return (data as ReminderRuleRow | null) ?? null;
 }
 
+async function loadTemplatesByWorkspaceMap(
+  supabase: SupabaseClient,
+  workspaceIds: string[],
+): Promise<Map<string, ReminderEmailTemplate[]>> {
+  const map = new Map<string, ReminderEmailTemplate[]>();
+  if (workspaceIds.length === 0) return map;
+  const { data, error } = await supabase
+    .from("reminder_email_templates")
+    .select(
+      "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order,created_at,updated_at",
+    )
+    .in("workspace_id", workspaceIds);
+  if (error) throw error;
+  for (const row of data ?? []) {
+    const t = mapTemplateRow(row as ReminderEmailTemplateRow);
+    const list = map.get(t.workspaceId) ?? [];
+    list.push(t);
+    map.set(t.workspaceId, list);
+  }
+  for (const [ws, list] of map) {
+    list.sort((a, b) => a.sortOrder - b.sortOrder || a.daysAfterDue - b.daysAfterDue);
+    map.set(ws, list);
+  }
+  return map;
+}
+
+function effectiveScheduleDaysForWorkspace(
+  templates: ReminderEmailTemplate[] | undefined,
+  rule: ReminderRuleRow | null,
+): number[] {
+  const autoDays = scheduleDaysFromTemplates(templates ?? []);
+  if (autoDays.length > 0) return autoDays;
+  return normalizeDaysAfterDue(rule?.days_after_due);
+}
+
 export async function enqueueDueReminderJobs(supabase: SupabaseClient): Promise<{ scannedClients: number; queuedJobs: number }> {
   const today = toIsoDay(new Date());
   const { data, error } = await supabase
     .from("clients")
-    .select("id,workspace_id,user_id,name,email,amount_due,due_date,status,deleted_at")
+    .select("id,workspace_id,user_id,name,email,amount_due,due_date,status,deleted_at,created_at")
     .eq("status", "unpaid")
     .is("deleted_at", null)
     .lte("due_date", today);
   if (error) throw error;
 
   const clients = (data ?? []) as ClientRow[];
-  let queuedJobs = 0;
+  const workspaceIds = [...new Set(clients.map((c) => c.workspace_id).filter(Boolean))] as string[];
+  const templatesMap = await loadTemplatesByWorkspaceMap(supabase, workspaceIds);
+
+  const globalDedup = isGlobalReminderEmailDedupEnabled();
+  const candidates: ReminderQueueCandidate[] = [];
 
   for (const client of clients) {
     if (!client.workspace_id || !client.user_id) continue;
     const rule = await getRuleByWorkspace(supabase, client.workspace_id);
     const enabled = rule?.enabled ?? true;
     if (!enabled) continue;
-    const days = normalizeDaysAfterDue(rule?.days_after_due);
+    const wsTemplates = templatesMap.get(client.workspace_id);
+    const days = effectiveScheduleDaysForWorkspace(wsTemplates, rule);
     const ownerUserId = rule?.owner_user_id ?? client.user_id;
 
+    const tplList = wsTemplates ?? [];
+
     for (const scheduleDays of days) {
+      const tpl = pickAutomationTemplate(tplList, scheduleDays);
+
       const fireDay = addDays(client.due_date, scheduleDays);
       if (fireDay > today) continue;
       const idempotencyKey = `${client.id}:${scheduleDays}:${fireDay}`;
       const scheduledFor = scheduledForIso(fireDay);
-      const subject = reminderSubject(client.name, scheduleDays);
+      const ctx = substitutionCtx(client, scheduleDays);
+      const subject = tpl
+        ? substituteReminderTemplate(tpl.subjectTemplate, ctx)
+        : defaultReminderSubject(client.name, scheduleDays);
 
-      const { error: insertErr } = await supabase.from("reminder_jobs").insert({
-        client_id: client.id,
-        workspace_id: client.workspace_id,
-        owner_user_id: ownerUserId,
-        schedule_days: scheduleDays,
-        due_date: client.due_date,
-        scheduled_for: scheduledFor,
-        status: "pending",
-        max_attempts: 3,
-        idempotency_key: idempotencyKey,
-        subject,
-      });
-
-      if (insertErr) {
-        // duplicate key => already queued, ignore
-        if (!String(insertErr.message).toLowerCase().includes("duplicate")) {
-          console.error("[reminders] enqueue error:", insertErr.message);
-        }
-        continue;
-      }
-
-      queuedJobs += 1;
-      await insertEvent(supabase, {
-        eventType: "queued",
+      candidates.push({
+        client,
+        scheduleDays,
+        fireDay,
+        scheduledFor,
         ownerUserId,
-        workspaceId: client.workspace_id,
-        clientId: client.id,
-        clientEmail: client.email,
         subject,
-        details: { scheduleDays, fireDay },
+        templateId: tpl?.id ?? null,
+        idempotencyKey,
       });
+    }
+  }
+
+  const groups = new Map<string, ReminderQueueCandidate[]>();
+  for (const c of candidates) {
+    const key = reminderDedupGroupKey(c, globalDedup);
+    const list = groups.get(key) ?? [];
+    list.push(c);
+    groups.set(key, list);
+  }
+
+  let queuedJobs = 0;
+  const overdueNotified = new Set<string>();
+
+  for (const [, group] of groups) {
+    const sorted = [...group].sort((a, b) => compareClientsForReminderWinner(a.client, b.client));
+    const winner = sorted[0];
+    if (!winner) continue;
+
+    const { error: insertErr } = await supabase.from("reminder_jobs").insert({
+      client_id: winner.client.id,
+      workspace_id: winner.client.workspace_id,
+      owner_user_id: winner.ownerUserId,
+      schedule_days: winner.scheduleDays,
+      due_date: winner.client.due_date,
+      scheduled_for: winner.scheduledFor,
+      status: "pending",
+      max_attempts: 3,
+      idempotency_key: winner.idempotencyKey,
+      subject: winner.subject,
+    });
+
+    if (insertErr) {
+      if (!String(insertErr.message).toLowerCase().includes("duplicate")) {
+        console.error("[reminders] enqueue error:", insertErr.message);
+      }
+      continue;
+    }
+
+    queuedJobs += 1;
+    await insertEvent(supabase, {
+      eventType: "queued",
+      ownerUserId: winner.ownerUserId,
+      workspaceId: winner.client.workspace_id,
+      clientId: winner.client.id,
+      clientEmail: winner.client.email,
+      subject: winner.subject,
+      details: {
+        scheduleDays: winner.scheduleDays,
+        fireDay: winner.fireDay,
+        templateId: winner.templateId,
+        dedupScope: globalDedup ? "global_email" : "workspace_email",
+      },
+    });
+
+    for (let i = 1; i < sorted.length; i++) {
+      const loser = sorted[i];
+      await insertEvent(supabase, {
+        eventType: "skipped_duplicate_email",
+        ownerUserId: loser.ownerUserId,
+        workspaceId: loser.client.workspace_id,
+        clientId: loser.client.id,
+        clientEmail: loser.client.email,
+        subject: loser.subject,
+        errorMessage: null,
+        details: {
+          reason: globalDedup ? "duplicate_email_global_slot" : "duplicate_email_same_workspace",
+          scheduleDays: loser.scheduleDays,
+          fireDay: loser.fireDay,
+          winning_client_id: winner.client.id,
+          winning_workspace_id: winner.client.workspace_id,
+          deferred_idempotency_key: loser.idempotencyKey,
+        },
+      });
+    }
+
+    const overdueKey = `${winner.client.id}:${today}`;
+    if (!overdueNotified.has(overdueKey)) {
+      overdueNotified.add(overdueKey);
+      try {
+        const recipients = await listAccountRecipientIds(supabase, winner.ownerUserId);
+        await Promise.all(
+          recipients.map((recipientId) =>
+            createNotificationServer(supabase, {
+              recipientUserId: recipientId,
+              actorUserId: null,
+              workspaceId: winner.client.workspace_id,
+              type: "overdue_detected",
+              title: "Echeance depassee",
+              body: `${winner.client.name} a depasse sa date d'echeance (${winner.client.due_date}).`,
+              payload: { clientId: winner.client.id, dueDate: winner.client.due_date },
+              notificationKey: `overdue:${winner.client.id}:${today}:${recipientId}`,
+            }),
+          ),
+        );
+      } catch (error) {
+        console.error("[reminders] overdue notification failed:", error);
+      }
     }
   }
 
@@ -212,12 +421,9 @@ export async function enqueueDueReminderJobs(supabase: SupabaseClient): Promise<
 
 export async function processDueReminderJobs(supabase: SupabaseClient): Promise<ProcessSummary> {
   const nowIso = new Date().toISOString();
-  const resendKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.MAIL_FROM?.trim();
-  if (!resendKey || !from) {
+  if (!process.env.RESEND_API_KEY?.trim() || !process.env.MAIL_FROM?.trim()) {
     throw new Error("Missing RESEND_API_KEY or MAIL_FROM for reminder automation.");
   }
-  const resend = new Resend(resendKey);
 
   const { data: pendingRows, error: pendingErr } = await supabase
     .from("reminder_jobs")
@@ -234,13 +440,13 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
   }
 
   const profileCache = new Map<string, boolean>();
+  const templateCache = new Map<string, ReminderEmailTemplate | null | undefined>();
 
   let sent = 0;
   let failed = 0;
   let skipped = 0;
 
   for (const job of jobs) {
-    // best-effort lock
     const { data: lockRow, error: lockErr } = await supabase
       .from("reminder_jobs")
       .update({ status: "processing", locked_at: nowIso })
@@ -260,7 +466,7 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
 
     const { data: clientRow, error: clientErr } = await supabase
       .from("clients")
-      .select("id,workspace_id,user_id,name,email,amount_due,due_date,status,deleted_at")
+      .select("id,workspace_id,user_id,name,email,amount_due,due_date,status,deleted_at,created_at")
       .eq("id", job.client_id)
       .maybeSingle();
 
@@ -342,19 +548,37 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
       continue;
     }
 
-    const subject = reminderSubject(client.name, job.schedule_days);
-    const text = reminderText(client, job.schedule_days);
-    const html = reminderHtml(text);
+    const cacheKey = `${job.workspace_id}:${job.schedule_days}`;
+    if (!templateCache.has(cacheKey)) {
+      const list = await listReminderEmailTemplates(supabase, job.workspace_id);
+      templateCache.set(cacheKey, pickAutomationTemplate(list, job.schedule_days));
+    }
+    const tpl = templateCache.get(cacheKey) ?? null;
 
-    const { error: sendErr } = await resend.emails.send({
-      from,
-      to: client.email.trim().toLowerCase(),
+    const ctx = substitutionCtx(client, job.schedule_days);
+    let subject: string;
+    let text: string;
+    let html: string;
+    if (tpl) {
+      subject = substituteReminderTemplate(tpl.subjectTemplate, ctx);
+      const bodyRaw = substituteReminderTemplate(tpl.bodyTemplate, ctx);
+      text = reminderBodyToPlainText(bodyRaw, tpl.paymentLink);
+      html = reminderBodyToHtml(bodyRaw, tpl.paymentLink);
+    } else {
+      subject = defaultReminderSubject(client.name, job.schedule_days);
+      text = defaultReminderText(client, job.schedule_days);
+      html = reminderBodyToHtml(text, null);
+    }
+
+    const sendResult = await sendResendReminderEmail({
+      to: client.email,
       subject,
       text,
       html,
     });
 
-    if (sendErr) {
+    if (!sendResult.ok) {
+      const errMsg = sendResult.error;
       const nextAttempts = job.attempts + 1;
       const canRetry = nextAttempts < Math.max(1, job.max_attempts);
       failed += 1;
@@ -366,7 +590,7 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
           .update({
             status: "pending",
             attempts: nextAttempts,
-            last_error: sendErr.message,
+            last_error: errMsg,
             scheduled_for: retryAt,
             updated_at: new Date().toISOString(),
           })
@@ -379,7 +603,7 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
           jobId: job.id,
           clientEmail: client.email,
           subject,
-          errorMessage: sendErr.message,
+          errorMessage: errMsg,
           details: { retryAt, attempts: nextAttempts },
         });
       } else {
@@ -388,7 +612,7 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
           .update({
             status: "failed",
             attempts: nextAttempts,
-            last_error: sendErr.message,
+            last_error: errMsg,
             updated_at: new Date().toISOString(),
           })
           .eq("id", job.id);
@@ -400,7 +624,7 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
           jobId: job.id,
           clientEmail: client.email,
           subject,
-          errorMessage: sendErr.message,
+          errorMessage: errMsg,
         });
       }
       continue;
@@ -428,6 +652,37 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
       subject,
       details: { scheduleDays: job.schedule_days },
     });
+    try {
+      const recipients = await listAccountRecipientIds(supabase, job.owner_user_id);
+      await Promise.all(
+        recipients.map((recipientId) =>
+          Promise.all([
+            createNotificationServer(supabase, {
+              recipientUserId: recipientId,
+              actorUserId: null,
+              workspaceId: job.workspace_id,
+              type: "reminder_sent",
+              title: `Relance J+${job.schedule_days} envoyee`,
+              body: `Relance envoyee a ${client.email}.`,
+              payload: { jobId: job.id, clientId: client.id, scheduleDays: job.schedule_days, email: client.email },
+              notificationKey: `reminder_sent:${job.id}:${recipientId}`,
+            }),
+            createNotificationServer(supabase, {
+              recipientUserId: recipientId,
+              actorUserId: null,
+              workspaceId: job.workspace_id,
+              type: "reminder_stage",
+              title: `Palier J+${job.schedule_days}`,
+              body: `Passage au palier J+${job.schedule_days} pour ${client.name}.`,
+              payload: { jobId: job.id, clientId: client.id, stage: `J+${job.schedule_days}` },
+              notificationKey: `reminder_stage:${job.id}:${recipientId}`,
+            }),
+          ]),
+        ),
+      );
+    } catch (error) {
+      console.error("[reminders] sent notification failed:", error);
+    }
   }
 
   return {

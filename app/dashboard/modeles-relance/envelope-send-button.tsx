@@ -5,6 +5,7 @@ import type { Client } from "@/app/dashboard/types";
 import { sortClientsForRelanceList } from "@/lib/dashboard-metrics";
 import type { PlanId } from "@/lib/plans";
 import { getMaxBulkMailRecipients } from "@/lib/plans";
+import { buildMailtoBccRecipients, buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
 
 type RecipientTab = "everyone" | "list" | "manual";
 
@@ -49,30 +50,6 @@ type Props = {
   planId: PlanId;
 };
 
-function buildMailtoSingle(to: string, subject: string, body: string): string {
-  const params = new URLSearchParams();
-  if (subject) params.set("subject", subject);
-  if (body) params.set("body", body);
-  const q = params.toString();
-  const addr = to.trim();
-  if (!addr) {
-    return q ? `mailto:?${q}` : "mailto:";
-  }
-  return q ? `mailto:${addr}?${q}` : `mailto:${addr}`;
-}
-
-/** Plusieurs destinataires en Bcc (messagerie locale). */
-function buildMailtoBcc(bcc: string[], subject: string, body: string): string {
-  const cleaned = [...new Set(bcc.map((e) => e.trim().toLowerCase()).filter(Boolean))];
-  const params = new URLSearchParams();
-  if (subject) params.set("subject", subject);
-  if (body) params.set("body", body);
-  if (cleaned.length) params.set("bcc", cleaned.join(","));
-  return `mailto:?${params.toString()}`;
-}
-
-const MAILTO_SAFE_MAX = 1900;
-
 /** Enveloppe : envoi manuel via client mail (mailto) + modale copier / prévisualiser. */
 export function EnvelopeSendButton({ subject, body, labels, clients, locale, planId }: Props) {
   const [open, setOpen] = useState(false);
@@ -116,12 +93,12 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
   const listEmailsCapped = useMemo(() => listEmails.slice(0, maxRecipients), [listEmails, maxRecipients]);
 
   const mailtoHref = useMemo(() => {
-    if (tab === "manual") return buildMailtoSingle(manualTo, subject, body);
-    if (tab === "everyone") return buildMailtoBcc(everyoneForSend, subject, body);
-    return buildMailtoBcc(listEmailsCapped, subject, body);
+    if (tab === "manual") return buildMailtoSingleRecipient(manualTo, subject, body);
+    if (tab === "everyone") return buildMailtoBccRecipients(everyoneForSend, subject, body);
+    return buildMailtoBccRecipients(listEmailsCapped, subject, body);
   }, [tab, manualTo, subject, body, everyoneForSend, listEmailsCapped]);
 
-  const mailtoTooLong = mailtoHref.length > MAILTO_SAFE_MAX;
+  const mailtoTooLong = mailtoHref.length > MAILTO_HREF_SAFE_MAX;
 
   const canOpenMail = useMemo(() => {
     if (mailtoTooLong) return false;

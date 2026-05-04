@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalTopBar } from "./conditional-topbar";
 import { LocaleProvider } from "./locale-context";
@@ -7,7 +7,7 @@ import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
 import { PwaRegister } from "./pwa-register";
 
-const font = Plus_Jakarta_Sans({
+const font = Inter({
   subsets: ["latin"],
   variable: "--font-paypulse",
   display: "swap",
