@@ -6,6 +6,7 @@ import { LocaleProvider } from "./locale-context";
 import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
 import { PwaRegister } from "./pwa-register";
+import { LowPerformanceHtmlAttrs } from "@/lib/low-performance";
 
 const font = Inter({
   subsets: ["latin"],
@@ -57,6 +58,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={font.variable}>
       <body className={`${font.className} min-h-screen antialiased`}>
+        <LowPerformanceHtmlAttrs />
         <PwaRegister />
         <AuthProvider>
           <LocaleProvider>

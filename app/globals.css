@@ -361,39 +361,31 @@ body {
 
 .pp-hero-mobile-ambient {
   isolation: isolate;
+  /* Isole les repaints : le scroll de la page ne reflowe pas l’aurora. */
+  contain: layout paint;
 }
 
 .pp-hero-mobile-ambient-layer {
   pointer-events: none;
-  inset: -30%;
+  inset: -20%;
+  /* Promotion GPU pour un seul calque animé : transform/opacity composites. */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .pp-hero-mobile-ambient-layer--a {
-  background: radial-gradient(ellipse 88% 52% at 50% 38%, rgba(37, 99, 235, 0.36), rgba(59, 130, 246, 0.16) 38%, rgba(99, 102, 241, 0.06) 52%, transparent 68%),
-    radial-gradient(ellipse 78% 50% at 14% 72%, rgba(109, 40, 217, 0.22), rgba(139, 92, 246, 0.1) 45%, transparent 62%);
-  animation: pp-hero-mobile-aurora-a 17s ease-in-out infinite;
-}
-
-.pp-hero-mobile-ambient-layer--b {
-  background: radial-gradient(ellipse 90% 48% at 58% 16%, rgba(56, 189, 248, 0.22), rgba(14, 165, 233, 0.08) 42%, transparent 62%),
-    radial-gradient(ellipse 72% 46% at 90% 64%, rgba(61, 255, 138, 0.16), rgba(52, 211, 153, 0.06) 48%, transparent 58%);
-  animation: pp-hero-mobile-aurora-b 23s ease-in-out infinite;
-  animation-delay: -5s;
+  background: radial-gradient(ellipse 88% 52% at 50% 38%, rgba(37, 99, 235, 0.34), rgba(59, 130, 246, 0.14) 38%, rgba(99, 102, 241, 0.05) 52%, transparent 68%),
+    radial-gradient(ellipse 78% 50% at 18% 70%, rgba(109, 40, 217, 0.18), rgba(139, 92, 246, 0.08) 45%, transparent 62%);
+  /* Animation plus lente : moins de frames composites par seconde de scroll. */
+  animation: pp-hero-mobile-aurora-a 28s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-hero-mobile-ambient-layer--a,
-  .pp-hero-mobile-ambient-layer--b {
+  .pp-hero-mobile-ambient-layer--a {
     animation: none !important;
     transform: none !important;
-  }
-
-  .pp-hero-mobile-ambient-layer--a {
     opacity: 0.72;
-  }
-
-  .pp-hero-mobile-ambient-layer--b {
-    opacity: 0.52;
   }
 }
 
@@ -501,12 +493,22 @@ body {
 }
 
 @media (max-width: 639px) {
+  /*
+   * Mobile : les conic-gradients massifs (jusqu’à 720–920px) qui tournent en
+   * boucle sont un vrai goulot. On fige la rotation et on garde un état
+   * statiquement orienté pour conserver l’effet visuel sans coût de composite
+   * pendant le scroll/navigation.
+   */
   .pp-landing-wave-disk--a {
-    animation-duration: 52s;
+    animation: none !important;
+    transform: rotate(135deg);
+    opacity: 0.62;
   }
 
   .pp-landing-wave-disk--b {
-    animation-duration: 68s;
+    animation: none !important;
+    transform: rotate(-78deg);
+    opacity: 0.42;
   }
 }
 
@@ -696,3 +698,69 @@ body {
     animation: none !important;
   }
 }
+
+/*
+ * Appareils modestes (~4 Go RAM / mobile budget) : même esprit que reduced-motion
+ * pour les animations CSS continues (Framer est déjà court-circuité côté JS).
+ */
+html[data-low-performance="true"] .pp-rise,
+html[data-low-performance="true"] .pp-float,
+html[data-low-performance="true"] .pp-float-dashboard,
+html[data-low-performance="true"] .pp-word,
+html[data-low-performance="true"] .pp-char {
+  animation: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+html[data-low-performance="true"] .pp-hero-title-glow {
+  opacity: 0.45;
+  filter: blur(12px);
+}
+
+html[data-low-performance="true"] .pp-hero-gradient-flow,
+html[data-low-performance="true"] .pp-hero-sheen,
+html[data-low-performance="true"] .pp-hero-sheen--delayed,
+html[data-low-performance="true"] .pp-hero-grid-drift,
+html[data-low-performance="true"] .pp-hero-noise-breathe,
+html[data-low-performance="true"] .pp-hero-flow-path,
+html[data-low-performance="true"] .pp-hero-starfield-drift,
+html[data-low-performance="true"] .pp-hero-mobile-ambient-layer--a,
+html[data-low-performance="true"] .pp-hero-mobile-ambient-layer--b,
+html[data-low-performance="true"] .pp-hero-color-lines-mobile {
+  animation: none !important;
+}
+
+html[data-low-performance="true"] .pp-landing-ambient__blob,
+html[data-low-performance="true"] .pp-landing-ambient__blob--2 {
+  animation: none !important;
+}
+
+html[data-low-performance="true"] .pp-landing-wave-disk--a,
+html[data-low-performance="true"] .pp-landing-wave-disk--b {
+  animation: none !important;
+}
+
+html[data-low-performance="true"] .pp-dashboard-card-interactive:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+html[data-low-performance="true"] .pp-product-tour-card:hover {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  border-color: #e2e8f0;
+}
+
+html[data-low-performance="true"] .pp-product-tour-card:hover .pp-product-tour-visual img.pp-product-tour-img {
+  transform: none;
+  filter: none;
+  animation: none;
+}
+
+html[data-low-performance="true"] .pp-product-tour-card:hover .pp-product-tour-glow,
+html[data-low-performance="true"] .pp-product-tour-card:hover .pp-product-tour-shine {
+  opacity: 0 !important;
+  animation: none !important;
+}
+

@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
 import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
@@ -420,7 +421,7 @@ function featureIcon(kind: "clients" | "status" | "remind" | "dash" | "auto" | "
 export function LandingPage() {
   const { locale } = useLocale();
   const { isAuthenticated } = useAuth();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePreferMinimalMotion();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
   const t =

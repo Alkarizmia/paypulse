@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { useLayoutEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
 
 /** Petites étincelles — positions %, durée s, opacité max */
 const SPARKS = [
@@ -107,7 +108,7 @@ function HeroColorFlowLines() {
  */
 function useHeroMobileCoarse(): boolean {
   const [coarse, setCoarse] = useState(false);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     const apply = () => setCoarse(mq.matches);
     apply();
@@ -118,7 +119,7 @@ function useHeroMobileCoarse(): boolean {
 }
 
 export function HeroAmbientVisual() {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   const mobile = useHeroMobileCoarse();
 
   /** Reduced motion : halos statiques. */
@@ -137,15 +138,14 @@ export function HeroAmbientVisual() {
   }
 
   /**
-   * Mobile : aurora CSS continue (keyframes transform + opacity) — évite JS + blur animés
-   * pour limiter les saccades sur appareils tactiles modestes.
+   * Mobile : un seul layer aurora CSS doux (transform + opacity uniquement).
+   * On retire le second layer, le mix-blend-mode et la couche "color lines"
+   * pour éliminer les saccades de scroll/navigation sur appareils tactiles.
    */
   if (mobile) {
     return (
       <div className="pp-hero-mobile-ambient pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
         <div className="pp-hero-mobile-ambient-layer pp-hero-mobile-ambient-layer--a absolute rounded-[48%]" />
-        <div className="pp-hero-mobile-ambient-layer pp-hero-mobile-ambient-layer--b absolute rounded-[48%]" />
-        <div className="pp-hero-color-lines-mobile" />
       </div>
     );
   }

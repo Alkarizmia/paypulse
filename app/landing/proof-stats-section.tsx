@@ -1,6 +1,7 @@
 "use client";
 
-import { animate, motion, useInView, useReducedMotion } from "framer-motion";
+import { animate, motion, useInView } from "framer-motion";
+import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
 import { useEffect, useRef, useState } from "react";
 import { Reveal } from "@/app/landing/landing-motion";
 
@@ -34,7 +35,7 @@ const DURATION = 2.15;
 const STAGGER = 0.22;
 
 export function ProofStatsSection({ locale, copy }: { locale: "fr" | "en"; copy: ProofStatsCopy }) {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef, { amount: 0.28, margin: "-10% 0px -14% 0px" });
   const [v1, setV1] = useState(-35);

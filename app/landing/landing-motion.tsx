@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useAnimationControls, useReducedMotion } from "framer-motion";
+import { motion, useAnimationControls } from "framer-motion";
+import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
 import type { ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -30,7 +31,7 @@ const STAR_PRESETS = [
 
 /** Very subtle starfield / paillettes — landing background only */
 export function LandingStarfield() {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) return null;
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
@@ -76,7 +77,7 @@ const HERO_STAR_DOTS = Array.from({ length: 96 }, (_, i) => {
  * Réservé au hero landing — sensation « premium » sans surcharge CPU.
  */
 export function HeroDenseStarfield() {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) {
     return (
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.35]" aria-hidden>
@@ -133,7 +134,7 @@ type RevealProps = {
 
 /** Scroll-in: fade + slight rise */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   const controls = useAnimationControls();
   if (reduce) return <div className={className}>{children}</div>;
   return (
@@ -163,7 +164,7 @@ export function Reveal({ children, className, delay = 0 }: RevealProps) {
  * léger et non intrusif. Aucun hook tiers.
  */
 export function HeroWingAurora() {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) {
     return (
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
@@ -249,7 +250,7 @@ export function HeroWingAurora() {
 
 /** Large violet / cyan orb behind hero copy — slow float, GPU-friendly (opacity + scale). */
 export function HeroBlurOrb() {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) {
     return (
       <div
@@ -292,7 +293,7 @@ export function HeroEntrance({
   className?: string;
   delay?: number;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
@@ -308,7 +309,7 @@ export function HeroEntrance({
 
 /** Pulsing soft glow under hero headline */
 export function HeroHeadlineGlow() {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   return (
     <motion.div
       className="pointer-events-none absolute left-[-10%] right-[-10%] top-[68%] z-0 h-40 sm:h-44"
@@ -337,7 +338,7 @@ const BRAND = "PayPulss";
 /** Kicker line — word stagger with Framer Motion */
 export function MotionKicker({ text, className }: { text: string; className?: string }) {
   const words = text.split(/\s+/).filter(Boolean);
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) return <p className={className}>{text}</p>;
   return (
     <p className={className}>
@@ -366,7 +367,7 @@ export function MotionHeroTitle({
   title: string;
   className: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   const hasBrand = title.startsWith(BRAND);
   const tail = hasBrand ? title.slice(BRAND.length).trimStart() : title;
 
@@ -436,7 +437,7 @@ export function MotionHeroTitle({
 
 /** Gentle vertical float for mockups (replaces CSS pp-float) */
 export function SoftFloat({ children, className }: { children: ReactNode; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
@@ -451,7 +452,7 @@ export function SoftFloat({ children, className }: { children: ReactNode; classN
 
 /** Stronger float for dashboard preview */
 export function SoftFloatDashboard({ children, className }: { children: ReactNode; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = usePreferMinimalMotion();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
