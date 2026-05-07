@@ -90,11 +90,11 @@ export function PwaInstallButton({ labels }: { labels: InstallLabels }) {
       <button
         type="button"
         onClick={install}
-        className="inline-flex items-center justify-center rounded-full border border-violet-300/45 bg-violet-500/15 px-6 py-3 text-sm font-semibold text-violet-50 backdrop-blur-sm transition hover:scale-[1.01] hover:border-violet-300/70 hover:shadow-[0_0_28px_rgba(139,92,246,0.25)]"
+        className="inline-flex items-center justify-center rounded-full border border-violet-200 bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 backdrop-blur-sm transition hover:scale-[1.01] hover:border-violet-300 hover:bg-violet-100 hover:shadow-[0_0_28px_rgba(139,92,246,0.18)]"
       >
         {ctaLabel}
       </button>
-      <span className="text-xs text-slate-300">{hint || labels.secondaryLabel}</span>
+      <span className="text-xs text-slate-600">{hint || labels.secondaryLabel}</span>
     </div>
   );
 }

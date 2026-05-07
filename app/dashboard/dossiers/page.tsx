@@ -11,6 +11,7 @@ import { fetchClients } from "@/lib/clients";
 import { getActiveLocalClients } from "@/lib/local-clients";
 import { createMemberActionNotifications } from "@/lib/notifications";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { useResolvedUiAppearance } from "@/lib/ui-theme";
 
 type FolderNote = { id: string; text: string; createdAt: string };
 type FolderPerson = { clientId: string; name: string; email: string };
@@ -93,6 +94,8 @@ export default function DashboardFoldersPage() {
   const [loaded, setLoaded] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const appearance = useResolvedUiAppearance();
+  const light = appearance === "light";
 
   const t =
     locale === "fr"
@@ -337,34 +340,46 @@ export default function DashboardFoldersPage() {
       userEmail={user?.email ?? null}
       onLogout={handleLogout}
       hideTrashNav={ws.memberRoleOnEffectiveAccount === "member"}
+      appearance={appearance}
     >
       <section className="space-y-6">
-        <div className="rounded-2xl border border-white/10 bg-[#10101a] p-6">
-          <h2 className="text-2xl font-semibold text-white">{t.title}</h2>
-          <p className="mt-2 text-sm text-slate-400">{t.subtitle}</p>
+        <div className={`rounded-2xl border p-6 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
+          <h2 className={`text-2xl font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.title}</h2>
+          <p className={`mt-2 text-sm ${light ? "text-slate-600" : "text-slate-400"}`}>{t.subtitle}</p>
           <div className="mt-4 flex gap-2">
             <input
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder={t.newFolder}
-              className="w-full max-w-sm rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-violet-400/50"
+              className={`w-full max-w-sm rounded-lg border px-3 py-2 text-sm outline-none focus:border-violet-400/50 ${
+                light ? "border-slate-300 bg-white text-slate-900" : "border-white/15 bg-black/35 text-white placeholder:text-slate-500"
+              }`}
             />
-            <button onClick={createFolder} className="rounded-lg bg-violet-600/25 px-4 py-2 text-sm font-semibold text-violet-100 ring-1 ring-violet-400/30">
+            <button onClick={createFolder} className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white">
               {t.create}
             </button>
-            <button onClick={handleSave} className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200">
+            <button
+              onClick={handleSave}
+              className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
+                light ? "border-slate-300 text-slate-700 hover:bg-slate-50" : "border-white/15 text-slate-200 hover:bg-white/10"
+              }`}
+            >
               {t.save}
             </button>
           </div>
-          {dirty ? <p className="mt-2 text-xs text-amber-300">{t.pendingSave}</p> : null}
-          {saveMessage ? <p className="mt-2 text-xs text-emerald-300">{saveMessage}</p> : null}
+          {dirty ? (
+            <p className={`mt-2 text-xs ${light ? "text-amber-700" : "text-amber-300"}`}>{t.pendingSave}</p>
+          ) : null}
+          {saveMessage ? (
+            <p className={`mt-2 text-xs ${light ? "text-emerald-700" : "text-emerald-300"}`}>{saveMessage}</p>
+          ) : null}
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          <aside className="rounded-2xl border border-white/10 bg-[#0f1320] p-4">
-            <h3 className="text-sm font-semibold text-slate-200">Dossiers</h3>
+          <aside className={`rounded-2xl border p-4 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
+            <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>Dossiers</h3>
             <div className="mt-3 space-y-2">
-              {folders.length === 0 ? <p className="text-sm text-slate-500">{t.foldersEmpty}</p> : null}
+              {folders.length === 0 ? <p className={`text-sm ${light ? "text-slate-500" : "text-slate-400"}`}>{t.foldersEmpty}</p> : null}
               {folders.map((f) => (
                 <button
                   key={f.id}
@@ -373,7 +388,13 @@ export default function DashboardFoldersPage() {
                     setRenameValue(f.name);
                   }}
                   className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${
-                    selectedFolderId === f.id ? "border-violet-400/45 bg-violet-500/15 text-violet-100" : "border-white/10 bg-black/20 text-slate-300 hover:bg-black/30"
+                    selectedFolderId === f.id
+                      ? light
+                        ? "border-violet-300 bg-violet-50 text-violet-800"
+                        : "border-violet-500/40 bg-violet-950/40 text-violet-200"
+                      : light
+                        ? "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                        : "border-white/10 bg-black/35 text-slate-200 hover:bg-white/10"
                   }`}
                 >
                   {f.name}
@@ -382,36 +403,54 @@ export default function DashboardFoldersPage() {
             </div>
           </aside>
 
-          <div className="rounded-2xl border border-white/10 bg-[#0f1320] p-5">
+          <div className={`rounded-2xl border p-5 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
             {!selectedFolder ? (
-              <p className="text-sm text-slate-500">{t.foldersEmpty}</p>
+              <p className={`text-sm ${light ? "text-slate-500" : "text-slate-400"}`}>{t.foldersEmpty}</p>
             ) : (
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
-                    className="w-full max-w-sm rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-violet-400/50"
+                    className={`w-full max-w-sm rounded-lg border px-3 py-2 text-sm outline-none focus:border-violet-400/50 ${
+                      light ? "border-slate-300 bg-white text-slate-900" : "border-white/15 bg-black/35 text-white"
+                    }`}
                   />
-                  <button onClick={renameFolder} className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200">
+                  <button
+                    onClick={renameFolder}
+                    className={`rounded-lg border px-3 py-2 text-sm transition ${
+                      light ? "border-slate-300 text-slate-700 hover:bg-slate-50" : "border-white/15 text-slate-200 hover:bg-white/10"
+                    }`}
+                  >
                     {t.rename}
                   </button>
-                  <button onClick={removeFolder} className="rounded-lg border border-red-400/35 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                  <button
+                    onClick={removeFolder}
+                    className={`rounded-lg border px-3 py-2 text-sm ${
+                      light ? "border-red-300 bg-red-50 text-red-700" : "border-red-500/40 bg-red-950/35 text-red-200"
+                    }`}
+                  >
                     {t.delete}
                   </button>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <h4 className="text-sm font-semibold text-white">{t.clientsLabel}</h4>
+                <div className={`rounded-xl border p-4 ${light ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"}`}>
+                  <h4 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.clientsLabel}</h4>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {loadingClients ? <span className="text-xs text-slate-500">...</span> : null}
-                    {!loadingClients && clients.length === 0 ? <span className="text-xs text-slate-500">{t.noClient}</span> : null}
+                    {loadingClients ? <span className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>...</span> : null}
+                    {!loadingClients && clients.length === 0 ? (
+                      <span className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>{t.noClient}</span>
+                    ) : null}
                     {!loadingClients
                       ? clients.map((c) => (
                           <button
                             key={c.id}
                             onClick={() => addClientToFolder(c.id)}
-                            className="rounded-full border border-white/15 px-3 py-1 text-xs text-slate-200 hover:bg-white/5"
+                            className={`rounded-full border px-3 py-1 text-xs transition ${
+                              light
+                                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                                : "border-white/15 bg-black/45 text-slate-200 hover:bg-white/10"
+                            }`}
                           >
                             {c.name}
                           </button>
@@ -420,14 +459,21 @@ export default function DashboardFoldersPage() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    {selectedFolder.people.length === 0 ? <p className="text-sm text-slate-500">{t.peopleEmpty}</p> : null}
+                    {selectedFolder.people.length === 0 ? (
+                      <p className={`text-sm ${light ? "text-slate-500" : "text-slate-400"}`}>{t.peopleEmpty}</p>
+                    ) : null}
                     {selectedFolder.people.map((p) => (
-                      <div key={p.clientId} className="flex items-center justify-between rounded-lg border border-white/10 bg-[#0d101a] px-3 py-2">
+                      <div
+                        key={p.clientId}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+                          light ? "border-slate-200 bg-white" : "border-white/10 bg-black/35"
+                        }`}
+                      >
                         <div>
-                          <p className="text-sm text-slate-200">{p.name}</p>
-                          <p className="text-xs text-slate-500">{p.email}</p>
+                          <p className={`text-sm ${light ? "text-slate-900" : "text-white"}`}>{p.name}</p>
+                          <p className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>{p.email}</p>
                         </div>
-                        <button onClick={() => removePerson(p.clientId)} className="text-xs text-red-300 hover:text-red-200">
+                        <button onClick={() => removePerson(p.clientId)} className="text-xs text-red-700 hover:text-red-600">
                           {t.delete}
                         </button>
                       </div>
@@ -435,30 +481,39 @@ export default function DashboardFoldersPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <h4 className="text-sm font-semibold text-white">{t.notesLabel}</h4>
+                <div className={`rounded-xl border p-4 ${light ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"}`}>
+                  <h4 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.notesLabel}</h4>
                   <div className="mt-3 flex gap-2">
                     <textarea
                       value={noteDraft}
                       onChange={(e) => setNoteDraft(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-violet-400/50"
+                      className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-violet-400/50 ${
+                        light ? "border-slate-300 bg-white text-slate-900" : "border-white/15 bg-black/35 text-white placeholder:text-slate-500"
+                      }`}
                     />
-                    <button onClick={addNote} className="h-fit rounded-lg bg-violet-600/25 px-3 py-2 text-xs font-semibold text-violet-100 ring-1 ring-violet-400/30">
+                    <button onClick={addNote} className="h-fit rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white">
                       {t.addNote}
                     </button>
                   </div>
                   <div className="mt-4 space-y-2">
-                    {selectedFolder.notes.length === 0 ? <p className="text-sm text-slate-500">{t.notesEmpty}</p> : null}
+                    {selectedFolder.notes.length === 0 ? (
+                      <p className={`text-sm ${light ? "text-slate-500" : "text-slate-400"}`}>{t.notesEmpty}</p>
+                    ) : null}
                     {selectedFolder.notes.map((n) => (
-                      <div key={n.id} className="rounded-lg border border-white/10 bg-[#0d101a] px-3 py-2">
+                      <div
+                        key={n.id}
+                        className={`rounded-lg border px-3 py-2 ${light ? "border-slate-200 bg-white" : "border-white/10 bg-black/35"}`}
+                      >
                         <div className="flex items-center justify-between">
-                          <p className="text-xs text-slate-500">{new Date(n.createdAt).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}</p>
-                          <button onClick={() => removeNote(n.id)} className="text-xs text-red-300 hover:text-red-200">
+                          <p className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>
+                            {new Date(n.createdAt).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+                          </p>
+                          <button onClick={() => removeNote(n.id)} className="text-xs text-red-700 hover:text-red-600">
                             {t.delete}
                           </button>
                         </div>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{n.text}</p>
+                        <p className={`mt-1 whitespace-pre-wrap text-sm ${light ? "text-slate-800" : "text-slate-200"}`}>{n.text}</p>
                       </div>
                     ))}
                   </div>

@@ -119,7 +119,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
     locale === "fr"
       ? {
           title: "Relances automatiques (scheduler)",
-          hint: "Ces paramètres pilotent le runner serveur /api/reminders/run pour le portefeuille actif.",
+          hint: "Ces paramètres pilotent le runner serveur /api/reminders/run pour le portefeuille actif. Les envois automatiques utilisent MAIL_FROM_AUTO_REMINDERS si la variable serveur existe, sinon MAIL_FROM (Resend ; domaine à vérifier).",
           enable: "Activer l’automatisation (portefeuille)",
           daysTitle: "Jours après échéance",
           daysExpl:
@@ -145,7 +145,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         }
       : {
           title: "Automatic reminders (scheduler)",
-          hint: "These settings drive the server runner /api/reminders/run for the active workspace.",
+          hint: "These settings drive the server runner /api/reminders/run for the active workspace. Automated sends use MAIL_FROM_AUTO_REMINDERS when set server-side; otherwise MAIL_FROM (Resend; domain must be verified).",
           enable: "Enable automation (workspace)",
           daysTitle: "Days after due date",
           daysExpl:

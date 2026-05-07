@@ -247,7 +247,7 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const systemDark = usePrefersColorSchemeDark();
-  const [storedThemePref, setStoredThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "dark");
+  const [storedThemePref, setStoredThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "light");
   const resolvedAppearance = useMemo<"light" | "dark">(() => {
     if (appearance) return appearance;
     return resolveUiTheme(storedThemePref, systemDark) === "light" ? "light" : "dark";
@@ -269,6 +269,10 @@ export function DashboardShell({
           overview: "Aperçu",
           plan: "Plan",
           settings: "Paramètres",
+          sitePaypulss: "Site PayPulss",
+          contactPage: "Contact",
+          legalHub: "Infos légales",
+          sidebarResources: "Liens utiles",
           logout: "Déconnexion",
           upgrade: "Changer de plan",
           notif: "Notifications",
@@ -287,6 +291,10 @@ export function DashboardShell({
           overview: "Overview",
           plan: "Plan",
           settings: "Settings",
+          sitePaypulss: "PayPulss website",
+          contactPage: "Contact",
+          legalHub: "Legal",
+          sidebarResources: "Shortcuts",
           logout: "Log out",
           upgrade: "Change plan",
           notif: "Notifications",
@@ -317,7 +325,10 @@ export function DashboardShell({
   }
 
   useEffect(() => {
-    setMobileMenuOpen(false);
+    queueMicrotask(() => {
+      setMobileMenuOpen(false);
+      setNotifOpen(false);
+    });
   }, [pathname]);
 
   useEffect(() => {
@@ -331,7 +342,7 @@ export function DashboardShell({
     if (typeof window === "undefined") return;
     const seen = window.localStorage.getItem("paypulss_folders_hint_seen_v1");
     if (!seen && !pathname.startsWith("/dashboard/dossiers")) {
-      setShowFoldersHint(true);
+      queueMicrotask(() => setShowFoldersHint(true));
     }
   }, [pathname]);
 
@@ -461,6 +472,63 @@ export function DashboardShell({
         <div
           className={
             light
+              ? "mt-5 border-t border-slate-200 pt-4"
+              : "mt-5 border-t border-white/[0.08] pt-4"
+          }
+        >
+          <p
+            className={`mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-500"}`}
+          >
+            {t.sidebarResources}
+          </p>
+          <Link
+            href="/"
+            className={
+              light
+                ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+            }
+          >
+            <span className="text-slate-500" aria-hidden>
+              ↗
+            </span>
+            {t.sitePaypulss}
+          </Link>
+          <Link
+            href="/contact"
+            className={
+              light
+                ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+            }
+          >
+            <span className="text-slate-500" aria-hidden>
+              ✉
+            </span>
+            {t.contactPage}
+          </Link>
+          <Link
+            href="/legal"
+            className={
+              light
+                ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+            }
+          >
+            <svg className="h-4 w-4 shrink-0 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.75}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            {t.legalHub}
+          </Link>
+        </div>
+        <div
+          className={
+            light
               ? "mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
               : "mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
           }
@@ -555,24 +623,31 @@ export function DashboardShell({
                 ) : null}
               </button>
               {notifOpen ? (
-                <div
-                  className={
-                    light
-                      ? "absolute right-0 z-30 mt-2 w-[min(92vw,360px)] rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
-                      : "absolute right-0 z-30 mt-2 w-[min(92vw,360px)] rounded-xl border border-white/10 bg-[#0e1018] p-2 shadow-2xl"
-                  }
-                >
-                  <div className="mb-2 flex items-center justify-between px-1">
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-[60] bg-black/35 sm:hidden"
+                    aria-label={t.closeHint}
+                    onClick={() => setNotifOpen(false)}
+                  />
+                  <div
+                    className={
+                      light
+                        ? "z-[61] flex max-h-[min(78dvh,calc(100dvh-5rem))] min-h-0 w-auto flex-col rounded-xl border border-slate-200 bg-white p-2 shadow-xl max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-16 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[min(92vw,360px)] sm:max-h-80"
+                        : "z-[61] flex max-h-[min(78dvh,calc(100dvh-5rem))] min-h-0 w-auto flex-col rounded-xl border border-white/10 bg-[#0e1018] p-2 shadow-2xl max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-16 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[min(92vw,360px)] sm:max-h-80"
+                    }
+                  >
+                  <div className="mb-2 flex shrink-0 items-center justify-between gap-2 px-1">
                     <p className={light ? "text-xs font-semibold uppercase tracking-wide text-slate-500" : "text-xs font-semibold uppercase tracking-wide text-slate-400"}>{t.notif}</p>
                     <button
                       type="button"
                       onClick={() => void markAllRead()}
-                      className={light ? "text-[11px] text-violet-700 hover:text-violet-600" : "text-[11px] text-violet-300 hover:text-violet-200"}
+                      className={light ? "shrink-0 text-[11px] text-violet-700 hover:text-violet-600" : "shrink-0 text-[11px] text-violet-300 hover:text-violet-200"}
                     >
                       {t.markAllRead}
                     </button>
                   </div>
-                  <div className="max-h-80 space-y-1 overflow-auto">
+                  <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain sm:max-h-80">
                     {notifications.length === 0 ? (
                       <p className={light ? "px-2 py-2 text-sm text-slate-500" : "px-2 py-2 text-sm text-slate-400"}>{t.noNotifications}</p>
                     ) : (
@@ -594,7 +669,8 @@ export function DashboardShell({
                       ))
                     )}
                   </div>
-                </div>
+                  </div>
+                </>
               ) : null}
             </div>
             <div
@@ -774,6 +850,70 @@ export function DashboardShell({
               </span>
               {t.dossiers}
             </Link>
+            <Link
+              href="/settings"
+              onClick={() => setMobileMenuOpen(false)}
+              className={
+                light
+                  ? "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                  : "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+              }
+            >
+              <svg className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.75}
+                  d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
+                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {t.settings}
+            </Link>
+            <div
+              className={
+                light ? "mt-4 border-t border-slate-200 pt-4" : "mt-4 border-t border-white/[0.08] pt-4"
+              }
+            >
+              <p
+                className={`mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-500"}`}
+              >
+                {t.sidebarResources}
+              </p>
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className={
+                  light
+                    ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                    : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04]"
+                }
+              >
+                {t.sitePaypulss}
+              </Link>
+              <Link
+                href="/contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className={
+                  light
+                    ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                    : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04]"
+                }
+              >
+                {t.contactPage}
+              </Link>
+              <Link
+                href="/legal"
+                onClick={() => setMobileMenuOpen(false)}
+                className={
+                  light
+                    ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                    : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04]"
+                }
+              >
+                {t.legalHub}
+              </Link>
+            </div>
           </nav>
         </aside>
 

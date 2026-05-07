@@ -17,7 +17,18 @@ export default function ConfidentialitePage() {
       </p>
       <p>
         <strong>Responsable du traitement :</strong> [SOCIÉTÉ], [ADRESSE_SIÈGE]. Pour toute question relative aux
-        données personnelles : <strong>[EMAIL_PRIVACY]</strong>.
+        données personnelles : <strong>contact@paypulss.com</strong>.
+      </p>
+      <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+        <strong>Informations légales (temporaire)</strong>
+        <br />
+        Fondateur : El Fahmi Bilal
+        <br />
+        Responsable légale : Ikram El Fahmi
+        <br />
+        Email : contact@paypulss.com
+        <br />
+        Société : À compléter après immatriculation
       </p>
       <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
         Les mentions entre crochets […] sont des <strong>placeholders</strong> à remplacer par vos informations réelles
@@ -123,7 +134,7 @@ export default function ConfidentialitePage() {
         consentement ou le contrat et automatisé.
       </p>
       <p>
-        Vous pouvez exercer vos droits en écrivant à <strong>[EMAIL_PRIVACY]</strong>. Réclamation auprès de la CNIL :{" "}
+        Vous pouvez exercer vos droits en écrivant à <strong>contact@paypulss.com</strong>. Réclamation auprès de la CNIL :{" "}
         <a href="https://www.cnil.fr" className="text-blue-700 underline hover:text-blue-800">
           www.cnil.fr
         </a>
@@ -143,7 +154,7 @@ export default function ConfidentialitePage() {
         Nous mettons en œuvre des mesures techniques et organisationnelles conformes aux pratiques courantes du secteur
         (authentification, contrôle d&apos;accès, chiffrement en transit via HTTPS, politiques d&apos;accès en base).
         Aucun système n&apos;est toutefois garanti exempt de risque ; signalement des vulnérabilités :{" "}
-        <strong>[EMAIL_SECURITY]</strong>.
+        <strong>contact@paypulss.com</strong>.
       </p>
     </LegalLayout>
   );

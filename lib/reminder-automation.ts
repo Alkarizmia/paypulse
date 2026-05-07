@@ -421,8 +421,12 @@ export async function enqueueDueReminderJobs(supabase: SupabaseClient): Promise<
 
 export async function processDueReminderJobs(supabase: SupabaseClient): Promise<ProcessSummary> {
   const nowIso = new Date().toISOString();
-  if (!process.env.RESEND_API_KEY?.trim() || !process.env.MAIL_FROM?.trim()) {
-    throw new Error("Missing RESEND_API_KEY or MAIL_FROM for reminder automation.");
+  const hasReminderFrom =
+    Boolean(process.env.MAIL_FROM_AUTO_REMINDERS?.trim()) || Boolean(process.env.MAIL_FROM?.trim());
+  if (!process.env.RESEND_API_KEY?.trim() || !hasReminderFrom) {
+    throw new Error(
+      "Missing RESEND_API_KEY or MAIL_FROM (ou MAIL_FROM_AUTO_REMINDERS) for reminder automation.",
+    );
   }
 
   const { data: pendingRows, error: pendingErr } = await supabase
@@ -575,6 +579,7 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
       subject,
       text,
       html,
+      fromContext: "automation",
     });
 
     if (!sendResult.ok) {

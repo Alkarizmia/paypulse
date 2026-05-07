@@ -99,13 +99,13 @@ export function ProofStatsSection({ locale, copy }: { locale: "fr" | "en"; copy:
   const s3 = formatHours(locale, v3);
 
   return (
-    <section id="proof" ref={rootRef} className="scroll-mt-28 border-t border-white/[0.06] bg-[#050508] px-4 py-20 sm:px-6 sm:py-28">
+    <section id="proof" ref={rootRef} className="scroll-mt-28 border-t border-slate-200 bg-slate-50 px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-5xl text-center">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#3DFF8A]/90">{copy.socialProof}</p>
-          <h2 className="mx-auto mt-4 max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">{copy.statsTitle}</h2>
+          <h2 className="mx-auto mt-4 max-w-2xl text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{copy.statsTitle}</h2>
         </Reveal>
-        <Reveal className="mx-auto mt-3 max-w-xl text-sm text-slate-500" delay={0.06}>
+        <Reveal className="mx-auto mt-3 max-w-xl text-sm text-slate-600" delay={0.06}>
           {copy.statsSub}
         </Reveal>
         <motion.div
@@ -126,10 +126,10 @@ export function ProofStatsSection({ locale, copy }: { locale: "fr" | "en"; copy:
                 hidden: { opacity: 0, y: 20 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
               }}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-6 py-8 shadow-lg shadow-black/30 backdrop-blur-md transition hover:border-violet-400/25 hover:shadow-[0_0_40px_-12px_rgba(139,92,246,0.2)]"
+              className="rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm backdrop-blur-md transition hover:border-violet-300/60 hover:shadow-[0_0_40px_-20px_rgba(139,92,246,0.3)]"
             >
-              <p className="text-3xl font-semibold tabular-nums tracking-tight text-white sm:text-4xl">{s.val}</p>
-              <p className="mt-2 text-sm text-slate-400">{s.lab}</p>
+              <p className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900 sm:text-4xl">{s.val}</p>
+              <p className="mt-2 text-sm text-slate-600">{s.lab}</p>
             </motion.div>
           ))}
         </motion.div>

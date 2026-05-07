@@ -248,6 +248,48 @@ body {
   animation: pp-hero-noise-breathe 8s ease-in-out infinite;
 }
 
+/* Hero : lignes de couleur animées (fond WOW) — mobile */
+@keyframes pp-hero-color-lines-shift {
+  0% {
+    transform: translate3d(-3%, -1%, 0) skewY(-8deg);
+  }
+  50% {
+    transform: translate3d(4%, 1.5%, 0) skewY(-10deg);
+  }
+  100% {
+    transform: translate3d(-3%, -1%, 0) skewY(-8deg);
+  }
+}
+
+.pp-hero-color-lines-mobile {
+  position: absolute;
+  pointer-events: none;
+  inset: -8% -22%;
+  isolation: isolate;
+  mix-blend-mode: multiply;
+  /* Opacité fixe : pas d’animation d’opacité sur toute la couche (réduit les repaints). */
+  opacity: 0.58;
+  /* Un seul dégradé répété → moins de travail de composite que deux calques. */
+  background: repeating-linear-gradient(
+    115deg,
+    transparent,
+    transparent 46px,
+    rgba(167, 139, 250, 0.28) 46px,
+    rgba(167, 139, 250, 0.28) 48px,
+    transparent 48px,
+    transparent 118px,
+    rgba(61, 255, 138, 0.16) 118px,
+    rgba(61, 255, 138, 0.19) 120px,
+    transparent 120px,
+    transparent 196px,
+    rgba(56, 189, 248, 0.2) 196px,
+    rgba(56, 189, 248, 0.22) 198px,
+    transparent 198px
+  );
+  mask-image: radial-gradient(ellipse 88% 70% at 50% 40%, black 14%, transparent 72%);
+  animation: pp-hero-color-lines-shift 24s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pp-hero-gradient-flow,
   .pp-hero-sheen,
@@ -255,6 +297,103 @@ body {
   .pp-hero-grid-drift,
   .pp-hero-noise-breathe {
     animation: none !important;
+  }
+
+  .pp-hero-color-lines-mobile {
+    animation: none !important;
+    opacity: 0.32;
+    transform: none !important;
+  }
+}
+
+/* Traités par le navigateur comme animation CSS du stroke (sans Framer / layout JS). */
+@keyframes pp-hero-flow-dash-shift {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -1600;
+  }
+}
+
+.pp-hero-flow-path {
+  animation-name: pp-hero-flow-dash-shift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Indice de composition sans surcharger le transform centré (Tailwind). */
+.pp-hero-flow-lines-svg {
+  backface-visibility: hidden;
+}
+
+/*
+ * Hero mobile : aurora visible (comme l’ancienne version sombre) mais toujours
+ * en transform + opacity uniquement — pas de Framer / blur animé.
+ */
+@keyframes pp-hero-mobile-aurora-a {
+  0%,
+  100% {
+    transform: translate3d(-1.2%, 0%, 0) scale(1);
+    opacity: 0.62;
+  }
+  33% {
+    transform: translate3d(3%, 3.2%, 0) scale(1.09);
+    opacity: 0.82;
+  }
+  66% {
+    transform: translate3d(1%, -2.4%, 0) scale(1.04);
+    opacity: 0.7;
+  }
+}
+
+@keyframes pp-hero-mobile-aurora-b {
+  0%,
+  100% {
+    transform: translate3d(1.5%, 0%, 0) scale(1.03);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate3d(-3.5%, 2.8%, 0) scale(1.12);
+    opacity: 0.68;
+  }
+}
+
+.pp-hero-mobile-ambient {
+  isolation: isolate;
+}
+
+.pp-hero-mobile-ambient-layer {
+  pointer-events: none;
+  inset: -30%;
+}
+
+.pp-hero-mobile-ambient-layer--a {
+  background: radial-gradient(ellipse 88% 52% at 50% 38%, rgba(37, 99, 235, 0.36), rgba(59, 130, 246, 0.16) 38%, rgba(99, 102, 241, 0.06) 52%, transparent 68%),
+    radial-gradient(ellipse 78% 50% at 14% 72%, rgba(109, 40, 217, 0.22), rgba(139, 92, 246, 0.1) 45%, transparent 62%);
+  animation: pp-hero-mobile-aurora-a 17s ease-in-out infinite;
+}
+
+.pp-hero-mobile-ambient-layer--b {
+  background: radial-gradient(ellipse 90% 48% at 58% 16%, rgba(56, 189, 248, 0.22), rgba(14, 165, 233, 0.08) 42%, transparent 62%),
+    radial-gradient(ellipse 72% 46% at 90% 64%, rgba(61, 255, 138, 0.16), rgba(52, 211, 153, 0.06) 48%, transparent 58%);
+  animation: pp-hero-mobile-aurora-b 23s ease-in-out infinite;
+  animation-delay: -5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-hero-mobile-ambient-layer--a,
+  .pp-hero-mobile-ambient-layer--b {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .pp-hero-mobile-ambient-layer--a {
+    opacity: 0.72;
+  }
+
+  .pp-hero-mobile-ambient-layer--b {
+    opacity: 0.52;
   }
 }
 
@@ -313,6 +452,82 @@ body {
   }
 }
 
+/* Landing cartes / CTA — vagues gris & blanc tournantes (léger mobile : 1 transform / calque) */
+@keyframes pp-landing-wave-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pp-landing-wave-disk {
+  transform-origin: 50% 50%;
+}
+
+.pp-landing-wave-disk--a {
+  opacity: 0.72;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(248, 250, 252, 0) 0deg,
+    rgba(148, 163, 184, 0.14) 28deg,
+    rgba(226, 232, 240, 0.45) 56deg,
+    rgba(248, 250, 252, 0.35) 84deg,
+    rgba(241, 245, 249, 0) 118deg,
+    rgba(148, 163, 184, 0.1) 152deg,
+    rgba(248, 250, 252, 0.55) 188deg,
+    rgba(203, 213, 225, 0.2) 220deg,
+    rgba(248, 250, 252, 0) 268deg,
+    rgba(226, 232, 240, 0.38) 298deg,
+    rgba(148, 163, 184, 0.12) 330deg,
+    rgba(248, 250, 252, 0) 360deg
+  );
+  animation: pp-landing-wave-spin 38s linear infinite;
+}
+
+.pp-landing-wave-disk--b {
+  opacity: 0.52;
+  background: conic-gradient(
+    from 40deg at 50% 50%,
+    rgba(248, 250, 252, 0) 0deg,
+    rgba(203, 213, 225, 0.18) 42deg,
+    rgba(248, 250, 252, 0.5) 78deg,
+    rgba(226, 232, 240, 0.15) 118deg,
+    rgba(248, 250, 252, 0) 164deg,
+    rgba(148, 163, 184, 0.14) 202deg,
+    rgba(248, 250, 252, 0.42) 246deg,
+    rgba(226, 232, 240, 0.22) 294deg,
+    rgba(248, 250, 252, 0) 360deg
+  );
+  animation: pp-landing-wave-spin 54s linear infinite reverse;
+}
+
+@media (max-width: 639px) {
+  .pp-landing-wave-disk--a {
+    animation-duration: 52s;
+  }
+
+  .pp-landing-wave-disk--b {
+    animation-duration: 68s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-landing-wave-disk--a,
+  .pp-landing-wave-disk--b {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .pp-landing-wave-disk--a {
+    opacity: 0.52;
+    transform: rotate(120deg);
+  }
+
+  .pp-landing-wave-disk--b {
+    opacity: 0.38;
+    transform: rotate(-72deg);
+  }
+}
+
 /* Dashboard / marketing cards: lift + slight zoom on hover */
 .pp-dashboard-card-interactive {
   transition:
@@ -333,5 +548,151 @@ body {
   .pp-dashboard-card-interactive:hover {
     transform: none;
     box-shadow: none;
+  }
+}
+
+/* Landing — cartes « produit en images » : couleurs + mini-zoom sur l’illustration (pas la carte entière) */
+.pp-product-tour-card {
+  transition:
+    border-color 0.45s ease,
+    box-shadow 0.45s ease;
+}
+
+.pp-product-tour-card:hover {
+  border-color: rgba(139, 92, 246, 0.38);
+  box-shadow:
+    0 22px 50px -22px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(139, 92, 246, 0.14),
+    0 0 52px -14px rgba(139, 92, 246, 0.2);
+}
+
+.pp-product-tour-visual {
+  position: relative;
+  overflow: hidden;
+  background: #f1f5f9;
+  isolation: isolate;
+}
+
+.pp-product-tour-visual img.pp-product-tour-img {
+  transform-origin: center center;
+  transition:
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pp-product-tour-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  mix-blend-mode: multiply;
+  background: radial-gradient(ellipse 100% 85% at 50% 100%, rgba(139, 92, 246, 0.42), transparent 58%),
+    radial-gradient(circle at 82% 12%, rgba(61, 255, 138, 0.3), transparent 45%),
+    radial-gradient(circle at 12% 25%, rgba(56, 189, 248, 0.22), transparent 40%);
+}
+
+.pp-product-tour-shine {
+  pointer-events: none;
+  position: absolute;
+  inset: -25%;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  mix-blend-mode: soft-light;
+  background: linear-gradient(
+    118deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.2) 46%,
+    rgba(167, 139, 250, 0.35) 51%,
+    rgba(61, 255, 138, 0.15) 56%,
+    transparent 68%
+  );
+}
+
+.pp-product-tour-card[data-tour-accent="clients"] .pp-product-tour-glow {
+  background: radial-gradient(ellipse 100% 85% at 40% 100%, rgba(99, 102, 241, 0.38), transparent 58%),
+    radial-gradient(circle at 90% 20%, rgba(139, 92, 246, 0.28), transparent 48%);
+}
+
+.pp-product-tour-card[data-tour-accent="relances"] .pp-product-tour-glow {
+  background: radial-gradient(ellipse 100% 85% at 50% 100%, rgba(52, 211, 153, 0.35), transparent 58%),
+    radial-gradient(circle at 15% 18%, rgba(129, 140, 248, 0.3), transparent 46%);
+}
+
+.pp-product-tour-card[data-tour-accent="tresorerie"] .pp-product-tour-glow {
+  background: radial-gradient(ellipse 100% 85% at 55% 100%, rgba(56, 189, 248, 0.32), transparent 58%),
+    radial-gradient(circle at 20% 15%, rgba(167, 139, 250, 0.28), transparent 44%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-product-tour-card:hover .pp-product-tour-visual img.pp-product-tour-img {
+    transform: scale(1.065) translateY(-3px);
+    filter: saturate(1.38) brightness(1.06) contrast(1.05);
+    animation: pp-product-tour-img-drift 2.8s ease-in-out infinite;
+  }
+
+  .pp-product-tour-card:hover .pp-product-tour-glow {
+    opacity: 1;
+    animation: pp-product-tour-glow-pulse 2.2s ease-in-out infinite;
+  }
+
+  .pp-product-tour-card:hover .pp-product-tour-shine {
+    opacity: 1;
+    animation: pp-product-tour-shine-move 3s ease-in-out infinite;
+  }
+}
+
+@keyframes pp-product-tour-img-drift {
+  0%,
+  100% {
+    transform: scale(1.065) translateY(-3px) translateX(0);
+  }
+  50% {
+    transform: scale(1.065) translateY(-4px) translateX(1px);
+  }
+}
+
+@keyframes pp-product-tour-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.88;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    filter: hue-rotate(10deg) saturate(1.15);
+  }
+}
+
+@keyframes pp-product-tour-shine-move {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translate3d(-2%, 0, 0) rotate(-1deg);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate3d(5%, -3%, 0) rotate(1deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-product-tour-card:hover {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    border-color: #e2e8f0;
+  }
+
+  .pp-product-tour-card:hover .pp-product-tour-visual img.pp-product-tour-img {
+    transform: none;
+    filter: none;
+    animation: none;
+  }
+
+  .pp-product-tour-card:hover .pp-product-tour-glow,
+  .pp-product-tour-card:hover .pp-product-tour-shine {
+    opacity: 0 !important;
+    animation: none !important;
   }
 }

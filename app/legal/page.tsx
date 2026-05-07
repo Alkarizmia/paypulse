@@ -40,6 +40,18 @@ export default function LegalPage() {
         relecture juridique est recommandée.
       </p>
       <p className="mt-2 text-sm text-slate-500">Dernière mise à jour de cette page index : 21 avril 2026.</p>
+      <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+        <p className="font-semibold">Informations légales (temporaire)</p>
+        <p className="mt-2">Fondateur : El Fahmi Bilal</p>
+        <p>Responsable légale : Ikram El Fahmi</p>
+        <p>
+          Email :{" "}
+          <a href="mailto:contact@paypulss.com?subject=Contact%20Paypulss" className="underline hover:text-amber-800">
+            contact@paypulss.com
+          </a>
+        </p>
+        <p>Société : À compléter après immatriculation</p>
+      </div>
 
       <ul className="mt-10 grid gap-4 sm:grid-cols-2">
         {links.map((item) => (

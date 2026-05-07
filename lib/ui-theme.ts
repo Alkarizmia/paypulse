@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type UiThemePreference = "dark" | "light" | "system";
+/** Thème après résolution (`system` + préférence stockée). */
+export type UiResolvedAppearance = "light" | "dark";
 const THEME_STORAGE_KEY = "paypulss_ui_theme_pref_v1";
 const THEME_EVENT_NAME = "paypulss:ui-theme-changed";
 
@@ -10,7 +12,7 @@ export function resolveUiTheme(pref: UiThemePreference, systemIsDark: boolean): 
 }
 
 export function usePrefersColorSchemeDark(): boolean {
-  const [v, setV] = useState(true);
+  const [v, setV] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -43,4 +45,14 @@ export function subscribeUiThemePreferenceChange(onChange: (pref: UiThemePrefere
   };
   window.addEventListener(THEME_EVENT_NAME, handler as EventListener);
   return () => window.removeEventListener(THEME_EVENT_NAME, handler as EventListener);
+}
+
+/** Même logique que `DashboardShell` / `DashboardView` quand `appearance` n’est pas forcé — pour styler le contenu des sous-pages. */
+export function useResolvedUiAppearance(): UiResolvedAppearance {
+  const systemDark = usePrefersColorSchemeDark();
+  const [pref, setPref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "light");
+  useEffect(() => {
+    return subscribeUiThemePreferenceChange(setPref);
+  }, []);
+  return useMemo(() => (resolveUiTheme(pref, systemDark) === "light" ? "light" : "dark"), [pref, systemDark]);
 }

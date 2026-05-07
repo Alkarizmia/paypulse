@@ -63,7 +63,7 @@ export function ReminderTemplatesView() {
   const [historyRows, setHistoryRows] = useState<ReminderHistoryRow[]>([]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const systemDark = usePrefersColorSchemeDark();
-  const [uiThemePref, setUiThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "dark");
+  const [uiThemePref, setUiThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "light");
   const shellAppearance = useMemo(() => (resolveUiTheme(uiThemePref, systemDark) === "light" ? "light" : "dark"), [
     uiThemePref,
     systemDark,
@@ -441,7 +441,7 @@ export function ReminderTemplatesView() {
           hideTrashNav={memberReadOnly}
           appearance={shellAppearance}
         >
-          <p className="text-sm text-slate-400">…</p>
+          <p className={`text-sm ${shellAppearance === "light" ? "text-slate-600" : "text-slate-400"}`}>…</p>
         </DashboardShell>
       </div>
     );
@@ -463,14 +463,17 @@ export function ReminderTemplatesView() {
         >
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-bold text-white">{t.pageTitle}</h2>
-              <Link href="/dashboard" className="text-sm font-medium text-violet-300 hover:text-violet-200">
+              <h2 className={`text-xl font-bold ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>{t.pageTitle}</h2>
+              <Link
+                href="/dashboard"
+                className={shellAppearance === "light" ? "text-sm font-medium text-violet-700 hover:text-violet-600" : "text-sm font-medium text-violet-300 hover:text-violet-200"}
+              >
                 ← {t.back}
               </Link>
             </div>
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-950/25 p-6 text-sm text-amber-50">
-              <p className="font-semibold text-amber-200">{t.upgradeTitle}</p>
-              <p className="mt-2 text-amber-100/90">{t.upgradeBody}</p>
+            <div className={shellAppearance === "light" ? "rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900" : "rounded-2xl border border-amber-500/30 bg-amber-950/25 p-6 text-sm text-amber-50"}>
+              <p className={shellAppearance === "light" ? "font-semibold text-amber-900" : "font-semibold text-amber-200"}>{t.upgradeTitle}</p>
+              <p className={shellAppearance === "light" ? "mt-2 text-amber-800" : "mt-2 text-amber-100/90"}>{t.upgradeBody}</p>
               <Link
                 href="/#pricing"
                 className="mt-4 inline-flex rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-500"
@@ -598,11 +601,17 @@ export function ReminderTemplatesView() {
             </span>
           </div>
 
-          <section className="rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/40 to-violet-950/30 p-6">
+          <section
+            className={
+              shellAppearance === "light"
+                ? "rounded-2xl border border-violet-200 bg-violet-50 p-6"
+                : "rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/40 to-violet-950/30 p-6"
+            }
+          >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-semibold text-fuchsia-100">{t.aiTitle}</h3>
-                <p className="mt-2 text-sm text-slate-300">{t.aiHint}</p>
+                <h3 className={`text-sm font-semibold ${shellAppearance === "light" ? "text-violet-900" : "text-fuchsia-100"}`}>{t.aiTitle}</h3>
+                <p className={`mt-2 text-sm ${shellAppearance === "light" ? "text-slate-700" : "text-slate-300"}`}>{t.aiHint}</p>
                 {caps.aiReminderDrafts ? (
                   <div className="mt-4 space-y-3 rounded-xl border border-white/[0.08] bg-black/25 p-4">
                     <p className="text-xs font-semibold text-fuchsia-50/90">{t.aiParamsTitle}</p>
@@ -700,10 +709,10 @@ export function ReminderTemplatesView() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-white/[0.08] bg-[#14141c] p-6">
-            <h3 className="text-sm font-semibold text-white">{t.historyTitle}</h3>
+          <section className={shellAppearance === "light" ? "rounded-2xl border border-slate-200 bg-white p-6" : "rounded-2xl border border-white/[0.08] bg-[#14141c] p-6"}>
+            <h3 className={shellAppearance === "light" ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-white"}>{t.historyTitle}</h3>
             {historyLoading ? (
-              <p className="mt-3 text-xs text-slate-400">{t.historyLoading}</p>
+              <p className={shellAppearance === "light" ? "mt-3 text-xs text-slate-600" : "mt-3 text-xs text-slate-400"}>{t.historyLoading}</p>
             ) : historyRows.length === 0 ? (
               <p className="mt-3 text-xs text-slate-500">{t.historyEmpty}</p>
             ) : (
@@ -725,14 +734,29 @@ export function ReminderTemplatesView() {
                                 : t.historySkipped;
                   const toneClass =
                     row.event_type === "sent"
-                      ? "text-emerald-300"
+                      ? shellAppearance === "light"
+                        ? "text-emerald-700"
+                        : "text-emerald-300"
                       : row.event_type === "failed"
-                        ? "text-red-300"
+                        ? shellAppearance === "light"
+                          ? "text-red-700"
+                          : "text-red-300"
                         : row.event_type === "skipped_duplicate_email"
-                          ? "text-amber-300"
-                          : "text-slate-300";
+                          ? shellAppearance === "light"
+                            ? "text-amber-700"
+                            : "text-amber-300"
+                          : shellAppearance === "light"
+                            ? "text-slate-700"
+                            : "text-slate-300";
                   return (
-                    <li key={row.id} className="rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2 text-xs text-slate-300">
+                    <li
+                      key={row.id}
+                      className={
+                        shellAppearance === "light"
+                          ? "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                          : "rounded-lg border border-white/[0.08] bg-black/20 px-3 py-2 text-xs text-slate-300"
+                      }
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className={`font-semibold ${toneClass}`}>{eventLabel}</span>
                         <span className="text-slate-500">{new Date(row.created_at).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}</span>

@@ -14,6 +14,17 @@ export default function MentionsLegalesPage() {
         identifient l&apos;éditeur du site et l&apos;hébergeur.{" "}
         <strong>Remplacez tous les champs […] avant mise en ligne.</strong>
       </p>
+      <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+        <strong>Informations légales (temporaire)</strong>
+        <br />
+        Fondateur : El Fahmi Bilal
+        <br />
+        Responsable légale : Ikram El Fahmi
+        <br />
+        Email : contact@paypulss.com
+        <br />
+        Société : À compléter après immatriculation
+      </p>
 
       <h2>1. Éditeur du site et du service</h2>
       <ul>

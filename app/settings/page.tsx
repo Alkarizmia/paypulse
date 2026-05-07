@@ -34,7 +34,7 @@ function emptyProfile(locale: "fr" | "en"): ProfileForm {
     country: "",
     language: locale,
     autoRemindersEnabled: true,
-    uiTheme: "dark",
+    uiTheme: "light",
     activeWorkspaceId: null,
   };
 }
@@ -268,8 +268,8 @@ export default function SettingsPage() {
                 }}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
               >
-                <option value="dark">{locale === "fr" ? "Mode sombre" : "Dark mode"}</option>
                 <option value="light">{locale === "fr" ? "Mode clair" : "Light mode"}</option>
+                <option value="dark">{locale === "fr" ? "Mode sombre" : "Dark mode"}</option>
                 <option value="system">{locale === "fr" ? "Selon l’appareil" : "Match device"}</option>
               </select>
               <p className="mt-1 text-xs text-slate-500">

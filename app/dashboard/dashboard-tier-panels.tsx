@@ -1,10 +1,12 @@
 "use client";
 
 import type { PlanCapabilities } from "@/lib/plans";
+import type { UiResolvedAppearance } from "@/lib/ui-theme";
 
 type Props = {
   locale: "fr" | "en";
   caps: PlanCapabilities;
+  appearance: UiResolvedAppearance;
   /** Préférence utilisateur (toggle) — combinée avec caps.autoReminders. */
   autoRemindersUserEnabled?: boolean;
   onAutoRemindersUserEnabledChange?: (enabled: boolean) => void;
@@ -59,33 +61,45 @@ function getTierCopy(locale: "fr" | "en") {
 export function DashboardRelancePanel({
   locale,
   caps,
+  appearance,
   autoRemindersUserEnabled = true,
   onAutoRemindersUserEnabledChange,
 }: Props) {
   const t = getTierCopy(locale);
+  const light = appearance === "light";
   const planAllows = caps.autoReminders;
   const effective = planAllows && autoRemindersUserEnabled;
 
   const detailText = !planAllows ? t.relanceFree : effective ? t.relanceExplainOn : t.relanceExplainOff;
 
   return (
-    <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-6 shadow-[0_0_40px_-12px_rgba(139,92,246,0.25)] hover:border-violet-500/25">
+    <section
+      className={`pp-dashboard-card-interactive rounded-2xl border p-6 ${
+        light
+          ? "border-slate-200 bg-white shadow-sm hover:border-violet-300/60"
+          : "border-white/[0.08] bg-[#14141c] shadow-none hover:border-violet-500/35"
+      }`}
+    >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold text-white">{t.relanceTitle}</h2>
-            <p className="mt-1 text-xs leading-relaxed text-slate-400">{t.relanceLead}</p>
+            <h2 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.relanceTitle}</h2>
+            <p className={`mt-1 text-xs leading-relaxed ${light ? "text-slate-600" : "text-slate-400"}`}>{t.relanceLead}</p>
           </div>
           {planAllows && onAutoRemindersUserEnabledChange ? (
-            <div className="flex shrink-0 flex-col items-end gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2">
+            <div
+              className={`flex shrink-0 flex-col items-end gap-1.5 rounded-xl border px-3 py-2 ${
+                light ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/35"
+              }`}
+            >
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-slate-300">{t.relanceToggle}</span>
+                <span className={`text-xs font-medium ${light ? "text-slate-700" : "text-slate-300"}`}>{t.relanceToggle}</span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={autoRemindersUserEnabled}
                   onClick={() => onAutoRemindersUserEnabledChange(!autoRemindersUserEnabled)}
-                  className={`relative h-7 w-12 shrink-0 rounded-full transition ${autoRemindersUserEnabled ? "bg-violet-600" : "bg-slate-600"}`}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition ${autoRemindersUserEnabled ? "bg-violet-600" : "bg-slate-300"}`}
                 >
                   <span
                     className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${autoRemindersUserEnabled ? "left-5" : "left-0.5"}`}
@@ -95,7 +109,11 @@ export function DashboardRelancePanel({
             </div>
           ) : null}
         </div>
-        <div className="rounded-xl border border-white/[0.08] bg-[#1a1a22] px-4 py-3 text-left text-xs leading-relaxed text-slate-400">
+        <div
+          className={`rounded-xl border px-4 py-3 text-left text-xs leading-relaxed ${
+            light ? "border-slate-200 bg-slate-50 text-slate-600" : "border-white/10 bg-black/25 text-slate-300"
+          }`}
+        >
           {detailText}
         </div>
       </div>
@@ -103,8 +121,9 @@ export function DashboardRelancePanel({
   );
 }
 
-export function DashboardAddonTierPanels({ locale, caps, workspaces: workspaceList }: Props) {
+export function DashboardAddonTierPanels({ locale, caps, appearance, workspaces: workspaceList }: Props) {
   const t = getTierCopy(locale);
+  const light = appearance === "light";
   if (!caps.multiWorkspace && !caps.teamManagement && !caps.advancedAutomation) {
     return null;
   }
@@ -113,14 +132,21 @@ export function DashboardAddonTierPanels({ locale, caps, workspaces: workspaceLi
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-3">
         {caps.multiWorkspace ? (
-          <section className="pp-dashboard-card-interactive rounded-2xl border border-rose-500/25 bg-rose-950/20 p-5 hover:border-rose-400/40">
-            <h2 className="text-sm font-semibold text-rose-100">{t.workspaceTitle}</h2>
+          <section
+            className={`pp-dashboard-card-interactive rounded-2xl border p-5 ${
+              light ? "border-rose-200 bg-rose-50 hover:border-rose-300" : "border-rose-500/30 bg-rose-950/30 hover:border-rose-400/35"
+            }`}
+          >
+            <h2 className={`text-sm font-semibold ${light ? "text-rose-900" : "text-rose-200"}`}>{t.workspaceTitle}</h2>
             {wsRows.length === 0 ? (
-              <p className="mt-3 text-xs text-slate-400">{t.wsEmpty}</p>
+              <p className={`mt-3 text-xs ${light ? "text-slate-600" : "text-slate-400"}`}>{t.wsEmpty}</p>
             ) : (
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+              <ul className={`mt-3 space-y-2 text-sm ${light ? "text-slate-700" : "text-slate-200"}`}>
                 {wsRows.map((w) => (
-                  <li key={w.id} className="rounded-lg bg-white/[0.04] px-3 py-2">
+                  <li
+                    key={w.id}
+                    className={`rounded-lg px-3 py-2 ${light ? "bg-white" : "border border-white/10 bg-black/35"}`}
+                  >
                     {w.name}
                   </li>
                 ))}
@@ -129,15 +155,23 @@ export function DashboardAddonTierPanels({ locale, caps, workspaces: workspaceLi
           </section>
         ) : null}
         {caps.teamManagement ? (
-          <section className="pp-dashboard-card-interactive rounded-2xl border border-rose-500/25 bg-rose-950/20 p-5 hover:border-rose-400/40">
-            <h2 className="text-sm font-semibold text-rose-100">{t.teamTitle}</h2>
-            <p className="mt-2 text-xs leading-relaxed text-slate-400">{t.teamBody}</p>
+          <section
+            className={`pp-dashboard-card-interactive rounded-2xl border p-5 ${
+              light ? "border-rose-200 bg-rose-50 hover:border-rose-300" : "border-rose-500/30 bg-rose-950/30 hover:border-rose-400/35"
+            }`}
+          >
+            <h2 className={`text-sm font-semibold ${light ? "text-rose-900" : "text-rose-200"}`}>{t.teamTitle}</h2>
+            <p className={`mt-2 text-xs leading-relaxed ${light ? "text-slate-700" : "text-slate-300"}`}>{t.teamBody}</p>
           </section>
         ) : null}
         {caps.advancedAutomation ? (
-          <section className="pp-dashboard-card-interactive rounded-2xl border border-rose-500/25 bg-rose-950/20 p-5 lg:col-span-1 hover:border-rose-400/40">
-            <h2 className="text-sm font-semibold text-rose-100">{t.autoTitle}</h2>
-            <p className="mt-2 text-xs leading-relaxed text-slate-400">{t.autoBody}</p>
+          <section
+            className={`pp-dashboard-card-interactive rounded-2xl border p-5 lg:col-span-1 ${
+              light ? "border-rose-200 bg-rose-50 hover:border-rose-300" : "border-rose-500/30 bg-rose-950/30 hover:border-rose-400/35"
+            }`}
+          >
+            <h2 className={`text-sm font-semibold ${light ? "text-rose-900" : "text-rose-200"}`}>{t.autoTitle}</h2>
+            <p className={`mt-2 text-xs leading-relaxed ${light ? "text-slate-700" : "text-slate-300"}`}>{t.autoBody}</p>
           </section>
         ) : null}
       </div>

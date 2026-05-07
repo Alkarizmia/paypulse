@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useLayoutEffect, useState } from "react";
 
 /** Petites étincelles — positions %, durée s, opacité max */
 const SPARKS = [
@@ -14,23 +15,137 @@ const SPARKS = [
   { x: 92, y: 42, d: 4.2, s: 0.15 },
 ] as const;
 
+/** Lignes courbes multicouleurs — animation CSS sur `stroke-dashoffset` (moins cher que Framer sur le fil JS). Quatre traits seulement pour limiter les couches peintes. */
+function HeroColorFlowLines() {
+  const paths = [
+    {
+      d: "M -90 486 C 210 538, 352 298, 612 418 S 968 548, 1310 392",
+      dash: "16 132 4 198",
+      width: 2.2,
+      dur: 26,
+      delay: 0,
+      grad: "pp-hero-flow-g1",
+    },
+    {
+      d: "M 1280 168 C 940 248, 712 118, 468 278 S 188 508, -80 362",
+      dash: "10 168 14 142",
+      width: 1.85,
+      dur: 22,
+      delay: -4,
+      grad: "pp-hero-flow-g2",
+    },
+    {
+      d: "M 160 772 C 388 628, 528 758, 718 582 S 1028 298, 1260 468",
+      dash: "22 116 8 174",
+      width: 2.05,
+      dur: 28,
+      delay: -7,
+      grad: "pp-hero-flow-g3",
+    },
+    {
+      d: "M -40 268 C 228 392, 412 208, 608 332 S 912 442, 1240 276",
+      dash: "12 188 18 156",
+      width: 1.55,
+      dur: 24,
+      delay: -2,
+      grad: "pp-hero-flow-g4",
+    },
+  ] as const;
+
+  return (
+    <svg
+      className="pp-hero-flow-lines-svg absolute left-1/2 top-[38%] z-[1] h-[min(88vh,820px)] w-[min(135%,1500px)] -translate-x-1/2 -translate-y-1/2 overflow-visible opacity-[0.62] [mix-blend-mode:soft-light]"
+      viewBox="0 0 1200 780"
+      fill="none"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="pp-hero-flow-g1" x1="0%" y1="50%" x2="100%" y2="50%">
+          <stop offset="0%" stopColor="#a855f7" stopOpacity="0.95" />
+          <stop offset="45%" stopColor="#3DFF8A" stopOpacity="0.88" />
+          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.9" />
+        </linearGradient>
+        <linearGradient id="pp-hero-flow-g2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.92" />
+          <stop offset="55%" stopColor="#f472b6" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#c084fc" stopOpacity="0.85" />
+        </linearGradient>
+        <linearGradient id="pp-hero-flow-g3" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#34d399" stopOpacity="0.75" />
+          <stop offset="50%" stopColor="#3DFF8A" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.8" />
+        </linearGradient>
+        <linearGradient id="pp-hero-flow-g4" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#fb923c" stopOpacity="0.45" />
+          <stop offset="40%" stopColor="#a78bfa" stopOpacity="0.78" />
+          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.65" />
+        </linearGradient>
+      </defs>
+      {paths.map((p, i) => (
+        <path
+          key={i}
+          className="pp-hero-flow-path"
+          d={p.d}
+          stroke={`url(#${p.grad})`}
+          strokeWidth={p.width}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={p.dash}
+          style={{
+            animationDuration: `${p.dur}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+    </svg>
+  );
+}
+
 /**
  * Fond hero animé (sans Spline) : mesh, sheen CSS, particules, anneaux SVG,
  * grille + grain. Animations lentes, premium ; désactivées si reduced-motion.
  */
+function useHeroMobileCoarse(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const apply = () => setCoarse(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return coarse;
+}
+
 export function HeroAmbientVisual() {
   const reduce = useReducedMotion();
+  const mobile = useHeroMobileCoarse();
 
+  /** Reduced motion : halos statiques. */
   if (reduce) {
     return (
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
         <div
-          className="absolute inset-0 opacity-50"
+          className="absolute inset-0 opacity-[0.72]"
           style={{
             background:
-              "radial-gradient(ellipse 90% 55% at 50% 42%, rgba(37,99,235,0.28), rgba(30,64,175,0.08) 45%, transparent 62%), radial-gradient(ellipse 85% 50% at 50% 18%, rgba(139,92,246,0.16), transparent 58%), radial-gradient(ellipse 70% 45% at 85% 75%, rgba(61,255,138,0.08), transparent 55%)",
+              "radial-gradient(ellipse 88% 52% at 50% 40%, rgba(37,99,235,0.45), rgba(59,130,246,0.16) 40%, transparent 66%), radial-gradient(ellipse 82% 48% at 50% 14%, rgba(109,40,217,0.22), rgba(139,92,246,0.1) 38%, transparent 58%), radial-gradient(ellipse 68% 42% at 88% 72%, rgba(61,255,138,0.14), transparent 54%)",
           }}
         />
+      </div>
+    );
+  }
+
+  /**
+   * Mobile : aurora CSS continue (keyframes transform + opacity) — évite JS + blur animés
+   * pour limiter les saccades sur appareils tactiles modestes.
+   */
+  if (mobile) {
+    return (
+      <div className="pp-hero-mobile-ambient pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
+        <div className="pp-hero-mobile-ambient-layer pp-hero-mobile-ambient-layer--a absolute rounded-[48%]" />
+        <div className="pp-hero-mobile-ambient-layer pp-hero-mobile-ambient-layer--b absolute rounded-[48%]" />
+        <div className="pp-hero-color-lines-mobile" />
       </div>
     );
   }
@@ -42,11 +157,11 @@ export function HeroAmbientVisual() {
         className="absolute left-1/2 top-[40%] h-[min(95vmin,920px)] w-[min(110vmin,1040px)] -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 45%, rgba(59,130,246,0.42) 0%, rgba(37,99,235,0.2) 28%, rgba(30,58,138,0.08) 48%, transparent 68%)",
+            "radial-gradient(ellipse at 50% 45%, rgba(59,130,246,0.58) 0%, rgba(37,99,235,0.28) 28%, rgba(30,58,138,0.12) 48%, transparent 68%)",
           filter: "blur(48px)",
         }}
         animate={{
-          opacity: [0.55, 0.85, 0.62, 0.78, 0.55],
+          opacity: [0.68, 0.98, 0.78, 0.92, 0.68],
           scale: [1, 1.04, 0.98, 1.02, 1],
         }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
@@ -54,25 +169,27 @@ export function HeroAmbientVisual() {
 
       {/* Flux de couleur large (CSS) */}
       <div
-        className="pp-hero-gradient-flow absolute inset-[-25%] opacity-[0.28]"
+        className="pp-hero-gradient-flow absolute inset-[-25%] opacity-[0.44]"
         style={{
           backgroundImage:
-            "linear-gradient(118deg, rgba(109,40,217,0.45) 0%, transparent 28%, rgba(61,255,138,0.22) 42%, transparent 58%, rgba(56,189,248,0.28) 72%, rgba(167,139,250,0.2) 88%, transparent 100%)",
+            "linear-gradient(118deg, rgba(109,40,217,0.55) 0%, transparent 26%, rgba(61,255,138,0.32) 42%, transparent 56%, rgba(56,189,248,0.38) 72%, rgba(167,139,250,0.32) 88%, transparent 100%)",
           filter: "blur(1px)",
         }}
       />
+
+      <HeroColorFlowLines />
 
       {/* Blobs volumétriques — mouvements plus lisibles */}
       <motion.div
         className="absolute -left-[18%] top-[-8%] h-[min(78%,620px)] w-[min(78vw,620px)] rounded-full"
         style={{
-          background: "radial-gradient(circle at 42% 42%, rgba(167,139,250,0.5), rgba(109,40,217,0.14) 48%, transparent 68%)",
+          background: "radial-gradient(circle at 42% 42%, rgba(167,139,250,0.62), rgba(109,40,217,0.22) 48%, transparent 68%)",
           filter: "blur(72px)",
         }}
         animate={{
           x: [0, 48, -28, 12, 0],
           y: [0, 28, 18, -8, 0],
-          opacity: [0.22, 0.38, 0.28, 0.32, 0.22],
+          opacity: [0.34, 0.52, 0.4, 0.46, 0.34],
           scale: [1, 1.1, 0.94, 1.04, 1],
         }}
         transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
@@ -80,13 +197,13 @@ export function HeroAmbientVisual() {
       <motion.div
         className="absolute -right-[12%] top-[18%] h-[min(62%,520px)] w-[min(65vw,520px)] rounded-full"
         style={{
-          background: "radial-gradient(circle at 48% 48%, rgba(61,255,138,0.34), rgba(52,211,153,0.12) 42%, transparent 65%)",
+          background: "radial-gradient(circle at 48% 48%, rgba(61,255,138,0.46), rgba(52,211,153,0.18) 42%, transparent 65%)",
           filter: "blur(64px)",
         }}
         animate={{
           x: [0, -40, 24, -12, 0],
           y: [0, 22, -14, 16, 0],
-          opacity: [0.16, 0.32, 0.22, 0.28, 0.16],
+          opacity: [0.26, 0.46, 0.34, 0.4, 0.26],
           scale: [1.06, 0.92, 1.08, 1, 1.06],
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: -3 }}
@@ -94,11 +211,11 @@ export function HeroAmbientVisual() {
       <motion.div
         className="absolute bottom-[-8%] left-1/2 h-[min(50%,420px)] w-[min(90vw,720px)] -translate-x-1/2 rounded-full"
         style={{
-          background: "radial-gradient(circle at 50% 40%, rgba(56,189,248,0.22), rgba(139,92,246,0.14) 45%, transparent 62%)",
+          background: "radial-gradient(circle at 50% 40%, rgba(56,189,248,0.34), rgba(139,92,246,0.22) 45%, transparent 62%)",
           filter: "blur(70px)",
         }}
         animate={{
-          opacity: [0.14, 0.28, 0.18, 0.24, 0.14],
+          opacity: [0.24, 0.42, 0.32, 0.38, 0.24],
           scale: [1, 1.12, 0.96, 1.06, 1],
           x: ["-50%", "-48%", "-52%", "-50%"],
         }}
@@ -128,16 +245,16 @@ export function HeroAmbientVisual() {
           background:
             "linear-gradient(118deg, transparent 38%, rgba(251,146,60,0.55) 49%, rgba(244,114,182,0.38) 51.5%, transparent 62%)",
         }}
-        animate={{ rotate: [-4, 8, -2, -4], opacity: [0.06, 0.14, 0.09, 0.06] }}
+        animate={{ rotate: [-4, 8, -2, -4], opacity: [0.1, 0.22, 0.14, 0.1] }}
         transition={{ duration: 32, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute left-1/2 top-1/2 aspect-square w-[min(120vw,1100px)] -translate-x-1/2 -translate-y-1/2"
         style={{
           background:
-            "linear-gradient(72deg, transparent 40%, rgba(167,139,250,0.55) 50%, rgba(61,255,138,0.3) 52%, transparent 64%)",
+            "linear-gradient(72deg, transparent 40%, rgba(167,139,250,0.62) 50%, rgba(61,255,138,0.38) 52%, transparent 64%)",
         }}
-        animate={{ rotate: [2, -10, 4, 2], opacity: [0.05, 0.12, 0.07, 0.05] }}
+        animate={{ rotate: [2, -10, 4, 2], opacity: [0.09, 0.2, 0.12, 0.09] }}
         transition={{ duration: 40, repeat: Infinity, ease: "easeInOut", delay: -6 }}
       />
 
@@ -168,7 +285,7 @@ export function HeroAmbientVisual() {
 
       {/* Anneaux SVG — rotation + pulsation */}
       <svg
-        className="absolute left-1/2 top-[42%] h-[min(70vmin,520px)] w-[min(70vmin,520px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.18]"
+        className="absolute left-1/2 top-[42%] h-[min(70vmin,520px)] w-[min(70vmin,520px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.3]"
         viewBox="0 0 400 400"
         fill="none"
       >
@@ -191,7 +308,7 @@ export function HeroAmbientVisual() {
             fill="none"
             stroke="url(#pp-hero-ring)"
             strokeWidth="1.25"
-            animate={{ strokeOpacity: [0.28, 0.55, 0.32, 0.5, 0.28] }}
+            animate={{ strokeOpacity: [0.38, 0.68, 0.44, 0.6, 0.38] }}
             transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
           />
         </motion.g>
@@ -222,10 +339,10 @@ export function HeroAmbientVisual() {
         }}
       />
       <div
-        className="pp-hero-grid-drift absolute inset-0 opacity-[0.055]"
+        className="pp-hero-grid-drift absolute inset-0 opacity-[0.09]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
+            "linear-gradient(rgba(100,116,139,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(100,116,139,0.11) 1px, transparent 1px)",
           backgroundSize: "72px 72px",
           maskImage: "radial-gradient(ellipse 78% 72% at 50% 38%, black 12%, transparent 74%)",
         }}

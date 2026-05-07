@@ -73,6 +73,27 @@ function newId() {
   return String(Date.now());
 }
 
+async function triggerOverdueScan(params: {
+  supabase: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>;
+  workspaceId: string;
+  ownerUserId: string;
+}): Promise<void> {
+  const { data } = await params.supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return;
+  await fetch("/api/overdue/scan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      workspaceId: params.workspaceId,
+      ownerUserId: params.ownerUserId,
+    }),
+  });
+}
+
 type ReminderToast = { tone: "info" | "warn"; text: string };
 
 function buildManualReminderDraftFields(
@@ -174,7 +195,7 @@ export function DashboardView() {
   };
   const [advanceModal, setAdvanceModal] = useState<AdvanceModalState | null>(null);
   const systemDark = usePrefersColorSchemeDark();
-  const [uiThemePref, setUiThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "dark");
+  const [uiThemePref, setUiThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "light");
   const shellAppearance = useMemo(() => (resolveUiTheme(uiThemePref, systemDark) === "light" ? "light" : "dark"), [
     uiThemePref,
     systemDark,
@@ -228,6 +249,13 @@ export function DashboardView() {
         setPlan(currentPlan);
         setClients(list);
         setTrashedClients(trash);
+        if (list.some((c) => c.status === "unpaid" && c.dueDate <= new Date().toISOString().slice(0, 10))) {
+          void triggerOverdueScan({
+            supabase,
+            workspaceId: ws.activeWorkspaceId,
+            ownerUserId: billUserId,
+          });
+        }
       } else {
         const all = loadLocalClientStore();
         setClients(all.filter((c) => !c.deletedAt));
@@ -839,33 +867,30 @@ export function DashboardView() {
         appearance={shellAppearance}
       >
         {envHint ? (
-          <div
-            className="mb-6 rounded-xl border border-sky-500/30 bg-sky-950/40 px-4 py-3 text-sm text-sky-100"
-            role="status"
-          >
-            <strong className="font-semibold text-white">Supabase (optionnel).</strong> {envHint}{" "}
-            <span className="text-sky-200/90">
+          <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900" role="status">
+            <strong className="font-semibold text-sky-950">Supabase (optionnel).</strong> {envHint}{" "}
+            <span className="text-sky-800">
               Mode local : données dans ce navigateur. Exécutez{" "}
-              <code className="rounded bg-black/30 px-1 py-0.5 text-xs">supabase/schema.sql</code> pour la table{" "}
-              <code className="rounded bg-black/30 px-1 py-0.5 text-xs">clients</code>.
+              <code className="rounded bg-sky-100 px-1 py-0.5 text-xs">supabase/schema.sql</code> pour la table{" "}
+              <code className="rounded bg-sky-100 px-1 py-0.5 text-xs">clients</code>.
             </span>
           </div>
         ) : null}
 
         {loadError && supabaseReady ? (
-          <div className="mb-6 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-100" role="alert">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
             <strong className="font-semibold">Erreur Supabase.</strong> {loadError}
           </div>
         ) : null}
 
         {addError ? (
-          <div className="mb-6 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-100" role="alert">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
             <strong className="font-semibold">Ajout impossible.</strong> {addError}
           </div>
         ) : null}
 
         {planNotice ? (
-          <div className="mb-6 rounded-xl border border-emerald-500/35 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-100" role="status">
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
             <strong className="font-semibold">{planNotice}</strong>
           </div>
         ) : null}
@@ -875,13 +900,13 @@ export function DashboardView() {
             ref={reminderAlertRef}
             className={`scroll-mt-24 mb-6 rounded-xl border px-4 py-3 text-sm ${
               reminderToast.tone === "info"
-                ? "border-emerald-500/35 bg-emerald-950/40 text-emerald-100"
-                : "border-amber-500/40 bg-amber-950/35 text-amber-50"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-200 bg-amber-50 text-amber-900"
             }`}
             role="status"
             aria-live="polite"
           >
-            <strong className="block font-semibold text-white">
+            <strong className="block font-semibold text-slate-900">
               {reminderToast.tone === "info"
                 ? locale === "fr"
                   ? "Relance envoyée"
@@ -893,8 +918,8 @@ export function DashboardView() {
             <span
               className={
                 reminderToast.tone === "info"
-                  ? "mt-1 block text-emerald-100/95"
-                  : "mt-1 block text-amber-50/95"
+                  ? "mt-1 block text-emerald-800"
+                  : "mt-1 block text-amber-800"
               }
             >
               {reminderToast.text}
@@ -903,25 +928,25 @@ export function DashboardView() {
         ) : null}
 
         {reminderMailHardError ? (
-          <div className="mb-6 rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-100" role="alert">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
             <strong className="font-semibold">{locale === "fr" ? "Relance." : "Reminder."}</strong> {reminderMailHardError}
           </div>
         ) : null}
 
         {isFreePlan ? (
-          <div className="mb-6 rounded-xl border border-amber-500/35 bg-amber-950/35 px-4 py-3 text-sm text-amber-50">
-            <span className="font-semibold text-amber-200">FREE</span> —{" "}
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <span className="font-semibold text-amber-950">FREE</span> —{" "}
             {locale === "fr" ? "Quotas : " : "Limits: "}
-            <span className="tabular-nums text-white">
+            <span className="tabular-nums text-amber-950">
               {quotaDistinctEmails}/{FREE_TIER_MAX_CLIENTS}{" "}
               {locale === "fr" ? "clients distincts" : "distinct clients"}
             </span>
             {" · "}
-            <span className="tabular-nums text-white">
+            <span className="tabular-nums text-amber-950">
               {clientCount}/{FREE_TIER_MAX_INVOICES} {locale === "fr" ? "factures" : "invoices"}
             </span>
             {quotaDistinctEmails >= FREE_TIER_MAX_CLIENTS && clientCount < FREE_TIER_MAX_INVOICES ? (
-              <p className="mt-2 text-xs text-amber-200/90">
+              <p className="mt-2 text-xs text-amber-800">
                 {locale === "fr"
                   ? "Vous pouvez encore ajouter des factures pour les e-mails déjà connus."
                   : "You can still add invoices for emails already on file."}
@@ -936,10 +961,12 @@ export function DashboardView() {
             locale={locale}
             fullCharts={caps.fullDashboardCharts}
             advancedStats={caps.advancedStats}
+            appearance={shellAppearance}
           />
           <DashboardAddonTierPanels
             locale={locale}
             caps={caps}
+            appearance={shellAppearance}
             workspaces={supabase && ws.ready ? ws.workspaces.map((w) => ({ id: w.id, name: w.name })) : undefined}
           />
         </div>
@@ -948,6 +975,7 @@ export function DashboardView() {
           <DashboardRelancePanel
             locale={locale}
             caps={caps}
+            appearance={shellAppearance}
             autoRemindersUserEnabled={autoRemindersUserEnabled}
             onAutoRemindersUserEnabledChange={async (enabled) => {
               setAutoRemindersUserEnabled(enabled);
@@ -965,11 +993,18 @@ export function DashboardView() {
 
         <div ref={invoicesRef} className="min-w-0 scroll-mt-28 mt-12 space-y-6">
           {tableLoading ? (
-            <div className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] px-6 py-12 text-center text-sm text-slate-400 hover:border-white/15">
+            <div
+              className={`pp-dashboard-card-interactive rounded-2xl border px-6 py-12 text-center text-sm hover:border-slate-300 ${
+                shellAppearance === "light"
+                  ? "border-slate-200 bg-white text-slate-600"
+                  : "border-white/[0.08] bg-[#14141c] text-slate-400 hover:border-white/12"
+              }`}
+            >
               {locale === "fr" ? "Chargement des factures…" : "Loading invoices…"}
             </div>
           ) : (
               <ClientList
+                appearance={shellAppearance}
                 clients={clients}
                 onSendReminder={handleRequestSendReminder}
                 remindCooldownUntil={remindCooldownUntil}
@@ -996,6 +1031,7 @@ export function DashboardView() {
 
         <div ref={clientsRef} className="min-w-0 scroll-mt-28 mt-12">
           <AddClientForm
+            appearance={shellAppearance}
             onAdd={handleAdd}
             disabled={tableLoading || memberReadOnly}
             supabaseActive={supabaseReady}
@@ -1025,39 +1061,83 @@ export function DashboardView() {
         </div>
 
         <div ref={paiementsRef} className="min-w-0 scroll-mt-28 mt-12">
-          <section className="pp-dashboard-card-interactive rounded-2xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-6 hover:border-violet-500/25">
-            <h2 className="text-base sm:text-lg font-semibold text-white">{copy.paiementsTitle}</h2>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400">{copy.paiementsSub}</p>
+          <section
+            className={`pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-6 ${
+              shellAppearance === "light"
+                ? "border-slate-200 bg-white hover:border-violet-300/60"
+                : "border-white/[0.08] bg-[#14141c] hover:border-violet-500/35"
+            }`}
+          >
+            <h2 className={`text-base sm:text-lg font-semibold ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
+              {copy.paiementsTitle}
+            </h2>
+            <p className={`mt-1 text-xs sm:text-sm ${shellAppearance === "light" ? "text-slate-600" : "text-slate-400"}`}>
+              {copy.paiementsSub}
+            </p>
             <dl className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div
+                className={`rounded-xl border px-4 py-3 ${
+                  shellAppearance === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"
+                }`}
+              >
+                <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
                   {locale === "fr" ? "Encours total" : "Total outstanding"}
                 </dt>
-                <dd className="mt-1 text-lg sm:text-xl font-semibold tabular-nums text-white">{moneyFmt.format(totalAmountDue)}</dd>
+                <dd className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
+                  {moneyFmt.format(totalAmountDue)}
+                </dd>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div
+                className={`rounded-xl border px-4 py-3 ${
+                  shellAppearance === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"
+                }`}
+              >
+                <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
                   {locale === "fr" ? "Factures payées" : "Paid invoices"}
                 </dt>
-                <dd className="mt-1 text-lg sm:text-xl font-semibold tabular-nums text-emerald-300">{paidCount}</dd>
+                <dd
+                  className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${
+                    shellAppearance === "light" ? "text-emerald-700" : "text-emerald-300"
+                  }`}
+                >
+                  {paidCount}
+                </dd>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div
+                className={`rounded-xl border px-4 py-3 ${
+                  shellAppearance === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"
+                }`}
+              >
+                <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
                   {locale === "fr" ? "Taux de paiement" : "Payment rate"}
                 </dt>
-                <dd className="mt-1 text-lg sm:text-xl font-semibold tabular-nums text-violet-300">{paymentRate}%</dd>
+                <dd
+                  className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${
+                    shellAppearance === "light" ? "text-violet-700" : "text-violet-300"
+                  }`}
+                >
+                  {paymentRate}%
+                </dd>
               </div>
             </dl>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/#pricing"
-                className="inline-flex rounded-full border border-violet-500/40 bg-violet-600/20 px-4 py-2 text-xs font-semibold text-violet-100 transition hover:bg-violet-600/30"
+                className={`inline-flex rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                  shellAppearance === "light"
+                    ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100"
+                    : "border-violet-500/40 bg-violet-950/40 text-violet-200 hover:bg-violet-950/60"
+                }`}
               >
                 {copy.upgrade}
               </Link>
               <Link
                 href="/settings"
-                className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                className={`inline-flex rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                  shellAppearance === "light"
+                    ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    : "border-white/15 bg-black/30 text-slate-200 hover:bg-white/10"
+                }`}
               >
                 {locale === "fr" ? "Paramètres compte" : "Account settings"}
               </Link>

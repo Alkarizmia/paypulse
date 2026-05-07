@@ -27,6 +27,15 @@ export function SiteFooter() {
       <div className="mx-auto mt-6 flex w-full max-w-7xl flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:flex-row">
         <p>© PayPulss</p>
         <nav className="flex flex-wrap items-center justify-center gap-4">
+          <Link href="/a-propos" className="transition hover:text-slate-800">
+            Fondateur
+          </Link>
+          <Link href="/contact" className="transition hover:text-slate-800">
+            Page contact
+          </Link>
+          <a href="mailto:contact@paypulss.com?subject=Contact%20Paypulss" className="transition hover:text-slate-800">
+            E-mail
+          </a>
           <Link href="/legal" className="transition hover:text-slate-800">
             Informations légales
           </Link>

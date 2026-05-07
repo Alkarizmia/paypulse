@@ -14,6 +14,7 @@ import { fetchClients } from "@/lib/clients";
 import { getActiveLocalClients } from "@/lib/local-clients";
 import { getCurrentSubscription, type UserSubscription } from "@/lib/subscriptions";
 import { getSupabaseBrowserClient, isSupabaseReady } from "@/lib/supabase";
+import { useResolvedUiAppearance } from "@/lib/ui-theme";
 
 const money = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const dateFmt = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" });
@@ -180,6 +181,8 @@ export function BilanView() {
   const showThreeYearRange = canViewBilanThreeYears(planId);
   const memberReadOnly =
     Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const appearance = useResolvedUiAppearance();
+  const light = appearance === "light";
 
   const rangeButtons: { key: RangeKey; label: string }[] = (
     [
@@ -194,7 +197,7 @@ export function BilanView() {
   }
 
   return (
-    <div className="dark">
+    <div>
       <DashboardShell
         locale={locale}
         planId={planId}
@@ -204,60 +207,100 @@ export function BilanView() {
         userEmail={user?.email}
         onLogout={handleLogout}
         hideTrashNav={memberReadOnly}
+        appearance={appearance}
       >
         <div className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-white">{t.title}</h2>
+            <h2 className={`text-xl font-bold ${light ? "text-slate-900" : "text-white"}`}>{t.title}</h2>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowTTable((v) => !v)}
-                className="rounded-full border border-emerald-500/35 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-600/25"
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  light
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                    : "border-emerald-500/40 bg-emerald-950/40 text-emerald-200 hover:bg-emerald-950/55"
+                }`}
               >
                 {t.tTable}
               </button>
-              <Link href="/dashboard" className="text-sm font-medium text-violet-300 hover:text-violet-200">
+              <Link
+                href="/dashboard"
+                className={`rounded-md px-1 text-sm font-semibold ${light ? "text-violet-700 hover:text-violet-600" : "text-violet-300 hover:text-violet-200"}`}
+              >
                 ← {t.back}
               </Link>
             </div>
           </div>
 
           {showTTable ? (
-            <section className="rounded-xl border border-white/[0.08] bg-[#14141c] p-4 sm:p-5">
+            <section className={`rounded-xl border p-4 sm:p-5 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">{t.debit}</p>
-                  <ul className="mt-3 space-y-2 text-xs sm:text-sm text-slate-200">
+                <div
+                  className={`rounded-lg border p-3 ${
+                    light ? "border-amber-200 bg-amber-50" : "border-amber-500/35 bg-amber-950/25"
+                  }`}
+                >
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-amber-800" : "text-amber-200"}`}>
+                    {t.debit}
+                  </p>
+                  <ul className={`mt-3 space-y-2 text-xs sm:text-sm ${light ? "text-slate-800" : "text-slate-200"}`}>
                     {rows
                       .filter((c) => c.status !== "paid")
                       .map((c) => (
-                        <li key={`d-${c.id}`} className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-1.5">
+                        <li
+                          key={`d-${c.id}`}
+                          className={`flex items-center justify-between gap-3 border-b pb-1.5 ${
+                            light ? "border-amber-200" : "border-amber-500/25"
+                          }`}
+                        >
                           <span className="truncate">{c.name}</span>
                           <span className="shrink-0 tabular-nums">{money.format(c.amountDue)}</span>
                         </li>
                       ))}
                   </ul>
-                  <p className="mt-3 text-sm font-semibold text-amber-100">{money.format(totals.pending)}</p>
+                  <p className={`mt-3 text-sm font-semibold ${light ? "text-amber-900" : "text-amber-100"}`}>
+                    {money.format(totals.pending)}
+                  </p>
                 </div>
 
-                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">{t.credit}</p>
-                  <ul className="mt-3 space-y-2 text-xs sm:text-sm text-slate-200">
+                <div
+                  className={`rounded-lg border p-3 ${
+                    light ? "border-emerald-200 bg-emerald-50" : "border-emerald-500/35 bg-emerald-950/25"
+                  }`}
+                >
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-emerald-800" : "text-emerald-200"}`}>
+                    {t.credit}
+                  </p>
+                  <ul className={`mt-3 space-y-2 text-xs sm:text-sm ${light ? "text-slate-800" : "text-slate-200"}`}>
                     {rows
                       .filter((c) => c.status === "paid")
                       .map((c) => (
-                        <li key={`c-${c.id}`} className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-1.5">
+                        <li
+                          key={`c-${c.id}`}
+                          className={`flex items-center justify-between gap-3 border-b pb-1.5 ${
+                            light ? "border-emerald-200" : "border-emerald-500/25"
+                          }`}
+                        >
                           <span className="truncate">{c.name}</span>
                           <span className="shrink-0 tabular-nums">{money.format(c.amountDue)}</span>
                         </li>
                       ))}
                   </ul>
-                  <p className="mt-3 text-sm font-semibold text-emerald-100">{money.format(totals.paid)}</p>
+                  <p className={`mt-3 text-sm font-semibold ${light ? "text-emerald-900" : "text-emerald-100"}`}>
+                    {money.format(totals.paid)}
+                  </p>
                 </div>
               </div>
-              <div className="mt-4 rounded-lg border border-violet-400/20 bg-violet-500/[0.06] p-3 text-sm">
-                <span className="text-violet-200">{t.balance}:</span>{" "}
-                <span className="font-semibold text-white tabular-nums">{money.format(totals.paid - totals.pending)}</span>
+              <div
+                className={`mt-4 rounded-lg border p-3 text-sm ${
+                  light ? "border-violet-200 bg-violet-50" : "border-violet-500/35 bg-violet-950/30"
+                }`}
+              >
+                <span className={light ? "text-violet-800" : "text-violet-200"}>{t.balance}:</span>{" "}
+                <span className={`font-semibold tabular-nums ${light ? "text-violet-900" : "text-violet-100"}`}>
+                  {money.format(totals.paid - totals.pending)}
+                </span>
               </div>
             </section>
           ) : null}
@@ -269,7 +312,11 @@ export function BilanView() {
                 type="button"
                 onClick={() => setRange(k)}
                 className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                  range === k ? "bg-violet-600 text-white" : "border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+                  range === k
+                    ? "bg-violet-600 text-white"
+                    : light
+                      ? "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                      : "border border-white/15 bg-black/35 text-slate-200 hover:bg-white/10"
                 }`}
               >
                 {label}
@@ -278,28 +325,32 @@ export function BilanView() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/[0.08] bg-[#14141c] px-4 py-3">
-              <p className="text-xs text-slate-500">{t.sumPending}</p>
-              <p className="mt-1 text-lg font-semibold text-white">{money.format(totals.pending)}</p>
+            <div className={`rounded-xl border px-4 py-3 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
+              <p className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>{t.sumPending}</p>
+              <p className={`mt-1 text-lg font-semibold ${light ? "text-slate-900" : "text-white"}`}>{money.format(totals.pending)}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-[#14141c] px-4 py-3">
-              <p className="text-xs text-slate-500">{t.sumPaid}</p>
-              <p className="mt-1 text-lg font-semibold text-emerald-300">{money.format(totals.paid)}</p>
+            <div className={`rounded-xl border px-4 py-3 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
+              <p className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>{t.sumPaid}</p>
+              <p className={`mt-1 text-lg font-semibold ${light ? "text-emerald-700" : "text-emerald-300"}`}>
+                {money.format(totals.paid)}
+              </p>
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-[#14141c] px-4 py-3">
-              <p className="text-xs text-slate-500">{t.rows}</p>
-              <p className="mt-1 text-lg font-semibold text-white">{totals.count}</p>
+            <div className={`rounded-xl border px-4 py-3 ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
+              <p className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>{t.rows}</p>
+              <p className={`mt-1 text-lg font-semibold ${light ? "text-slate-900" : "text-white"}`}>{totals.count}</p>
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-white/[0.08] bg-[#14141c]">
+          <div className={`overflow-x-auto rounded-xl border ${light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"}`}>
             {loading ? (
-              <p className="p-8 text-center text-sm text-slate-400">…</p>
+              <p className={`p-8 text-center text-sm ${light ? "text-slate-600" : "text-slate-400"}`}>…</p>
             ) : rows.length === 0 ? (
-              <p className="p-8 text-center text-sm text-slate-400">{t.empty}</p>
+              <p className={`p-8 text-center text-sm ${light ? "text-slate-600" : "text-slate-400"}`}>{t.empty}</p>
             ) : (
-              <table className="min-w-full text-left text-sm text-slate-200">
-                <thead className="border-b border-white/[0.08] bg-white/[0.03] text-xs uppercase tracking-wide text-slate-500">
+              <table className={`min-w-full text-left text-sm ${light ? "text-slate-800" : "text-slate-200"}`}>
+                <thead
+                  className={`border-b text-xs uppercase tracking-wide ${light ? "border-slate-200 bg-slate-50 text-slate-600" : "border-white/10 bg-black/35 text-slate-400"}`}
+                >
                   <tr>
                     <th className="px-4 py-3 font-medium">{t.thClient}</th>
                     <th className="px-4 py-3 font-medium">{t.thEmail}</th>
@@ -311,13 +362,16 @@ export function BilanView() {
                 </thead>
                 <tbody>
                   {rows.map((c) => (
-                    <tr key={c.id} className="border-b border-white/[0.05] hover:bg-white/[0.02]">
-                      <td className="px-4 py-2.5 font-medium text-white">{c.name}</td>
-                      <td className="px-4 py-2.5 text-slate-400">{c.email}</td>
+                    <tr
+                      key={c.id}
+                      className={`border-b ${light ? "border-slate-100 hover:bg-slate-50" : "border-white/10 hover:bg-white/[0.04]"}`}
+                    >
+                      <td className={`px-4 py-2.5 font-medium ${light ? "text-slate-900" : "text-white"}`}>{c.name}</td>
+                      <td className={`px-4 py-2.5 ${light ? "text-slate-600" : "text-slate-400"}`}>{c.email}</td>
                       <td className="px-4 py-2.5 tabular-nums">{money.format(c.amountDue)}</td>
                       <td className="px-4 py-2.5">{c.status === "paid" ? t.paid : t.unpaid}</td>
                       <td className="px-4 py-2.5">{dateFmt.format(new Date(c.dueDate + "T12:00:00"))}</td>
-                      <td className="px-4 py-2.5 text-slate-400">
+                      <td className={`px-4 py-2.5 ${light ? "text-slate-600" : "text-slate-400"}`}>
                         {(() => {
                           const iso = lastPaidIso(c);
                           return iso ? dateFmt.format(new Date(iso)) : "—";
@@ -331,7 +385,9 @@ export function BilanView() {
           </div>
 
           {!supabaseReady ? (
-            <p className="text-xs text-slate-500">Mode local : le bilan utilise les factures actives de ce navigateur.</p>
+            <p className={`text-xs ${light ? "text-slate-500" : "text-slate-400"}`}>
+              Mode local : le bilan utilise les factures actives de ce navigateur.
+            </p>
           ) : null}
         </div>
       </DashboardShell>

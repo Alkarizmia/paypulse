@@ -23,23 +23,46 @@ function normalizeRecipientEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export type ReminderSendFromContext = "manual" | "automation";
+
+/** Expéditeur Resend : automation → MAIL_FROM_AUTO_REMINDERS si défini, sinon MAIL_FROM. Manuel → MAIL_FROM. */
+export function resolveReminderFromAddress(context: ReminderSendFromContext): string | undefined {
+  if (context === "automation") {
+    return (
+      process.env.MAIL_FROM_AUTO_REMINDERS?.trim() ||
+      process.env.MAIL_FROM?.trim()
+    );
+  }
+  return process.env.MAIL_FROM?.trim();
+}
+
+export function hasResendReminderFrom(context: ReminderSendFromContext): boolean {
+  return Boolean(resolveReminderFromAddress(context));
+}
+
 /**
- * Envoi unique utilisé par la relance manuelle (/api/send-reminder) et le runner auto
- * (mêmes variables RESEND_API_KEY / MAIL_FROM, même forme d’appel Resend).
+ * Envoi Resend pour relances (/api/send-reminder manuel ou runner automatique).
  */
 export async function sendResendReminderEmail(params: {
   to: string;
   subject: string;
   text: string;
   html?: string;
+  /** Manuel : MAIL_FROM uniquement. Automatisation : MAIL_FROM_AUTO_REMINDERS puis repli sur MAIL_FROM. */
+  fromContext?: ReminderSendFromContext;
 }): Promise<ResendReminderSendResult> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.MAIL_FROM?.trim();
+  const fromContext = params.fromContext ?? "manual";
+  const from = resolveReminderFromAddress(fromContext);
   if (!apiKey) {
     return { ok: false, error: "Missing RESEND_API_KEY." };
   }
   if (!from) {
-    return { ok: false, error: "Missing MAIL_FROM." };
+    const err =
+      fromContext === "automation"
+        ? "Missing MAIL_FROM (ou MAIL_FROM_AUTO_REMINDERS pour les relances auto)."
+        : "Missing MAIL_FROM.";
+    return { ok: false, error: err };
   }
 
   const to = normalizeRecipientEmail(params.to);
