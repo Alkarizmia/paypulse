@@ -374,7 +374,7 @@ export function BilanView() {
                       <td className={`px-4 py-2.5 ${light ? "text-slate-600" : "text-slate-400"}`}>
                         {(() => {
                           const iso = lastPaidIso(c);
-                          return iso ? dateFmt.format(new Date(iso)) : "—";
+                          return iso ? dateFmt.format(new Date(iso)) : "–";
                         })()}
                       </td>
                     </tr>

@@ -34,6 +34,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "Unlimited clients",
       "Full dashboard: pending, paid, avg. delay",
       "Evolution & breakdown charts (cash-in trend, paid vs pending)",
+      "Automatic reminders + 1 custom email template (no payment link)",
     ],
     highlighted: true,
   },
@@ -139,16 +140,36 @@ export function countDistinctClientEmailsForQuota(active: { email: string }[], t
   return countDistinctClientEmails([...active, ...trashed]);
 }
 
-/** Éditeur brouillon / modèles de relance (page dédiée + nav). */
+/**
+ * Accès à l’éditeur de modèles de relance (page dédiée + nav).
+ * Starter : éditeur limité (1 modèle, sans lien). Pro / Agency : éditeur complet.
+ * Free : pas d’accès.
+ */
+export function hasReminderTemplatesEditor(planId: PlanId): boolean {
+  return planId === "starter" || planId === "pro" || planId === "agency";
+}
+
+/** Alias rétro-compatible (ancien nom). À retirer une fois les call-sites migrés. */
 export function hasProReminderEditor(planId: PlanId): boolean {
+  return hasReminderTemplatesEditor(planId);
+}
+
+/** Accès à l’éditeur "complet" : IA + brouillon + envoi du brouillon. Pro / Agency. */
+export function hasFullReminderEditor(planId: PlanId): boolean {
   return planId === "pro" || planId === "agency";
 }
 
-/** Nombre max de modèles d’e-mail enregistrés (Pro / Agency). J+1,3,7,21 = 4 créneaux. */
+/** Lien de paiement dans les modèles d’e-mails : Pro / Agency uniquement. */
+export function canUseTemplatePaymentLink(planId: PlanId): boolean {
+  return planId === "pro" || planId === "agency";
+}
+
+/** Nombre max de modèles d’e-mail enregistrés. Starter : 1, Pro : 4, Agency : 8. */
 export function getMaxEmailTemplates(planId: PlanId): number {
+  if (planId === "starter") return 1;
   if (planId === "pro") return 4;
   if (planId === "agency") return 8;
-  return 15;
+  return 0;
 }
 
 /** Bilan : plage « 3 ans » réservée au plan Agency. */

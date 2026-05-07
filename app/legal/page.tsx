@@ -10,7 +10,7 @@ const links = [
   {
     href: "/mentions-legales",
     title: "Mentions légales",
-    desc: "Éditeur, hébergeur, contact — placeholders à compléter.",
+    desc: "Éditeur, hébergeur, contact, placeholders à compléter.",
   },
   {
     href: "/confidentialite",

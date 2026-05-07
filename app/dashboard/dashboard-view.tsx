@@ -112,7 +112,7 @@ function buildManualReminderDraftFields(
   }
   if (locale === "fr") {
     return {
-      subject: `Rappel : facture en attente — ${client.name}`,
+      subject: `Rappel : facture en attente, ${client.name}`,
       body: [
         `Bonjour,`,
         ``,
@@ -125,7 +125,7 @@ function buildManualReminderDraftFields(
     };
   }
   return {
-    subject: `Reminder: pending invoice — ${client.name}`,
+    subject: `Reminder: pending invoice, ${client.name}`,
     body: [
       `Hello,`,
       ``,
@@ -373,7 +373,7 @@ export function DashboardView() {
         modeLocal: "Mode local",
         title: "Dashboard analytics",
         clientsTitle: "Vos clients",
-        clientsSubtitle: "Statut des montants et relances — « Envoyer relance » ouvre votre messagerie (mailto).",
+        clientsSubtitle: "Statut des montants et relances, « Envoyer relance » ouvre votre messagerie (mailto).",
         emptyTitle: "Aucun client pour le moment, ajoute ton premier client",
         emptyBody: "Ajoute ta première fiche client pour démarrer le suivi des paiements.",
         paid: "Payé",
@@ -382,7 +382,7 @@ export function DashboardView() {
         remind: "Envoyer relance",
         formTitle: "Nouveau client",
         formSubtitle:
-          "Nom, email, montant dû et date d'échéance — stockage local ou Supabase selon configuration.",
+          "Nom, email, montant dû et date d'échéance, stockage local ou Supabase selon configuration.",
         portfolio: "Portefeuille",
         name: "Nom",
         company: "Entreprise (optionnel)",
@@ -428,7 +428,7 @@ export function DashboardView() {
         modeLocal: "Local mode",
         title: "Analytics dashboard",
         clientsTitle: "Your clients",
-        clientsSubtitle: "Payment status and reminders — “Send reminder” opens your mail app (mailto).",
+        clientsSubtitle: "Payment status and reminders, “Send reminder” opens your mail app (mailto).",
         emptyTitle: "No clients yet, add your first client",
         emptyBody: "Add your first client to start tracking your cashflow.",
         paid: "Paid",
@@ -436,7 +436,7 @@ export function DashboardView() {
         due: "Due date",
         remind: "Send reminder",
         formTitle: "Add client",
-        formSubtitle: "Name, email, due amount and due date — stored locally or in Supabase.",
+        formSubtitle: "Name, email, due amount and due date, stored locally or in Supabase.",
         portfolio: "Wallet",
         name: "Name",
         company: "Company (optional)",
@@ -610,8 +610,8 @@ export function DashboardView() {
 
     const footer =
       locale === "fr"
-        ? `\n\n—\n${client.name} · ${client.amountDue} € · échéance ${client.dueDate}`
-        : `\n\n—\n${client.name} · ${client.amountDue} € · due ${client.dueDate}`;
+        ? `\n\n${client.name} · ${client.amountDue} € · échéance ${client.dueDate}`
+        : `\n\n${client.name} · ${client.amountDue} € · due ${client.dueDate}`;
 
     const autoEffective = caps.autoReminders && autoRemindersUserEnabled;
     let extra = "";
@@ -935,7 +935,7 @@ export function DashboardView() {
 
         {isFreePlan ? (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <span className="font-semibold text-amber-950">FREE</span> —{" "}
+            <span className="font-semibold text-amber-950">FREE</span> ·{" "}
             {locale === "fr" ? "Quotas : " : "Limits: "}
             <span className="tabular-nums text-amber-950">
               {quotaDistinctEmails}/{FREE_TIER_MAX_CLIENTS}{" "}

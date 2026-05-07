@@ -11,7 +11,7 @@ import {
   type ReminderEmailTemplateInput,
 } from "@/lib/reminder-email-templates";
 import { getReminderRule, normalizeDaysAfterDue, upsertReminderRule, type ReminderRule } from "@/lib/reminder-rules";
-import { getMaxEmailTemplates } from "@/lib/plans";
+import { canUseTemplatePaymentLink, getMaxEmailTemplates } from "@/lib/plans";
 import type { PlanId } from "@/lib/plans";
 import { REMINDER_TEMPLATE_VARIABLES_DOC } from "@/lib/reminder-template-substitution";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -75,6 +75,8 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
   const { locale } = useLocale();
   const ws = useWorkspace();
   const maxModels = getMaxEmailTemplates(planId);
+  const allowPaymentLink = canUseTemplatePaymentLink(planId);
+  const showMultiPresets = maxModels > 1;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -138,8 +140,10 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           subject: "Objet (sujet)",
           body: "Corps du message",
           link: "Lien de paiement (optionnel)",
+          linkLockedHint:
+            "Lien de paiement réservé aux plans Pro et Agence. Sur Starter, le corps que vous écrivez est envoyé tel quel.",
           vars: "Variables : " + REMINDER_TEMPLATE_VARIABLES_DOC.join(", "),
-          readonly: "Lecture seule — membre invité.",
+          readonly: "Lecture seule, membre invité.",
           pickDay: "Choisissez un J+ libre pour le nouveau modèle.",
           quotaBlock: "Quota atteint pour votre plan.",
         }
@@ -164,8 +168,10 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           subject: "Subject",
           body: "Message body",
           link: "Payment link (optional)",
+          linkLockedHint:
+            "Payment link is a Pro/Agency feature. On Starter, the body you write is sent as-is.",
           vars: "Variables: " + REMINDER_TEMPLATE_VARIABLES_DOC.join(", "),
-          readonly: "Read-only — invited member.",
+          readonly: "Read-only, invited member.",
           pickDay: "Pick a free J+ for the new template.",
           quotaBlock: "Plan template limit reached.",
         };
@@ -180,7 +186,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
       next.push({
         clientId: `new-${d}-${Date.now()}`,
         daysAfterDue: d,
-        subjectTemplate: `Rappel J+${d} — facture en attente ({{clientName}})`,
+        subjectTemplate: `Rappel J+${d}, facture en attente ({{clientName}})`,
         bodyTemplate: locale === "fr" ? defaultTemplateBodyFr(d) : defaultTemplateBodyEn(d),
         paymentLink: "",
         sortOrder: order++,
@@ -205,7 +211,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
       {
         clientId: `new-${free}-${Date.now()}`,
         daysAfterDue: free,
-        subjectTemplate: `Rappel J+${free} — facture en attente ({{clientName}})`,
+        subjectTemplate: `Rappel J+${free}, facture en attente ({{clientName}})`,
         bodyTemplate: locale === "fr" ? defaultTemplateBodyFr(free) : defaultTemplateBodyEn(free),
         paymentLink: "",
         sortOrder: prev.length,
@@ -255,7 +261,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         daysAfterDue: r.daysAfterDue,
         subjectTemplate: r.subjectTemplate,
         bodyTemplate: r.bodyTemplate,
-        paymentLink: r.paymentLink.trim() || null,
+        paymentLink: allowPaymentLink ? r.paymentLink.trim() || null : null,
         sortOrder: i,
       }));
 
@@ -300,24 +306,26 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.daysTitle}</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.daysExpl}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={memberReadOnly}
-                onClick={() => applyPreset([3, 7, 21])}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                {t.preset37}
-              </button>
-              <button
-                type="button"
-                disabled={memberReadOnly}
-                onClick={() => applyPreset([1, 3, 7, 21])}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                {t.preset137}
-              </button>
-            </div>
+            {showMultiPresets ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={memberReadOnly}
+                  onClick={() => applyPreset([3, 7, 21])}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {t.preset37}
+                </button>
+                <button
+                  type="button"
+                  disabled={memberReadOnly}
+                  onClick={() => applyPreset([1, 3, 7, 21])}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {t.preset137}
+                </button>
+              </div>
+            ) : null}
           </div>
           <label className="block text-sm text-slate-700">
             {t.maxRun}
@@ -403,17 +411,21 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                       className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                     />
                   </label>
-                  <label className="mt-2 block text-xs font-medium text-slate-600">
-                    {t.link}
-                    <input
-                      type="url"
-                      disabled={memberReadOnly}
-                      value={r.paymentLink}
-                      onChange={(e) => updateRow(r.clientId, { paymentLink: e.target.value })}
-                      placeholder="https://"
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                    />
-                  </label>
+                  {allowPaymentLink ? (
+                    <label className="mt-2 block text-xs font-medium text-slate-600">
+                      {t.link}
+                      <input
+                        type="url"
+                        disabled={memberReadOnly}
+                        value={r.paymentLink}
+                        onChange={(e) => updateRow(r.clientId, { paymentLink: e.target.value })}
+                        placeholder="https://"
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      />
+                    </label>
+                  ) : (
+                    <p className="mt-2 text-[11px] italic text-slate-500">{t.linkLockedHint}</p>
+                  )}
                 </div>
               ))}
             </div>

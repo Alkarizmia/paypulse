@@ -16,7 +16,7 @@ import {
 } from "@/lib/reminder-templates-storage";
 import { fetchClients } from "@/lib/clients";
 import { getActiveLocalClients } from "@/lib/local-clients";
-import { getPlanCapabilities, hasProReminderEditor, type PlanId } from "@/lib/plans";
+import { getPlanCapabilities, hasReminderTemplatesEditor, type PlanId } from "@/lib/plans";
 import { getCurrentSubscription, type UserSubscription } from "@/lib/subscriptions";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { REMINDER_DRAFT_TONE_IDS, type ReminderDraftTone } from "@/lib/reminder-draft-tone";
@@ -71,8 +71,9 @@ export function ReminderTemplatesView() {
   const planId = plan?.planId ?? "free";
   const memberReadOnly =
     Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
-  const allowed = hasProReminderEditor(planId);
+  const allowed = hasReminderTemplatesEditor(planId);
   const caps = useMemo(() => getPlanCapabilities(planId), [planId]);
+  const showAiAndDraft = caps.aiReminderDrafts;
 
   const refreshPlan = useCallback(async () => {
     setLoading(true);
@@ -108,7 +109,7 @@ export function ReminderTemplatesView() {
   useEffect(() => {
     if (loading) return;
     const planId = plan?.planId ?? "free";
-    if (!hasProReminderEditor(planId)) return;
+    if (!hasReminderTemplatesEditor(planId)) return;
     if (tplStorageKey === null) return;
     const maxTpl = 15;
     let cancelled = false;
@@ -145,7 +146,7 @@ export function ReminderTemplatesView() {
   useEffect(() => {
     if (loading) return;
     const planId = plan?.planId ?? "free";
-    if (!hasProReminderEditor(planId)) return;
+    if (!hasReminderTemplatesEditor(planId)) return;
     if (supabase && tplStorageKey === null) return;
     let cancelled = false;
     void (async () => {
@@ -218,10 +219,11 @@ export function ReminderTemplatesView() {
       ? {
           pageTitle: "Modèles de relance",
           back: "Tableau de bord",
-          upgradeTitle: "Fonction réservée aux plans Pro et Agence",
-          upgradeBody: "Passez à un plan supérieur pour personnaliser vos brouillons et modèles d’e-mails.",
+          upgradeTitle: "Fonction disponible à partir du plan Starter",
+          upgradeBody:
+            "Passez au plan Starter pour configurer 1 modèle de relance automatique. Pro et Agence ajoutent l’IA, plusieurs modèles et le lien de paiement.",
           upgradeCta: "Voir les offres",
-          aiTitle: "IA — brouillon de relance",
+          aiTitle: "IA, brouillon de relance",
           aiHint:
             "Envoi manuel uniquement : composez ici votre texte, puis utilisez le bouton enveloppe quand vous voulez l’ouvrir dans votre messagerie. Rien n’est envoyé automatiquement depuis cette page.",
           subjectLabel: "Objet",
@@ -237,7 +239,7 @@ export function ReminderTemplatesView() {
           scheduleLabel: "Délai après échéance (planification future)",
           scheduleHelp:
             "Ce délai est enregistré pour quand l’automatisation lancera une relance à heure fixe. Le périmètre ci-dessous (impayé / payé) détermine quelles fiches utiliseront ce modèle : sur le tableau de bord, le corps d’e-mail vient du premier modèle compatible avec la fiche, sinon du brouillon en haut de la page. L’objet reste celui du brouillon général.",
-          scopeLabel: "Relance auto (futur) — cible de statut",
+          scopeLabel: "Relance auto (futur), cible de statut",
           scopeHelp: "Choisit si ce modèle concerne les factures impayées, payées, ou les deux. Utile dès aujourd’hui pour « Envoyer relance » (périmètre cohérent) ; la planification J+ viendra en plus quand l’agenda automatique existera.",
           scopeUnpaid: "Impayé",
           scopePaid: "Payé",
@@ -247,7 +249,7 @@ export function ReminderTemplatesView() {
           envelopeAria: "Ouvrir l’envoi du brouillon par e-mail",
           modalTitle: "Envoyer le brouillon",
           modalHint:
-            "Choisissez Tout le monde (toutes les adresses du tableau de bord en Bcc), Liste (sélection avec « v »), ou Manuel (un seul e-mail). Puis ouvrez votre messagerie — rien n’est envoyé automatiquement.",
+            "Choisissez Tout le monde (toutes les adresses du tableau de bord en Bcc), Liste (sélection avec « v »), ou Manuel (un seul e-mail). Puis ouvrez votre messagerie, rien n’est envoyé automatiquement.",
           toLabel: "Destinataire (e-mail)",
           toPlaceholder: "client@exemple.com",
           copy: "Copier tout le message",
@@ -265,7 +267,7 @@ export function ReminderTemplatesView() {
           listOpenMailDisabled: "Sélectionnez au moins un client (v).",
           everyoneSummary: (n: number) => `Envoi préparé vers ${n} adresse(s) du tableau de bord (Bcc).`,
           everyoneCapped: (included: number, total: number) =>
-            `Seules les ${included} première(s) adresse(s) (sur ${total}) seront mises en Bcc — plafond de votre plan. Refaites un envoi pour la suite.`,
+            `Seules les ${included} première(s) adresse(s) (sur ${total}) seront mises en Bcc, plafond de votre plan. Refaites un envoi pour la suite.`,
           everyoneEmpty: "Aucun client : ajoutez des fiches sur le tableau de bord.",
           listSelectedSummary: (rowCount: number, distinct: number, max: number) =>
             rowCount === distinct
@@ -290,7 +292,7 @@ export function ReminderTemplatesView() {
             firm: "Ferme mais poli",
             urgent: "Urgent / insistant",
           } satisfies Record<ReminderDraftTone, string>,
-          aiDaysLabel: "Délai après échéance (jours) — vide = J+ du 1er modèle",
+          aiDaysLabel: "Délai après échéance (jours), vide = J+ du 1er modèle",
           aiGenerate: "Générer par IA",
           aiGenerating: "Génération…",
           aiError: "Le service de génération a échoué. Réessayez.",
@@ -308,10 +310,11 @@ export function ReminderTemplatesView() {
       : {
           pageTitle: "Reminder templates",
           back: "Dashboard",
-          upgradeTitle: "Pro and Agency only",
-          upgradeBody: "Upgrade your plan to edit reminder drafts and email templates.",
+          upgradeTitle: "Available from the Starter plan",
+          upgradeBody:
+            "Upgrade to Starter to configure 1 automatic reminder template. Pro and Agency add AI drafts, multiple templates and the payment link.",
           upgradeCta: "View plans",
-          aiTitle: "AI — reminder draft",
+          aiTitle: "AI, reminder draft",
           aiHint:
             "Manual send only: write your text here, then use the envelope button whenever you want to open it in your mail app. Nothing is sent automatically from this page.",
           subjectLabel: "Subject",
@@ -327,7 +330,7 @@ export function ReminderTemplatesView() {
           scheduleLabel: "Days after due date (future scheduling)",
           scheduleHelp:
             "This delay is stored for when automatic scheduling can fire at a fixed time. The scope (unpaid / paid) below determines which rows use this template: on the dashboard, the message body is taken from the first template that matches the row, otherwise from the global draft at the top. The subject still comes from the global draft.",
-          scopeLabel: "Auto reminder (future) — status target",
+          scopeLabel: "Auto reminder (future), status target",
           scopeHelp:
             "Whether this template applies to unpaid, paid, or both. “Send reminder” on the dashboard already uses the matching body; J+ timing will add on when auto scheduling exists.",
           scopeUnpaid: "Unpaid",
@@ -338,7 +341,7 @@ export function ReminderTemplatesView() {
           envelopeAria: "Open draft email in your mail app",
           modalTitle: "Send draft",
           modalHint:
-            "Pick Everyone (all dashboard addresses in Bcc), List (select with “v”), or Manual (one email). Then open your mail app — nothing is sent automatically.",
+            "Pick Everyone (all dashboard addresses in Bcc), List (select with “v”), or Manual (one email). Then open your mail app, nothing is sent automatically.",
           toLabel: "Recipient (email)",
           toPlaceholder: "client@example.com",
           copy: "Copy full message",
@@ -356,7 +359,7 @@ export function ReminderTemplatesView() {
           listOpenMailDisabled: "Select at least one client (v).",
           everyoneSummary: (n: number) => `Prepared send to ${n} dashboard address(es) (Bcc).`,
           everyoneCapped: (included: number, total: number) =>
-            `Only the first ${included} of ${total} address(es) will be Bcc’d — your plan’s cap. Send again for the rest.`,
+            `Only the first ${included} of ${total} address(es) will be Bcc’d, your plan’s cap. Send again for the rest.`,
           everyoneEmpty: "No clients: add records on the dashboard.",
           listSelectedSummary: (rowCount: number, distinct: number, max: number) =>
             rowCount === distinct
@@ -373,14 +376,14 @@ export function ReminderTemplatesView() {
           aiSenderLabel: "Your company or sender name",
           aiRefLabel: "Invoice reference or label",
           aiAmountLabel: "Amount (free text, e.g. €1,240)",
-          aiToneLabel: "Message tone (style is woven into the draft — nothing is pasted as a label into the body)",
+          aiToneLabel: "Message tone (style is woven into the draft, nothing is pasted as a label into the body)",
           aiToneOptions: {
             neutral: "Neutral (standard professional)",
             gentle: "Warm / friendly",
             firm: "Firm but polite",
             urgent: "Urgent / strong",
           } satisfies Record<ReminderDraftTone, string>,
-          aiDaysLabel: "Days after due — leave empty to use first template’s J+",
+          aiDaysLabel: "Days after due, leave empty to use first template’s J+",
           aiGenerate: "Generate with AI",
           aiGenerating: "Generating…",
           aiError: "Generation failed. Please try again.",
@@ -584,23 +587,26 @@ export function ReminderTemplatesView() {
             />
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleReset}
-              className={
-                shellAppearance === "light"
-                  ? "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  : "rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-              }
-            >
-              {t.reset}
-            </button>
-            <span className={`text-xs ${shellAppearance === "light" ? "text-slate-500" : "text-slate-500"}`}>
-              {t.saved}
-            </span>
-          </div>
+          {showAiAndDraft ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleReset}
+                className={
+                  shellAppearance === "light"
+                    ? "rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    : "rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                }
+              >
+                {t.reset}
+              </button>
+              <span className={`text-xs ${shellAppearance === "light" ? "text-slate-500" : "text-slate-500"}`}>
+                {t.saved}
+              </span>
+            </div>
+          ) : null}
 
+          {showAiAndDraft ? (
           <section
             className={
               shellAppearance === "light"
@@ -708,6 +714,7 @@ export function ReminderTemplatesView() {
               />
             </div>
           </section>
+          ) : null}
 
           <section className={shellAppearance === "light" ? "rounded-2xl border border-slate-200 bg-white p-6" : "rounded-2xl border border-white/[0.08] bg-[#14141c] p-6"}>
             <h3 className={shellAppearance === "light" ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-white"}>{t.historyTitle}</h3>
@@ -761,7 +768,7 @@ export function ReminderTemplatesView() {
                         <span className={`font-semibold ${toneClass}`}>{eventLabel}</span>
                         <span className="text-slate-500">{new Date(row.created_at).toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}</span>
                       </div>
-                      <p className="mt-1 break-all text-slate-400">{row.client_email ?? "—"}</p>
+                      <p className="mt-1 break-all text-slate-400">{row.client_email ?? "–"}</p>
                       {row.subject ? <p className="mt-1 text-slate-400">{row.subject}</p> : null}
                       {row.error_message ? <p className="mt-1 text-red-300">{row.error_message}</p> : null}
                     </li>
@@ -773,8 +780,12 @@ export function ReminderTemplatesView() {
 
           <p className="text-xs text-slate-500">
             {locale === "fr"
-              ? "Brouillon ci-dessus : enregistré localement dans ce navigateur. Modèles planifiés : base Supabase (portefeuille actif)."
-              : "Draft above: stored in this browser. Scheduled templates: Supabase (active workspace)."}
+              ? showAiAndDraft
+                ? "Brouillon ci-dessus : enregistré localement dans ce navigateur. Modèles planifiés : base Supabase (portefeuille actif)."
+                : "Modèles planifiés : enregistrés sur la base Supabase (portefeuille actif)."
+              : showAiAndDraft
+                ? "Draft above: stored in this browser. Scheduled templates: Supabase (active workspace)."
+                : "Scheduled templates: stored in Supabase (active workspace)."}
           </p>
         </div>
       </DashboardShell>

@@ -49,7 +49,7 @@ export default function ConfidentialitePage() {
         </li>
         <li>
           <strong>Données techniques</strong> : journaux limités (erreurs, sécurité), adresse IP, type de navigateur,
-          selon la configuration de l&apos;hébergeur et des outils utilisés — dans la mesure où ils sont activés et
+          selon la configuration de l&apos;hébergeur et des outils utilisés, dans la mesure où ils sont activés et
           proportionnés.
         </li>
       </ul>
@@ -113,7 +113,7 @@ export default function ConfidentialitePage() {
         Certains prestataires peuvent être établis ou héberger des données en dehors de l&apos;Espace économique
         européen. Le cas échéant, nous nous appuyons sur les mécanismes reconnus par la réglementation (clauses types de
         protection des données, mesures complémentaires si nécessaire), dans la mesure où nos prestataires les
-        proposent. Le détail peut varier selon les sous-traitants effectivement retenus — tenez cette section à jour.
+        proposent. Le détail peut varier selon les sous-traitants effectivement retenus, tenez cette section à jour.
       </p>
 
       <h2>5. Durées de conservation</h2>

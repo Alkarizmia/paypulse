@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
 import { PayPulseLogo } from "./pay-pulse-logo";
-import { hasProReminderEditor, usesAgencyWorkspaceUi, type PlanId } from "@/lib/plans";
+import { hasReminderTemplatesEditor, usesAgencyWorkspaceUi, type PlanId } from "@/lib/plans";
 import { useWorkspaceOptional } from "@/app/workspace-context";
 import {
   readStoredUiThemePreference,
@@ -314,7 +314,7 @@ export function DashboardShell({
   const initial = (userEmail?.[0] ?? "?").toUpperCase();
   const topItems = items.slice(0, 4);
   const paiementsItem = items[4];
-  const showTemplatesNav = hasProReminderEditor(planId);
+  const showTemplatesNav = hasReminderTemplatesEditor(planId);
 
   function scrollOrHome(id: DashboardNavId) {
     if (navScrollMode && isDashHome) {

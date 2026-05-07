@@ -7,10 +7,10 @@ type Props = {
   locale: "fr" | "en";
   caps: PlanCapabilities;
   appearance: UiResolvedAppearance;
-  /** Préférence utilisateur (toggle) — combinée avec caps.autoReminders. */
+  /** Préférence utilisateur (toggle), combinée avec caps.autoReminders. */
   autoRemindersUserEnabled?: boolean;
   onAutoRemindersUserEnabledChange?: (enabled: boolean) => void;
-  /** Portefeuilles (Agency) — données réelles pour la carte. */
+  /** Portefeuilles (Agency), données réelles pour la carte. */
   workspaces?: { id: string; name: string }[];
 };
 
@@ -29,7 +29,7 @@ function getTierCopy(locale: "fr" | "en") {
           "Désactivé : le brouillon ne contiendra pas cette phrase. Réactivez l’option ci-dessus si vous souhaitez la conserver.",
         teamTitle: "Équipe",
         teamBody:
-          "Invitations et rôles (facturation / lecture seule) — à gérer dans Paramètres. Le nombre de comptes actifs suit vos invitations acceptées.",
+          "Invitations et rôles (facturation / lecture seule), à gérer dans Paramètres. Le nombre de comptes actifs suit vos invitations acceptées.",
         workspaceTitle: "Espaces clients",
         wsEmpty: "Aucun portefeuille chargé. Ouvrez Paramètres pour en créer.",
         autoTitle: "Automatisation avancée",
@@ -49,7 +49,7 @@ function getTierCopy(locale: "fr" | "en") {
           "Off: drafts won’t include that line. Turn the option on above if you want it.",
         teamTitle: "Team",
         teamBody:
-          "Invites and roles (billing / read-only) — manage in Settings. Active seats follow accepted invitations.",
+          "Invites and roles (billing / read-only), manage in Settings. Active seats follow accepted invitations.",
         workspaceTitle: "Client workspaces",
         wsEmpty: "No wallets loaded yet. Open Settings to create one.",
         autoTitle: "Advanced automation",

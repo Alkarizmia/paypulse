@@ -11,7 +11,7 @@ export default function ConditionsPage() {
     <LegalLayout title="Conditions générales d'utilisation (CGU)" updated="21 avril 2026">
       <p>
         Les présentes conditions régissent l&apos;accès et l&apos;utilisation du service en ligne <strong>PayPulss</strong>{" "}
-        (ci-après le « Service »), édité par <strong>[SOCIÉTÉ]</strong>, [ADRESSE_SIÈGE] — contact :{" "}
+        (ci-après le « Service »), édité par <strong>[SOCIÉTÉ]</strong>, [ADRESSE_SIÈGE], contact :{" "}
         <strong>contact@paypulss.com</strong>.
       </p>
       <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">

@@ -11,9 +11,9 @@ type AddClientFormProps = {
   disabled?: boolean;
   /** True quand les vraies clés Supabase sont détectées (affichage du libellé). */
   supabaseActive?: boolean;
-  /** Plan Free : 5 factures max atteintes — bloque l’ajout. */
+  /** Plan Free : 5 factures max atteintes, bloque l’ajout. */
   freeInvoiceLimitReached?: boolean;
-  /** Nombre de clients distincts (e-mails) actuels — pour message plan Free. */
+  /** Nombre de clients distincts (e-mails) actuels, pour message plan Free. */
   freeClientDistinctCount?: number;
   /** Max clients distincts en Free (affichage seulement). */
   freeClientMax?: number;
@@ -123,7 +123,7 @@ export function AddClientForm({
           </h2>
           <p className={`mt-1 break-words text-xs sm:text-sm ${light ? "text-slate-600" : "text-slate-400"}`}>
             {labels?.subtitle ??
-              `Nom, email, montant dû et date d'échéance — ${
+              `Nom, email, montant dû et date d'échéance, ${
                 supabaseActive ? "enregistré dans Supabase" : "enregistré dans ce navigateur (mode local)"
               }.`}
           </p>

@@ -11,7 +11,7 @@ export type ReminderDraftAiRequest = {
   invoiceRef?: string;
   amountHint?: string;
   daysAfterDue?: number;
-  /** Ton prédéfini (pas de texte libre — voir `lib/reminder-draft-tone.ts`). */
+  /** Ton prédéfini (pas de texte libre, voir `lib/reminder-draft-tone.ts`). */
   tone?: ReminderDraftTone;
 };
 
@@ -63,7 +63,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
   if (locale === "fr") {
     const blocks: Record<ReminderDraftTone, { subject: string; bodyLines: string[]; closings: [string, string] }> = {
       neutral: {
-        subject: ref ? `Relance — ${refLine}` : "Relance — facture en attente de règlement",
+        subject: ref ? `Relance, ${refLine}` : "Relance, facture en attente de règlement",
         bodyLines: [
           `${amountLineFr}Je me permets de revenir vers vous concernant ${refLine}${delay}.`,
           "Pourriez-vous nous confirmer la date de règlement ou nous indiquer si un point bloque encore de votre côté ?",
@@ -71,7 +71,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
         closings: ["Cordialement,", company ?? "Votre contact"],
       },
       gentle: {
-        subject: ref ? `Petit rappel amical — ${refLine}` : "Petit rappel amical — facture en attente",
+        subject: ref ? `Petit rappel amical, ${refLine}` : "Petit rappel amical, facture en attente",
         bodyLines: [
           `${amountLineFr}J’aimerais simplement revenir vers vous, avec toute notre considération, concernant ${refLine}${delay}.`,
           "N’hésitez pas à nous indiquer la date prévue de règlement ou toute information utile de votre côté.",
@@ -79,7 +79,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
         closings: ["Bien à vous,", company ?? "Votre contact"],
       },
       firm: {
-        subject: ref ? `Relance — règlement requis — ${refLine}` : "Relance — règlement requis",
+        subject: ref ? `Relance, règlement requis, ${refLine}` : "Relance, règlement requis",
         bodyLines: [
           `${amountLineFr}Nous revenons vers vous concernant ${refLine}${delay} et avons besoin d’une date de règlement concrète.`,
           "Merci de nous confirmer sous 48 h le règlement ou de signaler toute difficulté spécifique.",
@@ -87,7 +87,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
         closings: ["Cordialement,", company ?? "Votre contact"],
       },
       urgent: {
-        subject: ref ? `URGENT — facture en retard — ${refLine}` : "URGENT — facture en attente de règlement",
+        subject: ref ? `URGENT, facture en retard, ${refLine}` : "URGENT, facture en attente de règlement",
         bodyLines: [
           `${amountLineFr}Nous attirons votre attention sur l’échéance de la facture ${refLine}${delay} et l’importance d’un règlement prochain.`,
           "Merci de procéder au paiement dans les plus brefs délais ou de nous contacter en urgence en cas d’empêchement.",
@@ -105,7 +105,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
 
   const blocksEn: Record<ReminderDraftTone, { subject: string; bodyLines: string[]; closings: [string, string] }> = {
     neutral: {
-      subject: ref ? `Follow-up — ${refLine}` : "Follow-up — outstanding invoice",
+      subject: ref ? `Follow-up, ${refLine}` : "Follow-up, outstanding invoice",
       bodyLines: [
         `${amountLineEn}I'm following up on ${refLine}${delay}.`,
         "Could you confirm when we can expect payment, or let us know if anything is still pending on your side?",
@@ -113,7 +113,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
       closings: ["Best regards,", company ?? "Your contact"],
     },
     gentle: {
-      subject: ref ? `Friendly nudge — ${refLine}` : "Friendly nudge — outstanding invoice",
+      subject: ref ? `Friendly nudge, ${refLine}` : "Friendly nudge, outstanding invoice",
       bodyLines: [
         `${amountLineEn}I'm reaching out in a friendly way about ${refLine}${delay}.`,
         "If you can share the expected payment date or any context on your side, we'd really appreciate it.",
@@ -121,7 +121,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
       closings: ["Warm regards,", company ?? "Your contact"],
     },
     firm: {
-      subject: ref ? `Payment required — follow-up — ${refLine}` : "Payment required — follow-up",
+      subject: ref ? `Payment required, follow-up, ${refLine}` : "Payment required, follow-up",
       bodyLines: [
         `${amountLineEn}We need a concrete payment date for ${refLine}${delay}.`,
         "Please confirm payment within 48 hours or let us know if a specific issue is holding this up.",
@@ -129,7 +129,7 @@ function heuristicDraft(input: Required<Pick<ReminderDraftAiRequest, "locale">> 
       closings: ["Regards,", company ?? "Your contact"],
     },
     urgent: {
-      subject: ref ? `URGENT — unpaid invoice — ${refLine}` : "URGENT — outstanding invoice",
+      subject: ref ? `URGENT, unpaid invoice, ${refLine}` : "URGENT, outstanding invoice",
       bodyLines: [
         `${amountLineEn}We need to highlight the due date of invoice ${refLine}${delay} and the urgency of resolving this.`,
         "Please arrange payment as soon as possible, or contact us urgently if you cannot.",

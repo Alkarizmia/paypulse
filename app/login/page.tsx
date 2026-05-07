@@ -79,7 +79,7 @@ export default function LoginPage() {
       <div className="pp-landing-ambient" aria-hidden>
         <div
           className="pp-landing-ambient__blob left-[-18%] top-[-22%] h-[min(520px,62vw)] w-[min(520px,62vw)]"
-          style={{ background: "radial-gradient(circle, rgba(61,255,138,0.24) 0%, rgba(61,255,138,0.08) 42%, transparent 72%)" }}
+          style={{ background: "radial-gradient(circle, rgba(52,211,153,0.24) 0%, rgba(52,211,153,0.08) 42%, transparent 72%)" }}
         />
         <div
           className="pp-landing-ambient__blob pp-landing-ambient__blob--2 right-[-16%] bottom-[-12%] h-[min(500px,58vw)] w-[min(500px,58vw)]"

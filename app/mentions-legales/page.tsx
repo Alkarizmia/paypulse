@@ -67,7 +67,7 @@ export default function MentionsLegalesPage() {
         </li>
       </ul>
       <p className="text-sm text-slate-600">
-        Indication courante pour une application Next.js : hébergement auprès de Vercel Inc. ou équivalent — à confirmer
+        Indication courante pour une application Next.js : hébergement auprès de Vercel Inc. ou équivalent, à confirmer
         selon votre contrat effectif.
       </p>
 
@@ -81,7 +81,7 @@ export default function MentionsLegalesPage() {
       <h2>4. Médiation consommation (si applicable)</h2>
       <p>
         Si vous adressez des consommateurs soumis au code de la consommation français, vous devrez peut-être indiquer
-        les coordonnées d&apos;un médiateur ou dispositif de règlement extrajudiciaire des litiges — à renseigner selon
+        les coordonnées d&apos;un médiateur ou dispositif de règlement extrajudiciaire des litiges, à renseigner selon
         votre statut et votre offre : <strong>[MÉDIATION_CONSOMMATION]</strong>.
       </p>
     </LegalLayout>

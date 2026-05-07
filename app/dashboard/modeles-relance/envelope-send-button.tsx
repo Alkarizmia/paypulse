@@ -110,7 +110,7 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
   const handleCopy = useCallback(async () => {
     const toLine =
       tab === "manual"
-        ? `${labels.toLabel}: ${manualTo || "—"}`
+        ? `${labels.toLabel}: ${manualTo || "–"}`
         : tab === "everyone"
           ? (() => {
               const base = labels.everyoneSummary(everyoneForSend.length);
@@ -326,9 +326,9 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
 
             <div className="mt-4 rounded-lg border border-white/[0.08] bg-black/30 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{labels.previewHeading}</p>
-              <p className="mt-2 text-xs font-medium text-fuchsia-200/90">{subject || "—"}</p>
+              <p className="mt-2 text-xs font-medium text-fuchsia-200/90">{subject || "–"}</p>
               <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-300">
-                {body || "—"}
+                {body || "–"}
               </pre>
             </div>
 

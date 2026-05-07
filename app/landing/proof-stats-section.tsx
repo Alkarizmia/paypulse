@@ -103,7 +103,7 @@ export function ProofStatsSection({ locale, copy }: { locale: "fr" | "en"; copy:
     <section id="proof" ref={rootRef} className="scroll-mt-28 border-t border-slate-200 bg-slate-50 px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-5xl text-center">
         <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#3DFF8A]/90">{copy.socialProof}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#34D399]/90">{copy.socialProof}</p>
           <h2 className="mx-auto mt-4 max-w-2xl text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{copy.statsTitle}</h2>
         </Reveal>
         <Reveal className="mx-auto mt-3 max-w-xl text-sm text-slate-600" delay={0.06}>

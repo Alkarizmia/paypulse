@@ -11,8 +11,8 @@
   <path d="M124 200h72" stroke="#94A3B8" stroke-width="8" stroke-linecap="round"/>
   <path d="M280 160h120" stroke="#CBD5E1" stroke-width="4" stroke-dasharray="12 10"/>
   <polygon points="410,150 430,160 410,170" fill="#94A3B8"/>
-  <circle cx="520" cy="160" r="56" fill="#FFFFFF" stroke="#3DFF8A" stroke-width="4" stroke-opacity="0.8"/>
-  <circle cx="520" cy="160" r="20" fill="#3DFF8A" fill-opacity="0.45"/>
+  <circle cx="520" cy="160" r="56" fill="#FFFFFF" stroke="#34D399" stroke-width="4" stroke-opacity="0.8"/>
+  <circle cx="520" cy="160" r="20" fill="#34D399" fill-opacity="0.45"/>
   <path d="M640 160h120" stroke="#CBD5E1" stroke-width="4" stroke-dasharray="12 10"/>
   <polygon points="770,150 790,160 770,170" fill="#94A3B8"/>
   <circle cx="880" cy="160" r="56" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="4"/>

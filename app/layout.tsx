@@ -15,7 +15,7 @@ const font = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PayPulss — Factures et relances pour freelances",
+  title: "PayPulss · Factures et relances pour freelances",
   description:
     "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "PayPulss — Factures et relances pour freelances",
+    title: "PayPulss · Factures et relances pour freelances",
     description:
       "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
     url: "/",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PayPulss — Factures et relances pour freelances",
+    title: "PayPulss · Factures et relances pour freelances",
     description:
       "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
   },
