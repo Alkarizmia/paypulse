@@ -43,6 +43,13 @@ export async function upsertBillingRecordFromCheckoutSession(
   const paidAt =
     typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : new Date().toISOString();
 
+  const { data: existing } = await admin
+    .from("billing_records")
+    .select("id")
+    .eq("stripe_checkout_session_id", session.id)
+    .maybeSingle();
+  if (existing) return;
+
   const row = {
     user_id: userId,
     amount_cents: total,
@@ -53,11 +60,11 @@ export async function upsertBillingRecordFromCheckoutSession(
     stripe_checkout_session_id: session.id,
   };
 
-  const { error } = await admin.from("billing_records").upsert(row, {
-    onConflict: "stripe_checkout_session_id",
-    ignoreDuplicates: true,
-  });
-  if (error) throw error;
+  const { error } = await admin.from("billing_records").insert(row);
+  if (error) {
+    if ((error as { code?: string }).code === "23505") return;
+    throw error;
+  }
 }
 
 function parsePaidPlanId(raw: string | undefined | null): Exclude<PlanId, "free"> | null {
