@@ -174,6 +174,13 @@ export function DashboardView() {
   const requestedBilling = parseBillingParam(searchParams.get("billing"));
   const stripeQuery = searchParams.get("stripe");
   const [planNotice, setPlanNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!planNotice) return;
+    const id = window.setTimeout(() => setPlanNotice(null), 15000);
+    return () => window.clearTimeout(id);
+  }, [planNotice]);
+
   const [addTargetWorkspaceId, setAddTargetWorkspaceId] = useState<string | null>(null);
   const [reminderToast, setReminderToast] = useState<ReminderToast | null>(null);
   const [reminderMailHardError, setReminderMailHardError] = useState<string | null>(null);

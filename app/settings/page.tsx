@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -57,6 +57,44 @@ export default function SettingsPage() {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const openStripePortal = useCallback(async () => {
+    if (!supabase) return;
+    setPortalLoading(true);
+    setPageError(null);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) return;
+      const returnUrl =
+        typeof window !== "undefined" && window.location?.origin
+          ? `${window.location.origin}/settings`
+          : "/settings";
+      const res = await fetch("/api/stripe/customer-portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ returnUrl }),
+      });
+      const j = (await res.json()) as { url?: string; error?: string };
+      if (res.ok && typeof j.url === "string" && j.url.length > 0) {
+        window.location.href = j.url;
+        return;
+      }
+      setPageError(
+        j.error ??
+          (locale === "fr"
+            ? "Portail Stripe indisponible. Active le portail client dans Stripe : Paramètres → Portail client."
+            : "Stripe portal unavailable. Enable the customer portal under Stripe Settings → Customer portal."),
+      );
+    } finally {
+      setPortalLoading(false);
+    }
+  }, [supabase, locale]);
+
   useEffect(() => {
     if (loading) return;
     if (!isAuthenticated || !user) {
@@ -102,6 +140,35 @@ export default function SettingsPage() {
       mounted = false;
     };
   }, [supabase, user]);
+
+  useEffect(() => {
+    if (!supabase || !user) return;
+    if (!subscription || subscription.planId === "free") return;
+    if (subscription.currentPeriodEnd) return;
+
+    let mounted = true;
+    void (async () => {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (!token) return;
+        const res = await fetch("/api/stripe/subscription-sync", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok || !mounted) return;
+        const j = (await res.json()) as { currentPeriodEnd?: string | null };
+        if (!mounted || typeof j.currentPeriodEnd !== "string") return;
+        const end = j.currentPeriodEnd;
+        setSubscription((prev) => (prev ? { ...prev, currentPeriodEnd: end } : prev));
+      } catch {
+        /* ignore */
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [supabase, user, subscription?.planId, subscription?.currentPeriodEnd]);
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -336,9 +403,28 @@ export default function SettingsPage() {
             <p className="mt-3 text-sm font-medium text-slate-900">
               {locale === "fr" ? "Total dépensé" : "Total spent"}: {currency.format(totalSpent / 100)}
             </p>
-            <Link href="/#pricing" className="mt-4 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-              {locale === "fr" ? "Gérer l’abonnement" : "Manage subscription"}
-            </Link>
+            <p className="mt-1 text-xs text-slate-500">
+              {locale === "fr"
+                ? "Somme de toutes les lignes ci-dessous (plusieurs paiements ou tests peuvent dépasser un seul mois)."
+                : "Sum of all rows below (several charges or tests can exceed a single month)."}
+            </p>
+            {subscription && subscription.planId !== "free" ? (
+              <button
+                type="button"
+                onClick={() => void openStripePortal()}
+                disabled={portalLoading}
+                className="mt-4 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              >
+                {portalLoading ? "…" : locale === "fr" ? "Gérer ou annuler l’abonnement (Stripe)" : "Manage or cancel (Stripe)"}
+              </button>
+            ) : (
+              <Link
+                href="/#pricing"
+                className="mt-4 inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                {locale === "fr" ? "Voir les offres" : "View plans"}
+              </Link>
+            )}
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6">
