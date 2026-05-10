@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/app/locale-context";
 import { useWorkspace } from "@/app/workspace-context";
@@ -11,8 +12,14 @@ import {
   type ReminderEmailTemplateInput,
 } from "@/lib/reminder-email-templates";
 import { getReminderRule, normalizeDaysAfterDue, upsertReminderRule, type ReminderRule } from "@/lib/reminder-rules";
-import { canUseTemplatePaymentLink, getMaxEmailTemplates } from "@/lib/plans";
+import {
+  canUseTemplatePaymentLink,
+  getMaxEmailTemplates,
+  getMaxReminderJobsPerRun,
+  REMINDER_JOBS_PER_RUN_DEFAULT,
+} from "@/lib/plans";
 import type { PlanId } from "@/lib/plans";
+import { AUTO_REMINDER_FROM_DISPLAY } from "@/lib/auto-reminder-copy";
 import { REMINDER_TEMPLATE_VARIABLES_DOC } from "@/lib/reminder-template-substitution";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -76,12 +83,14 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
   const ws = useWorkspace();
   const maxModels = getMaxEmailTemplates(planId);
   const allowPaymentLink = canUseTemplatePaymentLink(planId);
+  const maxJobsCap = useMemo(() => getMaxReminderJobsPerRun(planId), [planId]);
   const showMultiPresets = maxModels > 1;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showRegistryHint, setShowRegistryHint] = useState(false);
   const [ruleEnabled, setRuleEnabled] = useState(true);
-  const [ruleMax, setRuleMax] = useState(50);
+  const [ruleMax, setRuleMax] = useState(REMINDER_JOBS_PER_RUN_DEFAULT);
   const [rows, setRows] = useState<EditableTemplate[]>([]);
 
   const workspaceId = ws.activeWorkspaceId;
@@ -90,6 +99,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
     if (!workspaceId || !supabase) return;
     setLoading(true);
     setMessage(null);
+    setShowRegistryHint(false);
     try {
       const [rule, tpls] = await Promise.all([
         getReminderRule(supabase, workspaceId),
@@ -97,10 +107,10 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
       ]);
       if (rule) {
         setRuleEnabled(rule.enabled);
-        setRuleMax(rule.maxJobsPerRun);
+        setRuleMax(Math.max(1, Math.min(rule.maxJobsPerRun, getMaxReminderJobsPerRun(planId))));
       } else {
         setRuleEnabled(true);
-        setRuleMax(50);
+        setRuleMax(Math.min(REMINDER_JOBS_PER_RUN_DEFAULT, getMaxReminderJobsPerRun(planId)));
       }
       setRows(tpls.map(rowFromDb));
     } catch (e) {
@@ -109,31 +119,46 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
     } finally {
       setLoading(false);
     }
-  }, [supabase, workspaceId]);
+  }, [supabase, workspaceId, planId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setRuleMax((v) => Math.max(1, Math.min(v, maxJobsCap)));
+  }, [maxJobsCap]);
 
   const usedDays = useMemo(() => new Set(rows.map((r) => r.daysAfterDue)), [rows]);
 
   const t =
     locale === "fr"
       ? {
-          title: "Relances automatiques (scheduler)",
-          hint: "Ces paramètres pilotent le runner serveur /api/reminders/run pour le portefeuille actif. Les envois automatiques utilisent MAIL_FROM_AUTO_REMINDERS si la variable serveur existe, sinon MAIL_FROM (Resend ; domaine à vérifier).",
-          enable: "Activer l’automatisation (portefeuille)",
-          daysTitle: "Jours après échéance",
+          title: "Relances automatiques",
+          hint: (
+            <>
+              PayPulss envoie ces mails <strong>pour vous</strong>, uniquement aux{" "}
+              <strong>factures encore impayées</strong> du portefeuille sélectionné. Vos clients voient généralement l’expéditeur{" "}
+              <strong>{AUTO_REMINDER_FROM_DISPLAY}</strong> (configuré côté serveur PayPulss / votre domaine peut aussi être utilisé).
+            </>
+          ),
+          hintTech:
+            "L’envoi réel passe par une tâche automatique régulière (cron) configurée pour votre projet : elle appelle le serveur, qui vérifie les échéances et envoie au bon jour.",
+          enable: "Activer les relances automatiques pour ce portefeuille",
+          daysTitle: "Délais après la date d’échéance (J+n)",
           daysExpl:
-            "Chaque modèle correspond à un seul J+n. Calendrier serveur en UTC (scheduled_for à 08:00 UTC). Exemple : avec J+1, une facture dont due_date est aujourd’hui UTC est mise en file le lendemain, puis envoyée après ce créneau.",
+            "Pour chaque retard, vous choisissez un délai « J+n » : par exemple « J+3 », c’est trois jours après la date d’échéance de la facture dans PayPulss. Une ligne n’est prise en compte que si elle est impayée et en retard. Le calcul passe par la date/heure UTC côté serveur puis l’e-mail sort en général le matin (souvent 9 h à 11 h Paris, après le créneau d’envoi et le passage du cron).",
           preset37: "Préréglage : J+3 · 7 · 21",
           preset137: "Préréglage : J+1 · 3 · 7 · 21",
-          maxRun: "Maximum d’envois par run",
+          maxRun: "Plafond d’envois par passage",
+          maxRunExpl: (cap: number) =>
+            `Garde-fou : à chaque passage du robot, ce portefeuille n’envoie pas plus de relances auto que ce nombre si beaucoup de retards coïncident. Plafond maximum autorisé sur votre plan : ${cap}.`,
           save: "Enregistrer les règles et modèles",
           modelsTitle: "Modèles d’e-mails",
           unpaidOnlyHint:
             "Les relances automatiques et les modèles ci-dessous s’appliquent aux factures impayées uniquement. Pour une fiche payée, la relance manuelle utilise le brouillon (objet + corps) plus bas sur cette page.",
           quota: (n: number, m: number) => `Modèles enregistrés : ${n} / ${m}`,
+          senderLine: `Ajouter un ou plusieurs messages : ils seront envoyés automatiquement par ${AUTO_REMINDER_FROM_DISPLAY} aux adresses clients en retard.`,
           add: "Ajouter un modèle",
           remove: "Supprimer ce modèle",
           delay: "Délai J+",
@@ -141,27 +166,48 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           body: "Corps du message",
           link: "Lien de paiement (optionnel)",
           linkLockedHint:
-            "Lien de paiement réservé aux plans Pro et Agence. Sur Starter, le corps que vous écrivez est envoyé tel quel.",
-          vars: "Variables : " + REMINDER_TEMPLATE_VARIABLES_DOC.join(", "),
+            "Plans Pro et Agence : champ séparé « lien de paiement » avec mise en avant cliquable en bas du mail. Sur Starter, ce champ est absent ; vous pouvez quand même saisir une URL https dans le corps. PayPulss envoie la relance en texte brut (sans HTML). Le destinataire copie-collera le lien s’il y en a.",
+          starterBodyUrlsHint:
+            "Sur Starter, évitez de compter sur un « joli lien bleu » : le message est envoyé en texte brut — ce qui aide à éviter confusion avec nos liens paiement réservés Pro/Agence. Le client peut tout de même sélectionner l’URL dans le mail et la copier dans son navigateur.",
+          vars: "Variables que le serveur remplacera automatiquement : " + REMINDER_TEMPLATE_VARIABLES_DOC.join(", "),
+          registryHint: (
+            <>
+              Voir&nbsp;
+              <Link href="/dashboard/modeles-relance/enregistrements" className="font-semibold text-blue-700 underline hover:text-blue-800">
+                la synthèse de ce qui sera envoyé aux clients
+              </Link>
+              .
+            </>
+          ),
           readonly: "Lecture seule, membre invité.",
           pickDay: "Choisissez un J+ libre pour le nouveau modèle.",
           quotaBlock: "Quota atteint pour votre plan.",
         }
       : {
-          title: "Automatic reminders (scheduler)",
-          hint: "These settings drive the server runner /api/reminders/run for the active workspace. Automated sends use MAIL_FROM_AUTO_REMINDERS when set server-side; otherwise MAIL_FROM (Resend; domain must be verified).",
-          enable: "Enable automation (workspace)",
-          daysTitle: "Days after due date",
+          title: "Automatic reminders",
+          hint: (
+            <>
+              PayPulss sends these on your behalf to <strong>unpaid overdue rows</strong> in the wallet you selected. Clients usually see&nbsp;
+              <strong>{AUTO_REMINDER_FROM_DISPLAY}</strong> as the sender (server-side branding / domain may vary).
+            </>
+          ),
+          hintTech:
+            "Your hosting runs a cron job periodically; it pings the PayPulss server, which checks due dates and sends at the scheduled time.",
+          enable: "Enable automatic reminders for this wallet",
+          daysTitle: "Delays after the due date (J+n)",
           daysExpl:
-            "Each model maps to exactly one J+n. The runner uses UTC dates (scheduled_for at 08:00 UTC). Example: with J+1, if due_date is today UTC, enqueue happens the next day, then the email sends after that window.",
+            "Pick a delay like J+3: three calendar days after the due date recorded on the unpaid row in PayPulss. Unpaid-but-not-yet-due rows stay quiet until they become overdue (UTC-backed schedule; typical send window is roughly 9am–11am Paris depending on cron).",
           preset37: "Preset: J+3 · 7 · 21",
           preset137: "Preset: J+1 · 3 · 7 · 21",
-          maxRun: "Max sends per run",
+          maxRun: "Max reminders per cron run",
+          maxRunExpl: (cap: number) =>
+            `Safety valve: each cron pass won’t send more than this many auto reminders for this wallet when many rows are due. Your plan’s hard cap is ${cap}.`,
           save: "Save rules and templates",
           modelsTitle: "Email templates",
           unpaidOnlyHint:
             "Automatic reminders and the templates below apply to unpaid invoices only. For a paid row, the manual reminder uses the draft (subject + body) further down this page.",
           quota: (n: number, m: number) => `Saved templates: ${n} / ${m}`,
+          senderLine: `Add one or more messages: PayPulss sends them automatically from ${AUTO_REMINDER_FROM_DISPLAY} to overdue client emails.`,
           add: "Add template",
           remove: "Remove template",
           delay: "Delay J+",
@@ -169,8 +215,19 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           body: "Message body",
           link: "Payment link (optional)",
           linkLockedHint:
-            "Payment link is a Pro/Agency feature. On Starter, the body you write is sent as-is.",
-          vars: "Variables: " + REMINDER_TEMPLATE_VARIABLES_DOC.join(", "),
+            "Pro / Agency unlock a dedicated payment-link field rendered as an obvious clickable block. Starter hides that field—you can paste an https URL in the body instead. Starter uses plain-text email (no HTML) so recipients usually copy links manually.",
+          starterBodyUrlsHint:
+            "Starter skips HTML for auto reminders—expect plain text URLs. Recipients highlight the URL if their mail client does not autopaste it.",
+          vars: "Server replaces these placeholders: " + REMINDER_TEMPLATE_VARIABLES_DOC.join(", "),
+          registryHint: (
+            <>
+              View{" "}
+              <Link href="/dashboard/modeles-relance/enregistrements" className="font-semibold text-blue-700 underline hover:text-blue-800">
+                the summary clients will receive
+              </Link>
+              .
+            </>
+          ),
           readonly: "Read-only, invited member.",
           pickDay: "Pick a free J+ for the new template.",
           quotaBlock: "Plan template limit reached.",
@@ -248,13 +305,13 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           enabled: true,
           timezone: "Europe/Paris",
           daysAfterDue: normalizeDaysAfterDue([3, 7, 21]),
-          maxJobsPerRun: 50,
+          maxJobsPerRun: REMINDER_JOBS_PER_RUN_DEFAULT,
         } satisfies ReminderRule);
 
       const merged: ReminderRule = {
         ...baseRule,
         enabled: ruleEnabled,
-        maxJobsPerRun: Math.max(1, Math.min(500, ruleMax)),
+        maxJobsPerRun: Math.max(1, Math.min(ruleMax, maxJobsCap)),
       };
 
       const inputs: ReminderEmailTemplateInput[] = rows.map((r, i) => ({
@@ -269,6 +326,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
       await syncReminderRuleDaysFromTemplates(supabase, merged, saved);
       setRows(saved.map(rowFromDb));
       setMessage(locale === "fr" ? "Enregistré." : "Saved.");
+      setShowRegistryHint(true);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -292,7 +350,10 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
     <div className="space-y-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-base font-semibold text-slate-900">{t.title}</h2>
-        <p className="mt-2 text-sm text-slate-600">{t.hint}</p>
+        <div className="mt-2 space-y-2 text-sm text-slate-600">
+          <p>{t.hint}</p>
+          <p className="text-xs leading-relaxed text-slate-500">{t.hintTech}</p>
+        </div>
         <form onSubmit={handleSave} className="mt-4 space-y-4">
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
@@ -332,12 +393,17 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
             <input
               type="number"
               min={1}
-              max={500}
+              max={maxJobsCap}
               disabled={memberReadOnly}
               value={ruleMax}
-              onChange={(e) => setRuleMax(Number.parseInt(e.target.value, 10) || 1)}
+              onChange={(e) => {
+                const n = Number.parseInt(e.target.value, 10);
+                const next = Number.isFinite(n) ? n : 1;
+                setRuleMax(Math.max(1, Math.min(next, maxJobsCap)));
+              }}
               className="mt-1 w-32 rounded-lg border border-slate-200 px-3 py-2"
             />
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.maxRunExpl(maxJobsCap)}</p>
           </label>
 
           <div className="border-t border-slate-100 pt-4">
@@ -347,6 +413,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
             </div>
             <p className="mt-1 text-xs leading-relaxed text-slate-600">{t.unpaidOnlyHint}</p>
             <p className="mt-1 text-xs text-slate-500">{t.vars}</p>
+            <p className="mt-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">{t.senderLine}</p>
             <button
               type="button"
               disabled={memberReadOnly || rows.length >= maxModels}
@@ -411,6 +478,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                       className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                     />
                   </label>
+                  {planId === "starter" ? <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{t.starterBodyUrlsHint}</p> : null}
                   {allowPaymentLink ? (
                     <label className="mt-2 block text-xs font-medium text-slate-600">
                       {t.link}
@@ -432,7 +500,12 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           </div>
 
           {memberReadOnly ? <p className="text-sm text-amber-700">{t.readonly}</p> : null}
-          {message ? <p className="text-sm text-slate-700">{message}</p> : null}
+          {message ? (
+            <div className="space-y-1">
+              <p className="text-sm text-slate-700">{message}</p>
+              {!memberReadOnly && showRegistryHint ? <div className="text-sm text-slate-700">{t.registryHint}</div> : null}
+            </div>
+          ) : null}
           <button
             type="submit"
             disabled={saving || memberReadOnly}

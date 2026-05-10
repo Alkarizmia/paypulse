@@ -164,6 +164,29 @@ export function canUseTemplatePaymentLink(planId: PlanId): boolean {
   return planId === "pro" || planId === "agency";
 }
 
+/**
+ * Starter : pas de multipart HTML pour les relances automatiques — limites les boutons bleus et liens
+ * cliquables générés par le corps HTML ; une URL mise dans le texte peut toujours être copiée-collée par le destinataire.
+ * Pro et Agence : HTML classique (+ lien de paiement optionnel).
+ */
+export function autoReminderSendHtmlAllowed(planId: PlanId): boolean {
+  return planId !== "starter";
+}
+
+/** Défaut à l’inscription si aucune règle encore en base. */
+export const REMINDER_JOBS_PER_RUN_DEFAULT = 50;
+
+/**
+ * Maximum autorisé pour « plafond d’envois par passage » selon le plan (Starter 60 · Pro 85 · Agency 100).
+ * Valeur utilisateur défaut : {@link REMINDER_JOBS_PER_RUN_DEFAULT}.
+ */
+export function getMaxReminderJobsPerRun(planId: PlanId): number {
+  if (planId === "agency") return 100;
+  if (planId === "pro") return 85;
+  /* starter + free fallback */
+  return 60;
+}
+
 /** Nombre max de modèles d’e-mail enregistrés. Starter : 1, Pro : 4, Agency : 8. */
 export function getMaxEmailTemplates(planId: PlanId): number {
   if (planId === "starter") return 1;

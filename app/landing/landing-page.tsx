@@ -45,13 +45,6 @@ const ANNUAL_PRICING: Partial<Record<PlanId, AnnualPricing>> = {
   agency: { annual: "374.40€", oldAnnual: "468€" },
 };
 
-// TODO: Replace placeholders with Stripe links when ready.
-const STRIPE_CHECKOUT_URLS: Partial<Record<Exclude<PlanId, "free">, Record<BillingCycle, string>>> = {
-  starter: { monthly: "starter_monthly_url", annual: "starter_annual_url" },
-  pro: { monthly: "pro_monthly_url", annual: "pro_annual_url" },
-  agency: { monthly: "agency_monthly_url", annual: "agency_annual_url" },
-};
-
 /** Flèche demi-tour décorative : zoom uniquement sur ce picto au survol. */
 function RecurringCycleArrowDecor({
   ariaLabel,
@@ -821,8 +814,6 @@ export function LandingPage() {
 
   const resolvePlanCtaHref = (planId: PlanId): string => {
     if (planId === "free") return isAuthenticated ? "/dashboard?plan=free" : "/signup?plan=free";
-    const stripeUrl = STRIPE_CHECKOUT_URLS[planId]?.[billingCycle];
-    if (stripeUrl && !stripeUrl.endsWith("_url")) return stripeUrl;
     return isAuthenticated
       ? `/dashboard?plan=${planId}&billing=${billingCycle}`
       : `/signup?plan=${planId}&billing=${billingCycle}`;

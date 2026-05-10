@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
 export const metadata: Metadata = {
   title: "Informations légales | PayPulss",
@@ -10,7 +11,7 @@ const links = [
   {
     href: "/mentions-legales",
     title: "Mentions légales",
-    desc: "Éditeur, hébergeur, contact, placeholders à compléter.",
+    desc: "Éditeur (Alkarizmia, Belgique), hébergeur, immatriculation BCE/KBO, contact.",
   },
   {
     href: "/confidentialite",
@@ -30,27 +31,31 @@ const links = [
 ] as const;
 
 export default function LegalPage() {
+  const e = LEGAL_ENTITY;
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900">Informations légales</h1>
       <p className="mt-3 max-w-3xl text-slate-600">
-        PayPulss est un logiciel en ligne de suivi de factures et de relances pour freelances. Les documents ci-dessous
-        encadrent l&apos;usage du service. Les champs entre crochets […] sur certaines pages sont des{" "}
-        <strong>placeholders</strong> à remplacer par vos données réelles avant toute mise en production publique ; une
-        relecture juridique est recommandée.
+        <strong>{e.productBrand}</strong> est un logiciel en ligne de suivi de factures et de relances pour freelances
+        et indépendants, édité par <strong>{e.denomination}</strong> ({e.kbo}, Belgique). Les documents ci-dessous
+        encadrent l&apos;usage du service.
       </p>
-      <p className="mt-2 text-sm text-slate-500">Dernière mise à jour de cette page index : 21 avril 2026.</p>
-      <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-        <p className="font-semibold">Informations légales (temporaire)</p>
-        <p className="mt-2">Fondateur : El Fahmi Bilal</p>
-        <p>Responsable légale : Ikram El Fahmi</p>
-        <p>
-          Email :{" "}
-          <a href="mailto:contact@paypulss.com?subject=Contact%20Paypulss" className="underline hover:text-amber-800">
-            contact@paypulss.com
+      <p className="mt-2 text-sm text-slate-500">Dernière mise à jour de cette page index : 9 mai 2026.</p>
+      <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-800">
+        <p className="font-semibold text-slate-900">Éditeur</p>
+        <p className="mt-2">
+          {e.denomination} — BCE/KBO {e.kbo}
+        </p>
+        <p className="mt-1">{e.address}</p>
+        <p className="mt-2">
+          Contact :{" "}
+          <a href={`mailto:${e.contactEmail}?subject=Contact%20${e.productBrand}`} className="text-blue-700 underline hover:text-blue-600">
+            {e.contactEmail}
           </a>
         </p>
-        <p>Société : À compléter après immatriculation</p>
+        <p className="mt-1 text-xs text-slate-600">
+          Marque / service : {e.productBrand} ({e.denomination})
+        </p>
       </div>
 
       <ul className="mt-10 grid gap-4 sm:grid-cols-2">

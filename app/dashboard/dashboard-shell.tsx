@@ -256,6 +256,9 @@ export function DashboardShell({
   const { setLocale } = useLocale();
   const { user } = useAuth();
   const pathname = usePathname() ?? "";
+  const pathnameNorm = pathname.replace(/\/+$/, "") || "/";
+  const onTemplatesHub = pathnameNorm === "/dashboard/modeles-relance";
+  const onTemplatesRegistry = pathnameNorm.startsWith("/dashboard/modeles-relance/enregistrements");
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -279,6 +282,7 @@ export function DashboardShell({
           bilan: "Bilan",
           corbeille: "Corbeille",
           modelesRelance: "Modèles de relance",
+          autoReminderSaved: "Synthèse envois auto",
           dossiers: "Dossiers",
           foldersHintTitle: "Nouveau : Dossiers",
           foldersHintBody: "Organisez vos clients en dossiers, ajoutez des notes et gardez tout au même endroit.",
@@ -301,6 +305,7 @@ export function DashboardShell({
           bilan: "Summary",
           corbeille: "Trash",
           modelesRelance: "Reminder templates",
+          autoReminderSaved: "Auto-send summary",
           dossiers: "Folders",
           foldersHintTitle: "New: Folders",
           foldersHintBody: "Organize clients in folders, add notes, and keep everything in one place.",
@@ -426,15 +431,19 @@ export function DashboardShell({
             </Link>
           )}
           {showTemplatesNav ? (
-            <Link
-              href="/dashboard/modeles-relance"
-              className={shellNavLink(pathname.startsWith("/dashboard/modeles-relance"), light)}
-            >
-              <span className={pathname.startsWith("/dashboard/modeles-relance") ? navIconActive : navIconIdle}>
-                {templatesNavIcon}
-              </span>
-              {t.modelesRelance}
-            </Link>
+            <div className="flex flex-col gap-0.5">
+              <Link href="/dashboard/modeles-relance" className={shellNavLink(onTemplatesHub, light)}>
+                <span className={onTemplatesHub ? navIconActive : navIconIdle}>{templatesNavIcon}</span>
+                {t.modelesRelance}
+              </Link>
+              <Link
+                href="/dashboard/modeles-relance/enregistrements"
+                className={`${shellNavLink(onTemplatesRegistry, light)} pl-9 text-xs font-medium`}
+              >
+                <span className={onTemplatesRegistry ? navIconActive : `${navIconIdle} opacity-80`}>{templatesNavIcon}</span>
+                {t.autoReminderSaved}
+              </Link>
+            </div>
           ) : null}
           <Link href="/dashboard/dossiers" className={shellNavLink(pathname.startsWith("/dashboard/dossiers"), light)}>
             <span className={pathname.startsWith("/dashboard/dossiers") ? navIconActive : navIconIdle}>
@@ -822,16 +831,24 @@ export function DashboardShell({
               </Link>
             )}
             {showTemplatesNav ? (
-              <Link
-                href="/dashboard/modeles-relance"
-                onClick={() => setMobileMenuOpen(false)}
-                className={shellNavLink(pathname.startsWith("/dashboard/modeles-relance"), light)}
-              >
-                <span className={pathname.startsWith("/dashboard/modeles-relance") ? navIconActive : navIconIdle}>
-                  {templatesNavIcon}
-                </span>
-                {t.modelesRelance}
-              </Link>
+              <>
+                <Link
+                  href="/dashboard/modeles-relance"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={shellNavLink(onTemplatesHub, light)}
+                >
+                  <span className={onTemplatesHub ? navIconActive : navIconIdle}>{templatesNavIcon}</span>
+                  {t.modelesRelance}
+                </Link>
+                <Link
+                  href="/dashboard/modeles-relance/enregistrements"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`${shellNavLink(onTemplatesRegistry, light)} pl-9 text-xs font-medium`}
+                >
+                  <span className={onTemplatesRegistry ? navIconActive : `${navIconIdle} opacity-80`}>{templatesNavIcon}</span>
+                  {t.autoReminderSaved}
+                </Link>
+              </>
             ) : null}
             <Link
               href="/dashboard/dossiers"

@@ -66,6 +66,10 @@ function parsePlanParam(value: string | null): PlanId | null {
   return null;
 }
 
+function parseBillingParam(value: string | null): "monthly" | "annual" {
+  return value === "annual" ? "annual" : "monthly";
+}
+
 function newId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -162,6 +166,8 @@ export function DashboardView() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const envHint = getSupabaseEnvHint();
   const requestedPlan = parsePlanParam(searchParams.get("plan"));
+  const requestedBilling = parseBillingParam(searchParams.get("billing"));
+  const stripeQuery = searchParams.get("stripe");
   const [planNotice, setPlanNotice] = useState<string | null>(null);
   const [addTargetWorkspaceId, setAddTargetWorkspaceId] = useState<string | null>(null);
   const [reminderToast, setReminderToast] = useState<ReminderToast | null>(null);
@@ -409,6 +415,10 @@ export function DashboardView() {
         freeLimitClients: `Plan gratuit : maximum ${FREE_TIER_MAX_CLIENTS} clients distincts (e-mails différents).`,
         freeLimitInvoices: `Plan gratuit : maximum ${FREE_TIER_MAX_INVOICES} factures.`,
         planUpdated: "Abonnement mis à jour :",
+        planCheckoutFailed:
+          "Paiement en ligne indisponible pour le moment. Votre plan n’a pas été modifié. Vérifiez la configuration ou réessayez plus tard.",
+        stripePaymentSynced: "Paiement confirmé — votre abonnement est à jour.",
+        stripePaymentCancelled: "Paiement annulé. Aucun changement d’abonnement.",
         paiementsTitle: "Synthèse paiements",
         paiementsSub: "Vue agrégée des montants marqués payés et en attente.",
         reminderModalTitle: "Envoyer une relance",
@@ -463,6 +473,10 @@ export function DashboardView() {
         freeLimitClients: `Free plan: at most ${FREE_TIER_MAX_CLIENTS} distinct clients (different emails).`,
         freeLimitInvoices: `Free plan: at most ${FREE_TIER_MAX_INVOICES} invoices.`,
         planUpdated: "Subscription updated:",
+        planCheckoutFailed:
+          "Online checkout is unavailable. Your plan was not changed. Try again later or contact support.",
+        stripePaymentSynced: "Payment confirmed — your subscription is synced.",
+        stripePaymentCancelled: "Payment cancelled. Your plan was not changed.",
         paiementsTitle: "Payments summary",
         paiementsSub: "Aggregated view of marked paid vs pending amounts.",
         reminderModalTitle: "Send a reminder",
@@ -832,9 +846,52 @@ export function DashboardView() {
     const applyRequestedPlan = async () => {
       try {
         const { data: authData } = await supabase.auth.getUser();
-        const user = authData.user;
-        if (!user) return;
-        const updated = await setCurrentSubscriptionPlan(supabase, user.id, requestedPlan);
+        const authUser = authData.user;
+        if (!authUser) return;
+
+        if (requestedPlan !== "free") {
+          const { data: sess } = await supabase.auth.getSession();
+          const token = sess.session?.access_token;
+          if (!token) return;
+          let res: Response;
+          try {
+            res = await fetch("/api/stripe/checkout", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ planId: requestedPlan, billingCycle: requestedBilling }),
+            });
+          } catch {
+            if (!cancelled) {
+              setPlanNotice(copy.planCheckoutFailed);
+              router.replace("/dashboard");
+            }
+            return;
+          }
+          let json: { url?: string; code?: string } = {};
+          try {
+            json = (await res.json()) as { url?: string; code?: string };
+          } catch {
+            if (!cancelled) {
+              setPlanNotice(copy.planCheckoutFailed);
+              router.replace("/dashboard");
+            }
+            return;
+          }
+          if (!cancelled && res.ok && typeof json.url === "string" && json.url.length > 0) {
+            window.location.href = json.url;
+            return;
+          }
+          if (!cancelled) {
+            setPlanNotice(copy.planCheckoutFailed);
+            router.replace("/dashboard");
+          }
+          return;
+        }
+
+        const updated = await setCurrentSubscriptionPlan(supabase, authUser.id, requestedPlan);
         if (!cancelled) {
           setPlan(updated);
           setPlanNotice(`${planNoticePrefix} ${updated.planId.toUpperCase()} (${updated.status})`);
@@ -852,7 +909,42 @@ export function DashboardView() {
     return () => {
       cancelled = true;
     };
-  }, [planNoticePrefix, requestedPlan, router, supabase, ws.refreshWorkspaces]);
+  }, [
+    copy.planCheckoutFailed,
+    planNoticePrefix,
+    requestedPlan,
+    requestedBilling,
+    router,
+    supabase,
+    ws.refreshWorkspaces,
+  ]);
+
+  useEffect(() => {
+    if (!supabase || stripeQuery !== "success" || !user?.id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const p = await getCurrentSubscription(supabase, user.id);
+        if (!cancelled) {
+          setPlan(p);
+          setPlanNotice(copy.stripePaymentSynced);
+          void ws.refreshWorkspaces();
+          router.replace("/dashboard");
+        }
+      } catch {
+        if (!cancelled) router.replace("/dashboard");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [stripeQuery, supabase, user?.id, router, copy.stripePaymentSynced, ws.refreshWorkspaces]);
+
+  useEffect(() => {
+    if (stripeQuery !== "cancel") return;
+    setPlanNotice(copy.stripePaymentCancelled);
+    router.replace("/dashboard");
+  }, [stripeQuery, router, copy.stripePaymentCancelled]);
 
   return (
     <div>

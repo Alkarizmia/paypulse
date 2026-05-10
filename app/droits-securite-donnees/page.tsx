@@ -64,8 +64,11 @@ export default function DataRightsPage() {
       <h2>5. Signalement de vulnérabilités</h2>
       <p>
         Si vous pensez avoir identifié une faille de sécurité, merci de nous contacter de manière responsable à l&apos;adresse{" "}
-        <strong>[EMAIL_SECURITY]</strong> (ex. <code className="rounded bg-slate-100 px-1 py-0.5 text-sm">security@exemple.com</code>
-        ), en évitant de divulguer publiquement les détails exploitables avant correction raisonnable.
+        <a href="mailto:contact@paypulss.com?subject=Signalement%20s%C3%A9curit%C3%A9%20PayPulss" className="font-semibold text-blue-700 underline hover:text-blue-600">
+          contact@paypulss.com
+        </a>{" "}
+        (objet du message : signalement sécurité), en évitant de divulguer publiquement les détails exploitables avant
+        correction raisonnable.
       </p>
 
       <h2>6. Rôles et responsabilités</h2>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité | PayPulss",
@@ -8,31 +9,32 @@ export const metadata: Metadata = {
 };
 
 export default function ConfidentialitePage() {
+  const e = LEGAL_ENTITY;
   return (
-    <LegalLayout title="Politique de confidentialité" updated="21 avril 2026">
+    <LegalLayout title="Politique de confidentialité" updated="9 mai 2026">
       <p>
-        La présente politique décrit comment <strong>PayPulss</strong> (ci-après « nous », « le service ») traite les
-        données personnelles dans le cadre du logiciel en ligne de suivi de factures et de relances pour freelances et
-        indépendants.
+        La présente politique décrit comment <strong>{e.productBrand}</strong> (ci-après « nous », « le service »),
+        édité par <strong>{e.denomination}</strong>, traite les données personnelles dans le cadre du logiciel en ligne
+        de suivi de factures et de relances pour freelances et indépendants.
       </p>
       <p>
-        <strong>Responsable du traitement :</strong> [SOCIÉTÉ], [ADRESSE_SIÈGE]. Pour toute question relative aux
-        données personnelles : <strong>contact@paypulss.com</strong>.
+        <strong>Responsable du traitement :</strong> {e.denomination}, {e.address} (BCE/KBO {e.kbo}). Pour toute question
+        relative aux données personnelles :{" "}
+        <a href={`mailto:${e.contactEmail}?subject=Donn%C3%A9es%20personnelles%20${e.productBrand}`} className="font-semibold text-blue-700 underline hover:text-blue-600">
+          {e.contactEmail}
+        </a>
+        .
       </p>
-      <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-        <strong>Informations légales (temporaire)</strong>
+      <p className="rounded-lg border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-800">
+        <strong className="text-slate-900">Coordonnées complémentaires</strong>
         <br />
-        Fondateur : El Fahmi Bilal
+        Fondateur : {e.founder}
         <br />
-        Responsable légale : Ikram El Fahmi
-        <br />
-        Email : contact@paypulss.com
-        <br />
-        Société : À compléter après immatriculation
+        Responsable légale : {e.publicationDirector}
       </p>
-      <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-        Les mentions entre crochets […] sont des <strong>placeholders</strong> à remplacer par vos informations réelles
-        avant mise en production. Un avis juridique est recommandé pour validation définitive.
+      <p className="text-sm text-slate-600">
+        Une relecture juridique reste recommandée avant toute obligation contractuelle forte ou traitement sensible à
+        grande échelle.
       </p>
 
       <h2>1. Données collectées</h2>
@@ -143,8 +145,8 @@ export default function ConfidentialitePage() {
 
       <h2>7. Cookies et traceurs</h2>
       <p>
-        L&apos;application peut utiliser des cookies ou stockages locaux <strong>strictement nécessaires</strong> au
-        fonctionnement (par exemple session, préférences de langue). Si vous ajoutez des outils d&apos;analyse ou de
+        L&apos;application peut utiliser des cookies ou stockages locaux <strong>strictement nécessaires</strong>{" "}
+        au fonctionnement (par exemple session, préférences de langue). Si vous ajoutez des outils d&apos;analyse ou de
         publicité non essentiels, vous devrez mettre en place un mécanisme de consentement conforme (bandeau,
         politique cookies dédiée) et mettre à jour la présente politique.
       </p>

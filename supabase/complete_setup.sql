@@ -80,10 +80,15 @@ create table if not exists public.subscriptions (
   amount_cents integer not null default 0,
   currency text not null default 'EUR',
   current_period_end timestamptz,
+  stripe_subscription_id text,
   created_at timestamptz not null default now()
 );
 
 create index if not exists subscriptions_user_created_idx on public.subscriptions (user_id, created_at desc);
+
+create unique index if not exists subscriptions_stripe_subscription_id_key
+  on public.subscriptions (stripe_subscription_id)
+  where stripe_subscription_id is not null;
 
 create table if not exists public.billing_records (
   id uuid primary key default gen_random_uuid(),
@@ -125,13 +130,9 @@ create policy "subscriptions_select_own"
 drop policy if exists "subscriptions_insert_own" on public.subscriptions;
 create policy "subscriptions_insert_own"
   on public.subscriptions for insert
-  with check (auth.uid() = user_id);
+  with check (auth.uid() = user_id and plan_id = 'free');
 
 drop policy if exists "subscriptions_update_own" on public.subscriptions;
-create policy "subscriptions_update_own"
-  on public.subscriptions for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
 
 drop policy if exists "billing_select_own" on public.billing_records;
 create policy "billing_select_own"

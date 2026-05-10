@@ -1,57 +1,90 @@
 import Link from "next/link";
 
+const KBO = "1037.806.166";
+const YEAR = new Date().getFullYear();
+
+const footerLinkClass = "text-slate-600 transition hover:text-slate-900";
+
+type FooterColumn = {
+  title: string;
+  links: { label: string; href: string; external?: boolean }[];
+};
+
+const columns: FooterColumn[] = [
+  {
+    title: "Produit",
+    links: [
+      { label: "Fonctionnalités", href: "/#features" },
+      { label: "Aperçu", href: "/#demo" },
+      { label: "Tarifs", href: "/#pricing" },
+      { label: "FAQ", href: "/#faq" },
+      { label: "À propos", href: "/a-propos" },
+      { label: "Le produit en images", href: "/#product-tour" },
+      { label: "Comment ça marche", href: "/#how" },
+    ],
+  },
+  {
+    title: "Société",
+    links: [
+      { label: "Fondateur", href: "/a-propos" },
+      { label: "Contact", href: "/contact" },
+      { label: "Écrire par e-mail", href: "mailto:contact@paypulss.com?subject=Contact%20PayPulss", external: true },
+    ],
+  },
+  {
+    title: "Mentions",
+    links: [
+      { label: "Informations légales", href: "/legal" },
+      { label: "Mentions légales", href: "/mentions-legales" },
+      { label: "Sécurité des données", href: "/droits-securite-donnees" },
+      { label: "Confidentialité", href: "/confidentialite" },
+      { label: "CGU", href: "/conditions-utilisation" },
+    ],
+  },
+];
+
 export function SiteFooter() {
   return (
-    <footer className="border-t border-slate-200/80 bg-slate-50 px-4 py-10 text-sm text-slate-600 sm:px-6">
-      <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-3">
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-5">
-          <h3 className="text-sm font-semibold text-slate-900">Mentions légales</h3>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Éditeur, hébergeur et contact : page à compléter avec vos informations [SOCIÉTÉ], [RCS], etc.
-          </p>
-        </section>
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-5">
-          <h3 className="text-sm font-semibold text-slate-900">Confidentialité</h3>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Politique RGPD : données collectées, finalités, sous-traitants (Supabase, hébergeur, Stripe et e-mail lorsque
-            branchés), droits des personnes.
-          </p>
-        </section>
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-5">
-          <h3 className="text-sm font-semibold text-slate-900">CGU & sécurité</h3>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Conditions d&apos;utilisation du logiciel et page dédiée aux mesures de sécurité (auth, RLS, signalement).
-          </p>
-        </section>
-      </div>
-      <div className="mx-auto mt-6 flex w-full max-w-7xl flex-col items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 sm:flex-row">
-        <p>© PayPulss</p>
-        <nav className="flex flex-wrap items-center justify-center gap-4">
-          <Link href="/a-propos" className="transition hover:text-slate-800">
-            Fondateur
-          </Link>
-          <Link href="/contact" className="transition hover:text-slate-800">
-            Page contact
-          </Link>
-          <a href="mailto:contact@paypulss.com?subject=Contact%20Paypulss" className="transition hover:text-slate-800">
-            E-mail
-          </a>
-          <Link href="/legal" className="transition hover:text-slate-800">
-            Informations légales
-          </Link>
-          <Link href="/mentions-legales" className="transition hover:text-slate-800">
-            Mentions légales
-          </Link>
-          <Link href="/confidentialite" className="transition hover:text-slate-800">
-            Confidentialité
-          </Link>
-          <Link href="/conditions-utilisation" className="transition hover:text-slate-800">
-            CGU
-          </Link>
-          <Link href="/droits-securite-donnees" className="transition hover:text-slate-800">
-            Sécurité
-          </Link>
+    <footer className="border-t border-slate-200/80 bg-slate-50 px-4 py-12 text-sm text-slate-600 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl">
+        <nav aria-label="Pied de page" className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-14">
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{col.title}</h3>
+              <ul className="mt-4 space-y-3">
+                {col.links.map((item) => (
+                  <li key={item.label}>
+                    {item.external ? (
+                      <a href={item.href} className={footerLinkClass}>
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link href={item.href} className={footerLinkClass}>
+                        {item.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+                {col.title === "Société" ? (
+                  <li>
+                    <span className="text-slate-400" title="Page dédiée à venir">
+                      Carrières <span className="sr-only">(bientôt disponible)</span>
+                    </span>
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          ))}
         </nav>
+
+        <div className="mt-12 border-t border-slate-200 pt-8">
+          <p className="text-center text-xs leading-relaxed text-slate-500 sm:text-left">
+            © {YEAR} Alkarizmia — entreprise enregistrée sous le numéro {KBO} (BCE/KBO).
+          </p>
+          <p className="mt-2 text-center text-xs text-slate-500 sm:text-left">
+            PayPulss est une marque et un service proposé par Alkarizmia.
+          </p>
+        </div>
       </div>
     </footer>
   );

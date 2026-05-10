@@ -1,4 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { PlanId } from "@/lib/plans";
+import { autoReminderSendHtmlAllowed, getMaxReminderJobsPerRun, REMINDER_JOBS_PER_RUN_DEFAULT } from "@/lib/plans";
+import { getCurrentSubscription } from "@/lib/subscriptions";
 import { sendResendReminderEmail } from "@/lib/resend-reminder-send";
 import {
   listReminderEmailTemplates,
@@ -429,22 +432,62 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
     );
   }
 
+  const PENDING_FETCH_LIMIT = 500;
   const { data: pendingRows, error: pendingErr } = await supabase
     .from("reminder_jobs")
     .select("id,client_id,workspace_id,owner_user_id,schedule_days,due_date,scheduled_for,attempts,max_attempts,status")
     .eq("status", "pending")
     .lte("scheduled_for", nowIso)
     .order("scheduled_for", { ascending: true })
-    .limit(100);
+    .limit(PENDING_FETCH_LIMIT);
   if (pendingErr) throw pendingErr;
 
-  const jobs = (pendingRows ?? []) as ReminderJobRow[];
-  if (jobs.length === 0) {
+  const fetched = (pendingRows ?? []) as ReminderJobRow[];
+  if (fetched.length === 0) {
     return { scannedClients: 0, queuedJobs: 0, processedJobs: 0, sent: 0, failed: 0, skipped: 0 };
   }
 
   const profileCache = new Map<string, boolean>();
   const templateCache = new Map<string, ReminderEmailTemplate | null | undefined>();
+  const ownerPlanCache = new Map<string, PlanId>();
+  /** cache clé workspace|owner → max effectif après règle + plafond plan */
+  const effectiveCapCache = new Map<string, number>();
+
+  async function planIdForOwner(ownerUserId: string): Promise<PlanId> {
+    const hit = ownerPlanCache.get(ownerUserId);
+    if (hit) return hit;
+    const sub = await getCurrentSubscription(supabase, ownerUserId);
+    ownerPlanCache.set(ownerUserId, sub.planId);
+    return sub.planId;
+  }
+
+  async function effectiveJobCap(workspaceId: string, ownerUserId: string): Promise<number> {
+    const ck = `${workspaceId}:${ownerUserId}`;
+    const memo = effectiveCapCache.get(ck);
+    if (memo !== undefined) return memo;
+    const [rule, plan] = await Promise.all([getRuleByWorkspace(supabase, workspaceId), planIdForOwner(ownerUserId)]);
+    const stored = rule?.max_jobs_per_run ?? REMINDER_JOBS_PER_RUN_DEFAULT;
+    const planMax = getMaxReminderJobsPerRun(plan);
+    const v = Math.max(1, Math.min(stored, planMax));
+    effectiveCapCache.set(ck, v);
+    return v;
+  }
+
+  const perWsBatch = new Map<string, number>();
+  const jobs: ReminderJobRow[] = [];
+  for (const job of fetched) {
+    const ck = `${job.workspace_id}:${job.owner_user_id}`;
+    const cap = await effectiveJobCap(job.workspace_id, job.owner_user_id);
+    const used = perWsBatch.get(ck) ?? 0;
+    if (used < cap) {
+      jobs.push(job);
+      perWsBatch.set(ck, used + 1);
+    }
+  }
+
+  if (jobs.length === 0) {
+    return { scannedClients: 0, queuedJobs: 0, processedJobs: 0, sent: 0, failed: 0, skipped: 0 };
+  }
 
   let sent = 0;
   let failed = 0;
@@ -574,11 +617,14 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
       html = reminderBodyToHtml(text, null);
     }
 
+    const ownerPlan = await planIdForOwner(job.owner_user_id);
+    const allowHtml = autoReminderSendHtmlAllowed(ownerPlan);
+
     const sendResult = await sendResendReminderEmail({
       to: client.email,
       subject,
       text,
-      html,
+      ...(allowHtml ? { html } : {}),
       fromContext: "automation",
     });
 

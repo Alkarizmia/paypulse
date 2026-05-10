@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
 export const metadata: Metadata = {
   title: "Conditions générales d'utilisation | PayPulss",
@@ -7,27 +8,28 @@ export const metadata: Metadata = {
 };
 
 export default function ConditionsPage() {
+  const e = LEGAL_ENTITY;
   return (
-    <LegalLayout title="Conditions générales d'utilisation (CGU)" updated="21 avril 2026">
+    <LegalLayout title="Conditions générales d'utilisation (CGU)" updated="9 mai 2026">
       <p>
-        Les présentes conditions régissent l&apos;accès et l&apos;utilisation du service en ligne <strong>PayPulss</strong>{" "}
-        (ci-après le « Service »), édité par <strong>[SOCIÉTÉ]</strong>, [ADRESSE_SIÈGE], contact :{" "}
-        <strong>contact@paypulss.com</strong>.
+        Les présentes conditions régissent l&apos;accès et l&apos;utilisation du service en ligne{" "}
+        <strong>{e.productBrand}</strong> (ci-après le « Service »), édité par <strong>{e.denomination}</strong>,{" "}
+        {e.address} (BCE/KBO {e.kbo}), contact :{" "}
+        <a href={`mailto:${e.contactEmail}?subject=CGU%20${e.productBrand}`} className="font-semibold text-blue-700 underline hover:text-blue-600">
+          {e.contactEmail}
+        </a>
+        .
       </p>
-      <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-        <strong>Informations légales (temporaire)</strong>
+      <p className="rounded-lg border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-800">
+        <strong className="text-slate-900">Identité de l&apos;éditeur</strong>
         <br />
-        Fondateur : El Fahmi Bilal
+        Fondateur : {e.founder}
         <br />
-        Responsable légale : Ikram El Fahmi
-        <br />
-        Email : contact@paypulss.com
-        <br />
-        Société : À compléter après immatriculation
+        Responsable légale : {e.publicationDirector}
       </p>
-      <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-        Les champs […] sont des <strong>placeholders</strong> à compléter. Faites relire ces CGU par un professionnel du
-        droit avant commercialisation.
+      <p className="text-sm text-slate-600">
+        Faites relire ces CGU par un professionnel du droit avant toute commercialisation à grande échelle ou clauses
+        sectorielles spécifiques.
       </p>
 
       <h2>1. Objet du Service</h2>
@@ -39,7 +41,8 @@ export default function ConditionsPage() {
         selon la configuration du produit.
       </p>
       <p>
-        <strong>Le Service ne constitue pas un conseil comptable, fiscal ou juridique.</strong> Vous restez seul
+        <strong>Le Service ne constitue pas un conseil comptable, fiscal ou juridique.</strong>{" "}
+        Vous restez seul
         responsable du respect de vos obligations légales, déclaratives et contractuelles envers vos clients et les
         administrations.
       </p>
@@ -118,9 +121,14 @@ export default function ConditionsPage() {
 
       <h2>10. Droit applicable et litiges</h2>
       <p>
-        Sauf disposition impérative contraire, les présentes CGU sont régies par le <strong>droit français</strong>.
-        Attribution de compétence : <strong>[TRIBUNAL_COMPÉTENT]</strong> (à compléter, ex. tribunaux de [VILLE]), sous
-        réserve des règles impératives applicables aux consommateurs.
+        Sauf disposition impérative contraire, les présentes CGU sont régies par le <strong>droit belge</strong>
+        {". "}
+        Attribution de compétence : en cas de litige relatif à l&apos;interprétation ou à l&apos;exécution des présentes
+        CGU, et sous réserve des règles impératives applicables aux consommateurs (y compris celles de l&apos;Union
+        européenne), les <strong>tribunaux de l&apos;arrondissement judiciaire de Bruxelles</strong>
+        {" "}
+        sont compétents, étant précisé que le siège d&apos;exploitation de l&apos;éditeur ({e.denomination}) est établi à{" "}
+        {e.address}.
       </p>
     </LegalLayout>
   );
