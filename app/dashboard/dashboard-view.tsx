@@ -278,7 +278,14 @@ export function DashboardView() {
         const all = loadLocalClientStore();
         setClients(all.filter((c) => !c.deletedAt));
         setTrashedClients(all.filter((c) => Boolean(c.deletedAt)));
-        setPlan({ planId: "free", status: "trial", amountCents: 0, currency: "EUR", currentPeriodEnd: null });
+        setPlan({
+          planId: "free",
+          status: "trial",
+          amountCents: 0,
+          currency: "EUR",
+          currentPeriodEnd: null,
+          billingInterval: null,
+        });
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Impossible de charger les clients.";

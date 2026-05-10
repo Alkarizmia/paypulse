@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe-server";
 import { getSupabaseServerClient } from "@/lib/server-supabase";
-import { upsertSubscriptionRowFromStripe } from "@/lib/stripe-sync-subscription";
+import {
+  getBillingIntervalFromStripeSubscription,
+  upsertSubscriptionRowFromStripe,
+} from "@/lib/stripe-sync-subscription";
 import { getUserIdFromAuthorizationHeader } from "@/lib/supabase-route-auth";
 
 export const runtime = "nodejs";
@@ -31,10 +34,10 @@ export async function GET(request: Request) {
 
   const subId = row?.stripe_subscription_id as string | undefined;
   if (!subId) {
-    return NextResponse.json({ currentPeriodEnd: null, cancelAtPeriodEnd: false });
+    return NextResponse.json({ currentPeriodEnd: null, billingInterval: null, cancelAtPeriodEnd: false });
   }
 
-  const sub = await stripe.subscriptions.retrieve(subId);
+  const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data.price"] });
   await upsertSubscriptionRowFromStripe(admin, sub);
 
   const currentPeriodEnd =
@@ -42,6 +45,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     currentPeriodEnd,
+    billingInterval: getBillingIntervalFromStripeSubscription(sub),
     cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
     status: sub.status,
   });

@@ -53,7 +53,14 @@ export function TrashView() {
       } else {
         const all = loadLocalClientStore();
         setTrash(all.filter((c) => Boolean(c.deletedAt)));
-        setPlan({ planId: "free", status: "trial", amountCents: 0, currency: "EUR", currentPeriodEnd: null });
+        setPlan({
+          planId: "free",
+          status: "trial",
+          amountCents: 0,
+          currency: "EUR",
+          currentPeriodEnd: null,
+          billingInterval: null,
+        });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur");

@@ -4,6 +4,16 @@ import type { PlanId } from "@/lib/plans";
 import { getPaidPlanFromStripePriceId } from "@/lib/stripe-prices";
 import type { SubscriptionStatus } from "@/lib/subscriptions";
 
+export function getBillingIntervalFromStripeSubscription(sub: Stripe.Subscription): "month" | "year" | null {
+  const item0 = sub.items?.data?.[0];
+  const price = item0?.price;
+  if (typeof price === "string") return null;
+  if (!price || typeof price !== "object") return null;
+  const interval = (price as Stripe.Price).recurring?.interval;
+  if (interval === "month" || interval === "year") return interval;
+  return null;
+}
+
 function extractPrimarySubscriptionPriceId(sub: Stripe.Subscription): string | null {
   const item0 = sub.items?.data?.[0];
   if (!item0) return null;
@@ -114,6 +124,7 @@ type UpsertRow = {
   currency: string;
   current_period_end: string | null;
   stripe_subscription_id: string;
+  billing_interval: "month" | "year" | null;
 };
 
 function rowFromStripeSubscription(sub: Stripe.Subscription, paidPlan: Exclude<PlanId, "free">): UpsertRow {
@@ -134,6 +145,7 @@ function rowFromStripeSubscription(sub: Stripe.Subscription, paidPlan: Exclude<P
     currency: currency.length > 0 ? currency : "EUR",
     current_period_end: periodEnd,
     stripe_subscription_id: sub.id,
+    billing_interval: getBillingIntervalFromStripeSubscription(sub),
   };
 }
 
@@ -169,6 +181,7 @@ export async function upsertSubscriptionRowFromStripe(
         amount_cents: row.amount_cents,
         currency: row.currency,
         current_period_end: row.current_period_end,
+        billing_interval: row.billing_interval,
       })
       .eq("stripe_subscription_id", sub.id);
     if (error) throw error;
@@ -181,6 +194,7 @@ export async function upsertSubscriptionRowFromStripe(
       currency: row.currency,
       current_period_end: row.current_period_end,
       stripe_subscription_id: row.stripe_subscription_id,
+      billing_interval: row.billing_interval,
     });
     if (error) throw error;
   }

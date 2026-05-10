@@ -144,7 +144,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!supabase || !user) return;
     if (!subscription || subscription.planId === "free") return;
-    if (subscription.currentPeriodEnd) return;
+    if (subscription.currentPeriodEnd && subscription.billingInterval) return;
 
     let mounted = true;
     void (async () => {
@@ -156,10 +156,22 @@ export default function SettingsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok || !mounted) return;
-        const j = (await res.json()) as { currentPeriodEnd?: string | null };
-        if (!mounted || typeof j.currentPeriodEnd !== "string") return;
-        const end = j.currentPeriodEnd;
-        setSubscription((prev) => (prev ? { ...prev, currentPeriodEnd: end } : prev));
+        const j = (await res.json()) as {
+          currentPeriodEnd?: string | null;
+          billingInterval?: "month" | "year" | null;
+        };
+        if (!mounted) return;
+        const end = typeof j.currentPeriodEnd === "string" ? j.currentPeriodEnd : null;
+        const bi = j.billingInterval === "month" || j.billingInterval === "year" ? j.billingInterval : null;
+        if (!end && !bi) return;
+        setSubscription((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            ...(end ? { currentPeriodEnd: end } : {}),
+            ...(bi ? { billingInterval: bi } : {}),
+          };
+        });
       } catch {
         /* ignore */
       }
@@ -168,7 +180,7 @@ export default function SettingsPage() {
     return () => {
       mounted = false;
     };
-  }, [supabase, user, subscription?.planId, subscription?.currentPeriodEnd]);
+  }, [supabase, user, subscription?.planId, subscription?.currentPeriodEnd, subscription?.billingInterval]);
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -394,7 +406,18 @@ export default function SettingsPage() {
             <p className="mt-3 text-sm text-slate-600">{planMeta.name}</p>
             <p className="mt-1 text-sm text-slate-600">{subscription?.status ?? "trial"}</p>
             <p className="mt-1 text-sm text-slate-600">
-              {currency.format((subscription?.amountCents ?? 0) / 100)} / {locale === "fr" ? "mois" : "month"}
+              {currency.format((subscription?.amountCents ?? 0) / 100)}
+              {subscription?.billingInterval === "year"
+                ? locale === "fr"
+                  ? " / an"
+                  : " / year"
+                : subscription?.billingInterval === "month"
+                  ? locale === "fr"
+                    ? " / mois"
+                    : " / month"
+                  : locale === "fr"
+                    ? " (période Stripe)"
+                    : " (Stripe billing period)"}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               {locale === "fr" ? "Renouvellement" : "Renewal"}:{" "}

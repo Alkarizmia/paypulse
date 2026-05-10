@@ -3,12 +3,16 @@ import { MARKETING_PLANS, type PlanId } from "./plans";
 
 export type SubscriptionStatus = "trial" | "active" | "canceled" | "past_due";
 
+export type SubscriptionBillingInterval = "month" | "year";
+
 export type UserSubscription = {
   planId: PlanId;
   status: SubscriptionStatus;
   amountCents: number;
   currency: string;
   currentPeriodEnd: string | null;
+  /** Intervalle Stripe (`price.recurring.interval`) ; null si inconnu ou ancienne ligne. */
+  billingInterval: SubscriptionBillingInterval | null;
 };
 
 export type BillingRecord = {
@@ -26,9 +30,15 @@ type SubscriptionRow = {
   amount_cents: number | null;
   currency: string | null;
   current_period_end: string | null;
+  billing_interval?: string | null;
   stripe_subscription_id?: string | null;
   created_at?: string;
 };
+
+function normalizeBillingInterval(v: string | null | undefined): SubscriptionBillingInterval | null {
+  if (v === "month" || v === "year") return v;
+  return null;
+}
 
 type BillingRow = {
   id: string;
@@ -77,7 +87,9 @@ export function billingRecordsWithSubscriptionSnapshot(
 export async function getCurrentSubscription(supabase: SupabaseClient, userId: string): Promise<UserSubscription> {
   const { data: rows, error } = await supabase
     .from("subscriptions")
-    .select("plan_id,status,amount_cents,currency,current_period_end,stripe_subscription_id,created_at")
+    .select(
+      "plan_id,status,amount_cents,currency,current_period_end,billing_interval,stripe_subscription_id,created_at",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(24);
@@ -90,6 +102,7 @@ export async function getCurrentSubscription(supabase: SupabaseClient, userId: s
       amountCents: 0,
       currency: "EUR",
       currentPeriodEnd: null,
+      billingInterval: null,
     };
   }
 
@@ -125,6 +138,7 @@ export async function getCurrentSubscription(supabase: SupabaseClient, userId: s
     amountCents: row.amount_cents ?? 0,
     currency: row.currency ?? "EUR",
     currentPeriodEnd: row.current_period_end,
+    billingInterval: normalizeBillingInterval(row.billing_interval),
   };
 }
 
@@ -165,7 +179,7 @@ export async function setCurrentSubscriptionPlan(
       currency: "EUR",
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     })
-    .select("plan_id,status,amount_cents,currency,current_period_end")
+    .select("plan_id,status,amount_cents,currency,current_period_end,billing_interval")
     .single();
 
   if (error) throw error;
@@ -177,5 +191,6 @@ export async function setCurrentSubscriptionPlan(
     amountCents: row.amount_cents ?? 0,
     currency: row.currency ?? "EUR",
     currentPeriodEnd: row.current_period_end,
+    billingInterval: normalizeBillingInterval(row.billing_interval),
   };
 }

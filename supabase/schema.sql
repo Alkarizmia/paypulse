@@ -76,8 +76,19 @@ create table if not exists public.subscriptions (
   currency text not null default 'EUR',
   current_period_end timestamptz,
   stripe_subscription_id text,
+  billing_interval text,
   created_at timestamptz not null default now()
 );
+
+alter table public.subscriptions
+  add column if not exists billing_interval text;
+
+alter table public.subscriptions
+  drop constraint if exists subscriptions_billing_interval_check;
+
+alter table public.subscriptions
+  add constraint subscriptions_billing_interval_check
+  check (billing_interval is null or billing_interval in ('month', 'year'));
 
 create index if not exists subscriptions_user_created_idx on public.subscriptions (user_id, created_at desc);
 

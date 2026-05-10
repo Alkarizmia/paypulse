@@ -80,7 +80,14 @@ export function BilanView() {
         setPlan(sub);
       } else {
         setClients(getActiveLocalClients());
-        setPlan({ planId: "free", status: "trial", amountCents: 0, currency: "EUR", currentPeriodEnd: null });
+        setPlan({
+          planId: "free",
+          status: "trial",
+          amountCents: 0,
+          currency: "EUR",
+          currentPeriodEnd: null,
+          billingInterval: null,
+        });
       }
     } finally {
       setLoading(false);

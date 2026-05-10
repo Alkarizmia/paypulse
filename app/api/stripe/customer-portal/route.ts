@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No Stripe subscription for this account." }, { status: 404 });
   }
 
-  const sub = await stripe.subscriptions.retrieve(subId);
+  const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data.price"] });
   const cust = sub.customer;
   const customerId = typeof cust === "string" ? cust : cust && "id" in cust ? cust.id : null;
   if (!customerId) {

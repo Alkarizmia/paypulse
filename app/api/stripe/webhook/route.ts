@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         const subRef = session.subscription;
         const subId = typeof subRef === "string" ? subRef : subRef?.id;
         if (!subId) break;
-        const sub = await stripe.subscriptions.retrieve(subId);
+        const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data.price"] });
         const subForSync = subscriptionWithCheckoutSessionFallback(sub, session);
         const synced = await upsertSubscriptionRowFromStripe(admin, subForSync);
         if (!synced.ok) {
@@ -58,7 +58,8 @@ export async function POST(request: Request) {
       }
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        const sub = event.data.object as Stripe.Subscription;
+        const subPartial = event.data.object as Stripe.Subscription;
+        const sub = await stripe.subscriptions.retrieve(subPartial.id, { expand: ["items.data.price"] });
         await upsertSubscriptionRowFromStripe(admin, sub);
         break;
       }

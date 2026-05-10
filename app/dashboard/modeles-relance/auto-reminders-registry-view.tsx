@@ -76,7 +76,14 @@ export function AutoRemindersRegistryView() {
         const sub = await getCurrentSubscription(supabase, billUserId);
         setPlan(sub);
       } else {
-        setPlan({ planId: "free", status: "trial", amountCents: 0, currency: "EUR", currentPeriodEnd: null });
+        setPlan({
+          planId: "free",
+          status: "trial",
+          amountCents: 0,
+          currency: "EUR",
+          currentPeriodEnd: null,
+          billingInterval: null,
+        });
       }
     } finally {
       setLoading(false);
