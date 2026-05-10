@@ -26,6 +26,8 @@ type SubscriptionRow = {
   amount_cents: number | null;
   currency: string | null;
   current_period_end: string | null;
+  stripe_subscription_id?: string | null;
+  created_at?: string;
 };
 
 type BillingRow = {
@@ -42,15 +44,15 @@ export function getPlanMeta(planId: PlanId) {
 }
 
 export async function getCurrentSubscription(supabase: SupabaseClient, userId: string): Promise<UserSubscription> {
-  const { data, error } = await supabase
+  const { data: rows, error } = await supabase
     .from("subscriptions")
-    .select("plan_id,status,amount_cents,currency,current_period_end")
+    .select("plan_id,status,amount_cents,currency,current_period_end,stripe_subscription_id,created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(24);
   if (error) throw error;
-  if (!data) {
+  const list = (rows ?? []) as SubscriptionRow[];
+  if (list.length === 0) {
     return {
       planId: "free",
       status: "trial",
@@ -59,7 +61,30 @@ export async function getCurrentSubscription(supabase: SupabaseClient, userId: s
       currentPeriodEnd: null,
     };
   }
-  const row = data as SubscriptionRow;
+
+  const nonFree = list.filter((r) => r.plan_id && r.plan_id !== "free");
+  let row: SubscriptionRow;
+  if (nonFree.length > 0) {
+    nonFree.sort((a, b) => {
+      const ta = new Date(a.created_at ?? 0).getTime();
+      const tb = new Date(b.created_at ?? 0).getTime();
+      return tb - ta;
+    });
+    row = nonFree[0]!;
+  } else {
+    const withStripe = list.filter((r) => r.stripe_subscription_id && String(r.stripe_subscription_id).length > 0);
+    if (withStripe.length > 0) {
+      withStripe.sort((a, b) => {
+        const ta = new Date(a.created_at ?? 0).getTime();
+        const tb = new Date(b.created_at ?? 0).getTime();
+        return tb - ta;
+      });
+      row = withStripe[0]!;
+    } else {
+      row = list[0]!;
+    }
+  }
+
   return {
     planId: row.plan_id ?? "free",
     status: row.status ?? "trial",

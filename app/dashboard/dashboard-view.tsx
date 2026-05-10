@@ -422,6 +422,8 @@ export function DashboardView() {
         planStripeEnvIncomplete:
           "Paiement indisponible : variables Stripe manquantes côté serveur (Vercel → Settings → Environment Variables → Production). Ajoutez notamment :",
         stripePaymentSynced: "Paiement confirmé — votre abonnement est à jour.",
+        stripePaymentPendingSync:
+          "Stripe a bien encaissé, mais ton plan affiche encore « gratuit » : le webhook n’a probablement pas mis à jour la base. Actualise la page dans 1–2 min ; sinon vérifie sur Vercel STRIPE_WEBHOOK_SECRET et SUPABASE_SERVICE_ROLE_KEY, et dans Stripe que l’URL du webhook est bien …/api/stripe/webhook sur le même domaine que l’app (événement checkout.session.completed).",
         stripePaymentCancelled: "Paiement annulé. Aucun changement d’abonnement.",
         paiementsTitle: "Synthèse paiements",
         paiementsSub: "Vue agrégée des montants marqués payés et en attente.",
@@ -483,6 +485,8 @@ export function DashboardView() {
         planStripeEnvIncomplete:
           "Checkout unavailable: Stripe environment variables are missing on the server (Vercel → Settings → Environment Variables → Production). Add at least:",
         stripePaymentSynced: "Payment confirmed — your subscription is synced.",
+        stripePaymentPendingSync:
+          "Stripe charged successfully, but your plan still shows as free: the webhook likely did not update the database. Refresh in 1–2 minutes; if it persists, check Vercel for STRIPE_WEBHOOK_SECRET and SUPABASE_SERVICE_ROLE_KEY, and in Stripe that the webhook URL is your site’s /api/stripe/webhook (checkout.session.completed).",
         stripePaymentCancelled: "Payment cancelled. Your plan was not changed.",
         paiementsTitle: "Payments summary",
         paiementsSub: "Aggregated view of marked paid vs pending amounts.",
@@ -961,10 +965,15 @@ export function DashboardView() {
     let cancelled = false;
     void (async () => {
       try {
-        const p = await getCurrentSubscription(supabase, user.id);
+        let p = await getCurrentSubscription(supabase, user.id);
+        for (let i = 0; i < 5 && p.planId === "free" && !cancelled; i++) {
+          await new Promise((r) => setTimeout(r, 1200));
+          if (cancelled) break;
+          p = await getCurrentSubscription(supabase, user.id);
+        }
         if (!cancelled) {
           setPlan(p);
-          setPlanNotice(copy.stripePaymentSynced);
+          setPlanNotice(p.planId !== "free" ? copy.stripePaymentSynced : copy.stripePaymentPendingSync);
           void ws.refreshWorkspaces();
           router.replace("/dashboard");
         }
@@ -975,7 +984,15 @@ export function DashboardView() {
     return () => {
       cancelled = true;
     };
-  }, [stripeQuery, supabase, user?.id, router, copy.stripePaymentSynced, ws.refreshWorkspaces]);
+  }, [
+    stripeQuery,
+    supabase,
+    user?.id,
+    router,
+    copy.stripePaymentSynced,
+    copy.stripePaymentPendingSync,
+    ws.refreshWorkspaces,
+  ]);
 
   useEffect(() => {
     if (stripeQuery !== "cancel") return;
