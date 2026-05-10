@@ -45,7 +45,12 @@ import type { Client } from "./types";
 import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
 import { useWorkspace } from "@/app/workspace-context";
-import { getCurrentSubscription, setCurrentSubscriptionPlan, type UserSubscription } from "@/lib/subscriptions";
+import {
+  getCurrentSubscription,
+  setCurrentSubscriptionPlan,
+  shouldSkipStripeCheckoutForPlan,
+  type UserSubscription,
+} from "@/lib/subscriptions";
 import type { PlanId } from "@/lib/plans";
 import { buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
 import { createMemberActionNotifications } from "@/lib/notifications";
@@ -421,6 +426,9 @@ export function DashboardView() {
           "Reconnectez-vous puis choisissez de nouveau votre plan (session expirée ou indisponible).",
         planStripeEnvIncomplete:
           "Paiement indisponible : variables Stripe manquantes côté serveur (Vercel → Settings → Environment Variables → Production). Ajoutez notamment :",
+        planAlreadySubscribed:
+          "Tu as déjà un abonnement actif pour ce plan — pas de nouveau paiement tant que la période en cours n’est pas terminée.",
+        planPeriodEndsLabel: "Fin de période :",
         stripePaymentSynced: "Paiement confirmé — votre abonnement est à jour.",
         stripePaymentPendingSync:
           "Stripe a bien encaissé, mais ton plan affiche encore « gratuit » : le webhook n’a probablement pas mis à jour la base. Actualise la page dans 1–2 min ; sinon vérifie sur Vercel STRIPE_WEBHOOK_SECRET et SUPABASE_SERVICE_ROLE_KEY, et dans Stripe que l’URL du webhook est bien …/api/stripe/webhook sur le même domaine que l’app (événement checkout.session.completed).",
@@ -484,6 +492,9 @@ export function DashboardView() {
         planCheckoutAuthRequired: "Please sign in again, then pick your plan (session expired or unavailable).",
         planStripeEnvIncomplete:
           "Checkout unavailable: Stripe environment variables are missing on the server (Vercel → Settings → Environment Variables → Production). Add at least:",
+        planAlreadySubscribed:
+          "You already have an active subscription for this plan — no new payment until the current billing period ends.",
+        planPeriodEndsLabel: "Current period ends:",
         stripePaymentSynced: "Payment confirmed — your subscription is synced.",
         stripePaymentPendingSync:
           "Stripe charged successfully, but your plan still shows as free: the webhook likely did not update the database. Refresh in 1–2 minutes; if it persists, check Vercel for STRIPE_WEBHOOK_SECRET and SUPABASE_SERVICE_ROLE_KEY, and in Stripe that the webhook URL is your site’s /api/stripe/webhook (checkout.session.completed).",
@@ -880,6 +891,21 @@ export function DashboardView() {
             }
             return;
           }
+          const currentSub = await getCurrentSubscription(supabase, authUser.id);
+          if (shouldSkipStripeCheckoutForPlan(requestedPlan, currentSub)) {
+            if (!cancelled) {
+              setPlan(currentSub);
+              const end = currentSub.currentPeriodEnd;
+              setPlanNotice(
+                end
+                  ? `${copy.planAlreadySubscribed} (${copy.planPeriodEndsLabel} ${new Date(end).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")})`
+                  : copy.planAlreadySubscribed,
+              );
+              void ws.refreshWorkspaces();
+              router.replace("/dashboard");
+            }
+            return;
+          }
           let res: Response;
           try {
             res = await fetch("/api/stripe/checkout", {
@@ -949,9 +975,12 @@ export function DashboardView() {
     };
   }, [
     authLoading,
+    copy.planAlreadySubscribed,
     copy.planCheckoutAuthRequired,
     copy.planCheckoutFailed,
+    copy.planPeriodEndsLabel,
     copy.planStripeEnvIncomplete,
+    locale,
     planNoticePrefix,
     requestedPlan,
     requestedBilling,

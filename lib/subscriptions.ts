@@ -43,6 +43,36 @@ export function getPlanMeta(planId: PlanId) {
   return MARKETING_PLANS.find((p) => p.id === planId) ?? MARKETING_PLANS[0];
 }
 
+/** True si l’utilisateur a déjà ce plan payant avec une période Stripe encore valide (pas de nouveau Checkout). */
+export function shouldSkipStripeCheckoutForPlan(
+  requestedPlan: Exclude<PlanId, "free">,
+  sub: UserSubscription,
+): boolean {
+  if (sub.planId !== requestedPlan) return false;
+  if (sub.status !== "active" && sub.status !== "trial") return false;
+  if (!sub.currentPeriodEnd) return true;
+  return new Date(sub.currentPeriodEnd).getTime() > Date.now();
+}
+
+/** Si aucune ligne `billing_records`, afficher un aperçu depuis l’abonnement Stripe (ex. webhook pas encore passé). */
+export function billingRecordsWithSubscriptionSnapshot(
+  records: BillingRecord[],
+  sub: UserSubscription | null,
+): BillingRecord[] {
+  if (records.length > 0) return records;
+  if (!sub || sub.planId === "free" || sub.amountCents <= 0) return [];
+  return [
+    {
+      id: "__stripe_subscription_snapshot",
+      amountCents: sub.amountCents,
+      currency: sub.currency,
+      status: sub.status,
+      paidAt: sub.currentPeriodEnd ?? new Date().toISOString(),
+      provider: "stripe",
+    },
+  ];
+}
+
 export async function getCurrentSubscription(supabase: SupabaseClient, userId: string): Promise<UserSubscription> {
   const { data: rows, error } = await supabase
     .from("subscriptions")
