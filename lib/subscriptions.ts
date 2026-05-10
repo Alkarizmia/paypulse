@@ -97,6 +97,9 @@ export async function getCurrentSubscription(supabase: SupabaseClient, userId: s
   let row: SubscriptionRow;
   if (nonFree.length > 0) {
     nonFree.sort((a, b) => {
+      const aStripe = a.stripe_subscription_id && String(a.stripe_subscription_id).length > 0 ? 1 : 0;
+      const bStripe = b.stripe_subscription_id && String(b.stripe_subscription_id).length > 0 ? 1 : 0;
+      if (bStripe !== aStripe) return bStripe - aStripe;
       const ta = new Date(a.created_at ?? 0).getTime();
       const tb = new Date(b.created_at ?? 0).getTime();
       return tb - ta;

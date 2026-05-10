@@ -1,7 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 import type { PlanId } from "@/lib/plans";
+import { getPaidPlanFromStripePriceId } from "@/lib/stripe-prices";
 import type { SubscriptionStatus } from "@/lib/subscriptions";
+
+function extractPrimarySubscriptionPriceId(sub: Stripe.Subscription): string | null {
+  const item0 = sub.items?.data?.[0];
+  if (!item0) return null;
+  const p = item0.price as unknown;
+  if (typeof p === "string") return p.trim() || null;
+  if (p && typeof p === "object") {
+    const o = p as { id?: string; deleted?: boolean };
+    if (o.deleted) return null;
+    if (typeof o.id === "string" && o.id.length > 0) return o.id.trim();
+  }
+  return null;
+}
 
 /**
  * Stripe copie en principe `subscription_data.metadata` sur l’abonnement, mais selon
@@ -131,7 +145,9 @@ export async function upsertSubscriptionRowFromStripe(
   sub: Stripe.Subscription,
 ): Promise<{ ok: true } | { ok: false; reason: "missing_metadata" | "invalid_plan" | "missing_user" }> {
   const userId = sub.metadata?.supabase_user_id?.trim() ?? "";
-  const paidPlan = parsePaidPlanId(sub.metadata?.plan_id);
+  const fromPrice = getPaidPlanFromStripePriceId(extractPrimarySubscriptionPriceId(sub));
+  const fromMeta = parsePaidPlanId(sub.metadata?.plan_id);
+  const paidPlan = fromPrice ?? fromMeta;
   if (!userId) return { ok: false, reason: "missing_user" };
   if (!paidPlan) return { ok: false, reason: "invalid_plan" };
 

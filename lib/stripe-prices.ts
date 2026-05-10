@@ -28,6 +28,19 @@ export function getStripePriceId(planId: Exclude<PlanId, "free">, billing: Strip
   return v.length > 0 ? v : null;
 }
 
+/** Retrouve le plan payant à partir du `price_…` de l’abonnement Stripe (vérité côté paiement). */
+export function getPaidPlanFromStripePriceId(priceId: string | undefined | null): Exclude<PlanId, "free"> | null {
+  const id = typeof priceId === "string" ? priceId.trim() : "";
+  if (!id) return null;
+  for (const planId of ["starter", "pro", "agency"] as const) {
+    for (const billing of ["monthly", "annual"] as const) {
+      const v = getStripePriceId(planId, billing);
+      if (v === id) return planId;
+    }
+  }
+  return null;
+}
+
 /** True si les 6 variables `STRIPE_PRICE_*` sont renseignées (Checkout prêt). */
 export function isStripeCheckoutFullyConfigured(): boolean {
   return listMissingStripeCheckoutEnv().length === 0;
