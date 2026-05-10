@@ -30,10 +30,20 @@ export function getStripePriceId(planId: Exclude<PlanId, "free">, billing: Strip
 
 /** True si les 6 variables `STRIPE_PRICE_*` sont renseignées (Checkout prêt). */
 export function isStripeCheckoutFullyConfigured(): boolean {
+  return listMissingStripeCheckoutEnv().length === 0;
+}
+
+/** Noms des variables d’environnement manquantes pour Checkout (diagnostic Vercel / prod). */
+export function listMissingStripeCheckoutEnv(): string[] {
+  const missing: string[] = [];
+  if (!process.env.STRIPE_SECRET_KEY?.trim()) {
+    missing.push("STRIPE_SECRET_KEY");
+  }
   for (const planId of ["starter", "pro", "agency"] as const) {
     for (const billing of ["monthly", "annual"] as const) {
-      if (!getStripePriceId(planId, billing)) return false;
+      const name = PRICE_ENV_KEYS[planId][billing];
+      if (!trimEnv(name)) missing.push(name);
     }
   }
-  return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
+  return missing;
 }

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { PlanId } from "@/lib/plans";
-import { getStripePriceId, isStripeCheckoutFullyConfigured, type StripeBillingCycle } from "@/lib/stripe-prices";
+import {
+  getStripePriceId,
+  isStripeCheckoutFullyConfigured,
+  listMissingStripeCheckoutEnv,
+  type StripeBillingCycle,
+} from "@/lib/stripe-prices";
 import { getAppOrigin, getStripe } from "@/lib/stripe-server";
 import { getUserIdFromAuthorizationHeader } from "@/lib/supabase-route-auth";
 
@@ -35,7 +40,11 @@ export async function POST(request: Request) {
 
   if (!isStripeCheckoutFullyConfigured()) {
     return NextResponse.json(
-      { error: "Stripe Checkout is not configured.", code: "STRIPE_NOT_CONFIGURED" },
+      {
+        error: "Stripe Checkout is not configured.",
+        code: "STRIPE_NOT_CONFIGURED",
+        missingEnv: listMissingStripeCheckoutEnv(),
+      },
       { status: 503 },
     );
   }
@@ -43,7 +52,11 @@ export async function POST(request: Request) {
   const stripe = getStripe();
   if (!stripe) {
     return NextResponse.json(
-      { error: "Stripe secret key missing.", code: "STRIPE_NOT_CONFIGURED" },
+      {
+        error: "Stripe secret key missing.",
+        code: "STRIPE_NOT_CONFIGURED",
+        missingEnv: listMissingStripeCheckoutEnv(),
+      },
       { status: 503 },
     );
   }
@@ -51,7 +64,11 @@ export async function POST(request: Request) {
   const priceId = getStripePriceId(planId, billing);
   if (!priceId) {
     return NextResponse.json(
-      { error: "Missing price ID for this plan.", code: "STRIPE_NOT_CONFIGURED" },
+      {
+        error: "Missing price ID for this plan.",
+        code: "STRIPE_NOT_CONFIGURED",
+        missingEnv: listMissingStripeCheckoutEnv(),
+      },
       { status: 503 },
     );
   }
@@ -59,23 +76,29 @@ export async function POST(request: Request) {
   const origin = getAppOrigin();
   const planForMeta = planId as Exclude<PlanId, "free">;
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/dashboard?stripe=success`,
-    cancel_url: `${origin}/dashboard?stripe=cancel`,
-    client_reference_id: userId,
-    metadata: {
-      supabase_user_id: userId,
-      plan_id: planForMeta,
-    },
-    subscription_data: {
+  let session: Awaited<ReturnType<typeof stripe.checkout.sessions.create>>;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/dashboard?stripe=success`,
+      cancel_url: `${origin}/dashboard?stripe=cancel`,
+      client_reference_id: userId,
       metadata: {
         supabase_user_id: userId,
         plan_id: planForMeta,
       },
-    },
-  });
+      subscription_data: {
+        metadata: {
+          supabase_user_id: userId,
+          plan_id: planForMeta,
+        },
+      },
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message, code: "STRIPE_SESSION_FAILED" }, { status: 502 });
+  }
 
   if (!session.url) {
     return NextResponse.json({ error: "Checkout session missing URL." }, { status: 500 });

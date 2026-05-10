@@ -144,7 +144,7 @@ function buildManualReminderDraftFields(
 
 export function DashboardView() {
   const { locale } = useLocale();
-  const { signOut, user } = useAuth();
+  const { signOut, user, loading: authLoading } = useAuth();
   const ws = useWorkspace();
   const [activeNav, setActiveNav] = useState<DashboardNavId>("overview");
   const overviewRef = useRef<HTMLDivElement>(null);
@@ -417,6 +417,10 @@ export function DashboardView() {
         planUpdated: "Abonnement mis à jour :",
         planCheckoutFailed:
           "Paiement en ligne indisponible pour le moment. Votre plan n’a pas été modifié. Vérifiez la configuration ou réessayez plus tard.",
+        planCheckoutAuthRequired:
+          "Reconnectez-vous puis choisissez de nouveau votre plan (session expirée ou indisponible).",
+        planStripeEnvIncomplete:
+          "Paiement indisponible : variables Stripe manquantes côté serveur (Vercel → Settings → Environment Variables → Production). Ajoutez notamment :",
         stripePaymentSynced: "Paiement confirmé — votre abonnement est à jour.",
         stripePaymentCancelled: "Paiement annulé. Aucun changement d’abonnement.",
         paiementsTitle: "Synthèse paiements",
@@ -475,6 +479,9 @@ export function DashboardView() {
         planUpdated: "Subscription updated:",
         planCheckoutFailed:
           "Online checkout is unavailable. Your plan was not changed. Try again later or contact support.",
+        planCheckoutAuthRequired: "Please sign in again, then pick your plan (session expired or unavailable).",
+        planStripeEnvIncomplete:
+          "Checkout unavailable: Stripe environment variables are missing on the server (Vercel → Settings → Environment Variables → Production). Add at least:",
         stripePaymentSynced: "Payment confirmed — your subscription is synced.",
         stripePaymentCancelled: "Payment cancelled. Your plan was not changed.",
         paiementsTitle: "Payments summary",
@@ -840,19 +847,35 @@ export function DashboardView() {
   }
 
   useEffect(() => {
-    if (!supabase || !requestedPlan) return;
+    if (!supabase || !requestedPlan || authLoading) return;
     let cancelled = false;
 
     const applyRequestedPlan = async () => {
       try {
         const { data: authData } = await supabase.auth.getUser();
         const authUser = authData.user;
-        if (!authUser) return;
+        if (!authUser) {
+          if (!cancelled && requestedPlan !== "free") {
+            setPlanNotice(copy.planCheckoutAuthRequired);
+            router.replace("/dashboard");
+          }
+          return;
+        }
 
         if (requestedPlan !== "free") {
-          const { data: sess } = await supabase.auth.getSession();
-          const token = sess.session?.access_token;
-          if (!token) return;
+          const { data: sess0 } = await supabase.auth.getSession();
+          let token = sess0.session?.access_token;
+          if (!token) {
+            const { data: ref } = await supabase.auth.refreshSession();
+            token = ref.session?.access_token ?? undefined;
+          }
+          if (!token) {
+            if (!cancelled) {
+              setPlanNotice(copy.planCheckoutAuthRequired);
+              router.replace("/dashboard");
+            }
+            return;
+          }
           let res: Response;
           try {
             res = await fetch("/api/stripe/checkout", {
@@ -870,9 +893,10 @@ export function DashboardView() {
             }
             return;
           }
-          let json: { url?: string; code?: string } = {};
+          type CheckoutJson = { url?: string; code?: string; error?: string; missingEnv?: string[] };
+          let json: CheckoutJson = {};
           try {
-            json = (await res.json()) as { url?: string; code?: string };
+            json = (await res.json()) as CheckoutJson;
           } catch {
             if (!cancelled) {
               setPlanNotice(copy.planCheckoutFailed);
@@ -885,7 +909,17 @@ export function DashboardView() {
             return;
           }
           if (!cancelled) {
-            setPlanNotice(copy.planCheckoutFailed);
+            if (res.status === 401) {
+              setPlanNotice(copy.planCheckoutAuthRequired);
+            } else if (
+              json.code === "STRIPE_NOT_CONFIGURED" &&
+              Array.isArray(json.missingEnv) &&
+              json.missingEnv.length > 0
+            ) {
+              setPlanNotice(`${copy.planStripeEnvIncomplete} ${json.missingEnv.join(", ")}.`);
+            } else {
+              setPlanNotice(copy.planCheckoutFailed);
+            }
             router.replace("/dashboard");
           }
           return;
@@ -910,7 +944,10 @@ export function DashboardView() {
       cancelled = true;
     };
   }, [
+    authLoading,
+    copy.planCheckoutAuthRequired,
     copy.planCheckoutFailed,
+    copy.planStripeEnvIncomplete,
     planNoticePrefix,
     requestedPlan,
     requestedBilling,
