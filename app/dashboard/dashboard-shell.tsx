@@ -15,6 +15,7 @@ import {
   usePrefersColorSchemeDark,
   type UiThemePreference,
 } from "@/lib/ui-theme";
+import { formatDashboardNotificationCopy } from "@/lib/notification-display";
 import { useNotifications } from "./use-notifications";
 
 export type DashboardNavId = "overview" | "invoices" | "clients" | "relances" | "paiements";
@@ -264,7 +265,7 @@ export function DashboardShell({
   const [notifOpen, setNotifOpen] = useState(false);
   const [showFoldersHint, setShowFoldersHint] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const { items: notifications, unreadCount, markOneRead, markAllRead } = useNotifications(user?.id);
+  const { items: notifications, unreadCount, markingAllRead, markOneRead, markAllRead } = useNotifications(user?.id);
   const isDashHome = pathname === "/dashboard" || pathname === "/dashboard/";
   const t =
     locale === "fr"
@@ -290,6 +291,7 @@ export function DashboardShell({
           closeHint: "Fermer",
           noNotifications: "Aucune notification pour le moment.",
           markAllRead: "Tout marquer comme lu",
+          markAllReadBusy: "Mise à jour…",
         }
       : {
           overview: "Overview",
@@ -313,6 +315,7 @@ export function DashboardShell({
           closeHint: "Dismiss",
           noNotifications: "No notifications yet.",
           markAllRead: "Mark all as read",
+          markAllReadBusy: "Updating…",
         };
 
   const items = navItems(locale);
@@ -379,7 +382,7 @@ export function DashboardShell({
       const m = Math.floor(diffSec / 60);
       if (m < 60) return `il y a ${m} min`;
       const h = Math.floor(m / 60);
-      if (h < 24) return `il y a ${h} h`;
+      if (h < 24) return h <= 1 ? "il y a 1 heure" : `il y a ${h} heures`;
       const d = Math.floor(h / 24);
       return `il y a ${d} j`;
     }
@@ -650,32 +653,53 @@ export function DashboardShell({
                     <p className={light ? "text-xs font-semibold uppercase tracking-wide text-slate-500" : "text-xs font-semibold uppercase tracking-wide text-slate-400"}>{t.notif}</p>
                     <button
                       type="button"
-                      onClick={() => void markAllRead()}
-                      className={light ? "shrink-0 text-[11px] text-violet-700 hover:text-violet-600" : "shrink-0 text-[11px] text-violet-300 hover:text-violet-200"}
+                      disabled={markingAllRead || unreadCount === 0}
+                      onClick={() => {
+                        void (async () => {
+                          const ok = await markAllRead();
+                          if (ok) setNotifOpen(false);
+                        })();
+                      }}
+                      className={
+                        markingAllRead || unreadCount === 0
+                          ? light
+                            ? "shrink-0 cursor-not-allowed text-[11px] text-slate-400"
+                            : "shrink-0 cursor-not-allowed text-[11px] text-slate-500"
+                          : light
+                            ? "shrink-0 text-[11px] text-violet-700 hover:text-violet-600"
+                            : "shrink-0 text-[11px] text-violet-300 hover:text-violet-200"
+                      }
                     >
-                      {t.markAllRead}
+                      {markingAllRead ? t.markAllReadBusy : t.markAllRead}
                     </button>
                   </div>
                   <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain sm:max-h-80">
                     {notifications.length === 0 ? (
                       <p className={light ? "px-2 py-2 text-sm text-slate-500" : "px-2 py-2 text-sm text-slate-400"}>{t.noNotifications}</p>
                     ) : (
-                      notifications.map((n) => (
-                        <button
-                          key={n.id}
-                          type="button"
-                          onClick={() => void markOneRead(n.id)}
-                          className={`w-full rounded-lg px-2 py-2 text-left transition ${
-                            light ? "hover:bg-slate-50" : "hover:bg-white/[0.04]"
-                          } ${n.readAt ? "" : light ? "bg-violet-50/80" : "bg-violet-500/10"}`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className={light ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>{n.title}</p>
-                            <span className={light ? "text-[10px] text-slate-500" : "text-[10px] text-slate-500"}>{formatRelative(n.createdAt)}</span>
-                          </div>
-                          <p className={light ? "mt-0.5 text-xs text-slate-600" : "mt-0.5 text-xs text-slate-300"}>{n.body}</p>
-                        </button>
-                      ))
+                      notifications.map((n) => {
+                        const { title, body } = formatDashboardNotificationCopy(n, locale);
+                        return (
+                          <button
+                            key={n.id}
+                            type="button"
+                            onClick={() => void markOneRead(n.id)}
+                            className={`w-full rounded-lg px-2 py-2 text-left transition ${
+                              light ? "hover:bg-slate-50" : "hover:bg-white/[0.04]"
+                            } ${n.readAt ? "" : light ? "bg-violet-50/80" : "bg-violet-500/10"}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className={light ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>
+                                {title}
+                              </p>
+                              <span className={light ? "shrink-0 text-[10px] text-slate-500" : "shrink-0 text-[10px] text-slate-500"}>
+                                {formatRelative(n.createdAt)}
+                              </span>
+                            </div>
+                            <p className={light ? "mt-0.5 text-xs text-slate-600" : "mt-0.5 text-xs text-slate-300"}>{body}</p>
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                   </div>

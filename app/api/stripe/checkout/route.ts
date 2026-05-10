@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { PlanId } from "@/lib/plans";
+import { paidPlanTier, type PlanId } from "@/lib/plans";
 import {
   getStripePriceId,
   isStripeCheckoutFullyConfigured,
@@ -7,6 +7,9 @@ import {
   type StripeBillingCycle,
 } from "@/lib/stripe-prices";
 import { getAppOrigin, getStripe } from "@/lib/stripe-server";
+import { resolveLiveStripeSubscriptionForUser } from "@/lib/stripe-resolve-live-subscription";
+import { getSupabaseServerClient } from "@/lib/server-supabase";
+import { subscriptionEntitlesToPaidFeatures } from "@/lib/subscriptions";
 import { getUserIdFromAuthorizationHeader } from "@/lib/supabase-route-auth";
 
 type CheckoutBody = {
@@ -61,6 +64,27 @@ export async function POST(request: Request) {
     );
   }
 
+  const adminResult = getSupabaseServerClient();
+  if (adminResult.ok) {
+    const { view } = await resolveLiveStripeSubscriptionForUser(adminResult.client, stripe, userId, {
+      upsertRow: false,
+    });
+    if (
+      subscriptionEntitlesToPaidFeatures(view) &&
+      view.planId !== "free" &&
+      paidPlanTier(view.planId) > paidPlanTier(planId as PlanId)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "You already have a higher-tier subscription for the current period. Use the Stripe customer portal to change or cancel before choosing a lower plan.",
+          code: "STRIPE_DOWNGRADE_BLOCKED",
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const priceId = getStripePriceId(planId, billing);
   if (!priceId) {
     return NextResponse.json(
@@ -81,6 +105,15 @@ export async function POST(request: Request) {
     session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      /** Si activé dans le Dashboard, le prix adaptatif peut modifier l’UI Checkout (lien promo moins évident). */
+      adaptive_pricing: { enabled: false },
+      custom_text: {
+        submit: {
+          message:
+            "Code promo : cherchez le lien « Ajouter un code promotionnel » sous le sous-total, dans la colonne de gauche (récapitulatif du panier), puis saisissez votre code avant de payer.",
+        },
+      },
       success_url: `${origin}/dashboard?stripe=success`,
       cancel_url: `${origin}/dashboard?stripe=cancel`,
       client_reference_id: userId,

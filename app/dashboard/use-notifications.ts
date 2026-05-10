@@ -8,6 +8,7 @@ export function useNotifications(userId: string | null | undefined) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [items, setItems] = useState<DashboardNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [markingAllRead, setMarkingAllRead] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -58,18 +59,33 @@ export function useNotifications(userId: string | null | undefined) {
   const markOneRead = useCallback(
     async (id: string) => {
       if (!supabase) return;
-      await markNotificationRead(supabase, id);
-      setItems((prev) => prev.map((n) => (n.id === id ? { ...n, readAt: n.readAt ?? new Date().toISOString() } : n)));
+      try {
+        await markNotificationRead(supabase, id);
+        setItems((prev) => prev.map((n) => (n.id === id ? { ...n, readAt: n.readAt ?? new Date().toISOString() } : n)));
+      } catch {
+        await refresh();
+      }
     },
-    [supabase],
+    [supabase, refresh],
   );
 
-  const markAllRead = useCallback(async () => {
-    if (!supabase || !userId) return;
-    await markAllNotificationsRead(supabase, userId);
-    const now = new Date().toISOString();
-    setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? now })));
-  }, [supabase, userId]);
+  const markAllRead = useCallback(async (): Promise<boolean> => {
+    if (!supabase || !userId) return false;
+    setMarkingAllRead(true);
+    setError(null);
+    try {
+      await markAllNotificationsRead(supabase, userId);
+      const now = new Date().toISOString();
+      setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? now })));
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not mark all as read");
+      await refresh();
+      return false;
+    } finally {
+      setMarkingAllRead(false);
+    }
+  }, [supabase, userId, refresh]);
 
-  return { items, unreadCount, loading, error, refresh, markOneRead, markAllRead };
+  return { items, unreadCount, loading, error, markingAllRead, refresh, markOneRead, markAllRead };
 }

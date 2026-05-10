@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAppOrigin, getStripe } from "@/lib/stripe-server";
+import { resolveLiveStripeSubscriptionForUser } from "@/lib/stripe-resolve-live-subscription";
 import { getSupabaseServerClient } from "@/lib/server-supabase";
 import { getUserIdFromAuthorizationHeader } from "@/lib/supabase-route-auth";
 
@@ -29,21 +30,25 @@ export async function POST(request: Request) {
     body = {};
   }
 
-  const { data: row } = await admin
-    .from("subscriptions")
-    .select("stripe_subscription_id")
-    .eq("user_id", userId)
-    .not("stripe_subscription_id", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const subId = row?.stripe_subscription_id as string | undefined;
-  if (!subId) {
-    return NextResponse.json({ error: "No Stripe subscription for this account." }, { status: 404 });
+  /** Même logique que `/api/stripe/active-subscription` (plusieurs lignes / ids en base). */
+  let sub;
+  try {
+    const resolved = await resolveLiveStripeSubscriptionForUser(admin, stripe, userId, { upsertRow: false });
+    sub = resolved.stripeSubscription;
+  } catch {
+    sub = null;
+  }
+  if (!sub) {
+    return NextResponse.json(
+      {
+        error:
+          "No active Stripe subscription found for this account, or Stripe key mode does not match the subscription IDs in the database.",
+        code: "NO_ACTIVE_STRIPE_SUBSCRIPTION",
+      },
+      { status: 404 },
+    );
   }
 
-  const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data.price"] });
   const cust = sub.customer;
   const customerId = typeof cust === "string" ? cust : cust && "id" in cust ? cust.id : null;
   if (!customerId) {

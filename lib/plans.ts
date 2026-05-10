@@ -5,6 +5,15 @@ export const FREE_TIER_MAX_INVOICES = 5;
 
 export type PlanId = "free" | "starter" | "pro" | "agency";
 
+/** 0 = gratuit ; sert à bloquer checkout / plan gratuit vers un niveau inférieur à l’entitlement réel. */
+export function paidPlanTier(planId: PlanId): number {
+  if (planId === "free") return 0;
+  if (planId === "starter") return 1;
+  if (planId === "pro") return 2;
+  if (planId === "agency") return 3;
+  return 0;
+}
+
 export type MarketingPlan = {
   id: PlanId;
   name: string;

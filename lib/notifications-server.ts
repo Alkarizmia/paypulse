@@ -22,19 +22,12 @@ export async function createNotificationServer(supabase: SupabaseClient, input: 
     payload: input.payload ?? {},
     notification_key: input.notificationKey ?? null,
   };
-  const { error } = await supabase.from("notifications").upsert(row, {
-    onConflict: "notification_key",
-    ignoreDuplicates: false,
-  });
-  if (error) {
-    // If no notification_key, onConflict may fail depending on provider; retry as plain insert.
-    if (!input.notificationKey) {
-      const { error: insertErr } = await supabase.from("notifications").insert(row);
-      if (insertErr) throw insertErr;
-      return;
-    }
-    throw error;
-  }
+  const { error } = await supabase.from("notifications").insert(row);
+  if (!error) return;
+  const code = (error as { code?: string }).code;
+  // Ne pas réécraser une ligne existante : sinon un upsert réinitialisait read_at et « tout lu » semblait cassé.
+  if (code === "23505" && input.notificationKey) return;
+  throw error;
 }
 
 export async function listAccountRecipientIds(supabase: SupabaseClient, ownerUserId: string): Promise<string[]> {

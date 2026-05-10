@@ -71,6 +71,23 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         fetchMembershipsForMember(client, memberUserId).catch(() => [] as AccountMember[]),
       ]);
       setPlanId(sub.planId);
+      if (!isActing) {
+        try {
+          const { data: sess } = await client.auth.getSession();
+          const token = sess.session?.access_token;
+          if (token) {
+            const res = await fetch("/api/stripe/active-subscription", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const j = (await res.json()) as { subscription?: { planId: PlanId } };
+              if (j.subscription?.planId) setPlanId(j.subscription.planId);
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      }
       setMyMemberships(memberships);
 
       const uniqueOwners = [...new Set(memberships.map((m) => m.ownerUserId))];

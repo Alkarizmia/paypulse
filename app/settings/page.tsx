@@ -64,9 +64,20 @@ export default function SettingsPage() {
     setPortalLoading(true);
     setPageError(null);
     try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess.session?.access_token;
-      if (!token) return;
+      let { data: sess } = await supabase.auth.getSession();
+      let token = sess.session?.access_token;
+      if (!token) {
+        const refreshed = await supabase.auth.refreshSession();
+        token = refreshed.data.session?.access_token ?? undefined;
+      }
+      if (!token) {
+        setPageError(
+          locale === "fr"
+            ? "Session expirée. Reconnectez-vous puis réessayez."
+            : "Session expired. Sign in again, then retry.",
+        );
+        return;
+      }
       const returnUrl =
         typeof window !== "undefined" && window.location?.origin
           ? `${window.location.origin}/settings`
@@ -79,17 +90,32 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({ returnUrl }),
       });
-      const j = (await res.json()) as { url?: string; error?: string };
+      let j = {} as { url?: string; error?: string; code?: string };
+      try {
+        j = (await res.json()) as typeof j;
+      } catch {
+        j = {};
+      }
       if (res.ok && typeof j.url === "string" && j.url.length > 0) {
         window.location.href = j.url;
+        return;
+      }
+      if (j.code === "NO_ACTIVE_STRIPE_SUBSCRIPTION") {
+        setPageError(
+          locale === "fr"
+            ? "Stripe ne retrouve pas d’abonnement actif : vérifie que STRIPE_SECRET_KEY est en mode Live sur Vercel (comme le webhook), et que l’abo a bien été créé en Live dans cette base Supabase."
+            : "Stripe has no matching active subscription: confirm STRIPE_SECRET_KEY on Vercel is Live (same as webhook) and Checkout was completed in Live on this Supabase database.",
+        );
         return;
       }
       setPageError(
         j.error ??
           (locale === "fr"
-            ? "Portail Stripe indisponible. Active le portail client dans Stripe : Paramètres → Portail client."
-            : "Stripe portal unavailable. Enable the customer portal under Stripe Settings → Customer portal."),
+            ? "Portail Stripe indisponible. Dans Stripe → Paramètres → Portail client : activer le lien et enregistrer."
+            : "Stripe portal unavailable. In Stripe Settings → Customer portal: activate the link and save."),
       );
+    } catch (e) {
+      setPageError(e instanceof Error ? e.message : locale === "fr" ? "Erreur réseau ou serveur." : "Network or server error.");
     } finally {
       setPortalLoading(false);
     }
@@ -129,6 +155,24 @@ export default function SettingsPage() {
         }
         setSubscription(subscriptionData);
         setBilling(billingData);
+      })
+      .then(() => {
+        if (!mounted || !supabase || !user) return;
+        void (async () => {
+          try {
+            const { data: sess } = await supabase.auth.getSession();
+            const token = sess.session?.access_token;
+            if (!token || !mounted) return;
+            const res = await fetch("/api/stripe/active-subscription", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok || !mounted) return;
+            const j = (await res.json()) as { subscription?: UserSubscription };
+            if (mounted && j.subscription) setSubscription(j.subscription);
+          } catch {
+            /* ignore */
+          }
+        })();
       })
       .catch((e) => {
         if (!mounted) return;
@@ -233,6 +277,13 @@ export default function SettingsPage() {
     setPageError(error);
   }
 
+  const planMeta = getPlanMeta(subscription?.planId ?? "free");
+  const billingForDisplay = useMemo(
+    () => billingRecordsWithSubscriptionSnapshot(billing, subscription),
+    [billing, subscription],
+  );
+  const totalSpent = useMemo(() => getBillingTotalCents(billingForDisplay), [billingForDisplay]);
+
   if (loading || !user) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -240,13 +291,6 @@ export default function SettingsPage() {
       </main>
     );
   }
-
-  const planMeta = getPlanMeta(subscription?.planId ?? "free");
-  const billingForDisplay = useMemo(
-    () => billingRecordsWithSubscriptionSnapshot(billing, subscription),
-    [billing, subscription],
-  );
-  const totalSpent = useMemo(() => getBillingTotalCents(billingForDisplay), [billingForDisplay]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">

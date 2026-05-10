@@ -23,7 +23,9 @@ import {
   countDistinctClientEmailsForQuota,
   getMaxEmailTemplates,
   getPlanCapabilities,
+  paidPlanTier,
   usesAgencyWorkspaceUi,
+  type PlanId,
 } from "@/lib/plans";
 import { loadReminderTemplates } from "@/lib/reminder-templates-storage";
 import { getProfile, updateProfileAutoReminders } from "@/lib/profile";
@@ -47,11 +49,12 @@ import { useAuth } from "@/app/auth-context";
 import { useWorkspace } from "@/app/workspace-context";
 import {
   getCurrentSubscription,
+  preferStrongerSubscriptionView,
   setCurrentSubscriptionPlan,
   shouldSkipStripeCheckoutForPlan,
+  subscriptionEntitlesToPaidFeatures,
   type UserSubscription,
 } from "@/lib/subscriptions";
-import type { PlanId } from "@/lib/plans";
 import { buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
 import { createMemberActionNotifications } from "@/lib/notifications";
 
@@ -442,6 +445,10 @@ export function DashboardView() {
           "Paiement indisponible : variables Stripe manquantes côté serveur (Vercel → Settings → Environment Variables → Production). Ajoutez notamment :",
         planAlreadySubscribed:
           "Tu as déjà un abonnement actif pour ce plan — pas de nouveau paiement tant que la période en cours n’est pas terminée.",
+        planFreeBlockedWhileSubscribed:
+          "Impossible de passer au plan gratuit : ton abonnement payant (Stripe) couvre encore la période en cours. Pour revenir au gratuit, annule le renouvellement dans le portail Stripe puis attends la fin de période.",
+        planStripeDowngradeBlocked:
+          "Tu as déjà un abonnement plus complet pour la période en cours. Utilise le portail Stripe pour changer ou résilier ; un plan inférieur ne peut pas être souscrit tant que celui-ci est actif.",
         planPeriodEndsLabel: "Fin de période :",
         stripePaymentSynced: "Paiement confirmé — votre abonnement est à jour.",
         stripePaymentPendingSync:
@@ -508,6 +515,10 @@ export function DashboardView() {
           "Checkout unavailable: Stripe environment variables are missing on the server (Vercel → Settings → Environment Variables → Production). Add at least:",
         planAlreadySubscribed:
           "You already have an active subscription for this plan — no new payment until the current billing period ends.",
+        planFreeBlockedWhileSubscribed:
+          "You cannot switch to the free plan while your paid Stripe subscription still covers the current period. Cancel renewal in the Stripe customer portal, then wait until the period ends.",
+        planStripeDowngradeBlocked:
+          "You already have a higher-tier subscription for the current period. Use the Stripe customer portal to change or cancel before choosing a lower plan.",
         planPeriodEndsLabel: "Current period ends:",
         stripePaymentSynced: "Payment confirmed — your subscription is synced.",
         stripePaymentPendingSync:
@@ -905,15 +916,31 @@ export function DashboardView() {
             }
             return;
           }
-          const currentSub = await getCurrentSubscription(supabase, authUser.id);
+          let currentSub = await getCurrentSubscription(supabase, authUser.id);
+          try {
+            const resStripe = await fetch("/api/stripe/active-subscription", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (resStripe.ok) {
+              const jStripe = (await resStripe.json()) as { subscription?: UserSubscription };
+              if (jStripe.subscription) {
+                currentSub = preferStrongerSubscriptionView(currentSub, jStripe.subscription);
+              }
+            }
+          } catch {
+            /* garde l’état Supabase */
+          }
           if (shouldSkipStripeCheckoutForPlan(requestedPlan, currentSub)) {
             if (!cancelled) {
               setPlan(currentSub);
+              const higher = paidPlanTier(currentSub.planId) > paidPlanTier(requestedPlan);
               const end = currentSub.currentPeriodEnd;
               setPlanNotice(
-                end
-                  ? `${copy.planAlreadySubscribed} (${copy.planPeriodEndsLabel} ${new Date(end).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")})`
-                  : copy.planAlreadySubscribed,
+                higher
+                  ? copy.planStripeDowngradeBlocked
+                  : end
+                    ? `${copy.planAlreadySubscribed} (${copy.planPeriodEndsLabel} ${new Date(end).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")})`
+                    : copy.planAlreadySubscribed,
               );
               void ws.refreshWorkspaces();
               router.replace("/dashboard");
@@ -955,6 +982,8 @@ export function DashboardView() {
           if (!cancelled) {
             if (res.status === 401) {
               setPlanNotice(copy.planCheckoutAuthRequired);
+            } else if (res.status === 409 && json.code === "STRIPE_DOWNGRADE_BLOCKED") {
+              setPlanNotice(copy.planStripeDowngradeBlocked);
             } else if (
               json.code === "STRIPE_NOT_CONFIGURED" &&
               Array.isArray(json.missingEnv) &&
@@ -969,10 +998,56 @@ export function DashboardView() {
           return;
         }
 
-        const updated = await setCurrentSubscriptionPlan(supabase, authUser.id, requestedPlan);
+        const localSub = await getCurrentSubscription(supabase, authUser.id);
+        const { data: sessFree } = await supabase.auth.getSession();
+        const tokenFree = sessFree.session?.access_token;
+        let effective = localSub;
+        if (tokenFree) {
+          try {
+            const resStripe = await fetch("/api/stripe/active-subscription", {
+              headers: { Authorization: `Bearer ${tokenFree}` },
+            });
+            if (resStripe.ok) {
+              const jStripe = (await resStripe.json()) as { subscription?: UserSubscription };
+              if (jStripe.subscription) {
+                effective = preferStrongerSubscriptionView(localSub, jStripe.subscription);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+        if (subscriptionEntitlesToPaidFeatures(effective)) {
+          if (!cancelled) {
+            setPlanNotice(copy.planFreeBlockedWhileSubscribed);
+            setPlan(effective);
+            void ws.refreshWorkspaces();
+            router.replace("/dashboard");
+          }
+          return;
+        }
+
+        await setCurrentSubscriptionPlan(supabase, authUser.id, requestedPlan);
+        const localAfter = await getCurrentSubscription(supabase, authUser.id);
+        let mergedAfter = localAfter;
+        if (tokenFree) {
+          try {
+            const resStripe = await fetch("/api/stripe/active-subscription", {
+              headers: { Authorization: `Bearer ${tokenFree}` },
+            });
+            if (resStripe.ok) {
+              const jStripe = (await resStripe.json()) as { subscription?: UserSubscription };
+              if (jStripe.subscription) {
+                mergedAfter = preferStrongerSubscriptionView(localAfter, jStripe.subscription);
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         if (!cancelled) {
-          setPlan(updated);
-          setPlanNotice(`${planNoticePrefix} ${updated.planId.toUpperCase()} (${updated.status})`);
+          setPlan(mergedAfter);
+          setPlanNotice(`${planNoticePrefix} ${mergedAfter.planId.toUpperCase()} (${mergedAfter.status})`);
           void ws.refreshWorkspaces();
           router.replace("/dashboard");
         }
@@ -992,6 +1067,8 @@ export function DashboardView() {
     copy.planAlreadySubscribed,
     copy.planCheckoutAuthRequired,
     copy.planCheckoutFailed,
+    copy.planFreeBlockedWhileSubscribed,
+    copy.planStripeDowngradeBlocked,
     copy.planPeriodEndsLabel,
     copy.planStripeEnvIncomplete,
     locale,

@@ -116,9 +116,14 @@ export async function POST(request: Request) {
       actorUserId: null,
       workspaceId,
       type: "overdue_detected",
-      title: "Echeance depassee",
-      body: `${row.name} a depasse sa date d'echeance (${row.due_date}).`,
-      payload: { clientId: row.id, dueDate: row.due_date, email: row.email },
+      title: "overdue_detected",
+      body: `${row.name} — ${row.due_date}`,
+      payload: {
+        clientId: row.id,
+        dueDate: row.due_date,
+        email: row.email,
+        clientName: row.name,
+      },
       notificationKey: `overdue:${row.id}:${today}:${ownerUserId}`,
     });
     notified += 1;

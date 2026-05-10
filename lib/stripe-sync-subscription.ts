@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 import type { PlanId } from "@/lib/plans";
 import { getPaidPlanFromStripePriceId } from "@/lib/stripe-prices";
-import type { SubscriptionStatus } from "@/lib/subscriptions";
+import type { SubscriptionStatus, UserSubscription } from "@/lib/subscriptions";
 
 export function getBillingIntervalFromStripeSubscription(sub: Stripe.Subscription): "month" | "year" | null {
   const item0 = sub.items?.data?.[0];
@@ -14,7 +14,7 @@ export function getBillingIntervalFromStripeSubscription(sub: Stripe.Subscriptio
   return null;
 }
 
-function extractPrimarySubscriptionPriceId(sub: Stripe.Subscription): string | null {
+export function extractPrimarySubscriptionPriceId(sub: Stripe.Subscription): string | null {
   const item0 = sub.items?.data?.[0];
   if (!item0) return null;
   const p = item0.price as unknown;
@@ -95,6 +95,38 @@ function parsePaidPlanId(raw: string | undefined | null): Exclude<PlanId, "free"
   const v = typeof raw === "string" ? raw.trim() : "";
   if (v === "starter" || v === "pro" || v === "agency") return v;
   return null;
+}
+
+/** Vue « abonnement courant » alignée sur Stripe (prix + métadonnées). */
+export function userSubscriptionViewFromStripe(sub: Stripe.Subscription): UserSubscription {
+  const status = mapStripeSubscriptionStatus(sub.status);
+  const canceledLike = status === "canceled";
+  const item0 = sub.items?.data?.[0];
+  const priceObj = item0?.price;
+  let unit = 0;
+  if (priceObj && typeof priceObj === "object" && typeof (priceObj as Stripe.Price).unit_amount === "number") {
+    unit = (priceObj as Stripe.Price).unit_amount ?? 0;
+  }
+  const priceId = extractPrimarySubscriptionPriceId(sub);
+  const fromPrice = getPaidPlanFromStripePriceId(priceId);
+  const fromMeta = parsePaidPlanId(sub.metadata?.plan_id);
+  const paidPlan = fromPrice ?? fromMeta;
+  let planId: PlanId;
+  if (canceledLike || !paidPlan) planId = "free";
+  else planId = paidPlan;
+
+  const currency = (sub.currency ?? "eur").toUpperCase();
+  const periodEnd =
+    typeof sub.current_period_end === "number" ? new Date(sub.current_period_end * 1000).toISOString() : null;
+
+  return {
+    planId,
+    status: canceledLike ? "canceled" : status,
+    amountCents: unit,
+    currency: currency.length > 0 ? currency : "EUR",
+    currentPeriodEnd: planId === "free" ? null : periodEnd,
+    billingInterval: getBillingIntervalFromStripeSubscription(sub),
+  };
 }
 
 export function mapStripeSubscriptionStatus(status: Stripe.Subscription.Status): SubscriptionStatus {

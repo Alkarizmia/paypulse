@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { MARKETING_PLANS, type PlanId } from "./plans";
+import { MARKETING_PLANS, paidPlanTier, type PlanId } from "./plans";
 
 export type SubscriptionStatus = "trial" | "active" | "canceled" | "past_due";
 
@@ -53,11 +53,39 @@ export function getPlanMeta(planId: PlanId) {
   return MARKETING_PLANS.find((p) => p.id === planId) ?? MARKETING_PLANS[0];
 }
 
-/** True si l’utilisateur a déjà ce plan payant avec une période Stripe encore valide (pas de nouveau Checkout). */
+/** Période payante encore ouverte côté produit (inclut past_due : accès maintenu jusqu’à résolution Stripe). */
+export function subscriptionEntitlesToPaidFeatures(sub: UserSubscription): boolean {
+  if (sub.planId === "free") return false;
+  if (sub.status === "canceled") return false;
+  if (sub.status !== "active" && sub.status !== "trial" && sub.status !== "past_due") return false;
+  if (!sub.currentPeriodEnd) return true;
+  return new Date(sub.currentPeriodEnd).getTime() > Date.now();
+}
+
+/**
+ * Fusionne la ligne Supabase « locale » et la vue `/api/stripe/active-subscription`
+ * (évite d’écraser un plan payant réel par « free » quand Stripe n’a pas encore d’id en base).
+ */
+export function preferStrongerSubscriptionView(local: UserSubscription, stripe: UserSubscription): UserSubscription {
+  const stripePaid = subscriptionEntitlesToPaidFeatures(stripe) && stripe.planId !== "free";
+  const localPaid = subscriptionEntitlesToPaidFeatures(local) && local.planId !== "free";
+  if (stripePaid && (!localPaid || paidPlanTier(stripe.planId) >= paidPlanTier(local.planId))) {
+    return stripe;
+  }
+  if (localPaid) return local;
+  return stripe;
+}
+
+/** True si l’utilisateur a déjà ce plan (ou mieux) avec une période encore valide — pas de nouveau Checkout inutile ni downgrade payant. */
 export function shouldSkipStripeCheckoutForPlan(
   requestedPlan: Exclude<PlanId, "free">,
   sub: UserSubscription,
 ): boolean {
+  if (!subscriptionEntitlesToPaidFeatures(sub)) return false;
+  const req = paidPlanTier(requestedPlan);
+  const cur = paidPlanTier(sub.planId);
+  if (cur > req) return true;
+  if (cur < req) return false;
   if (sub.planId !== requestedPlan) return false;
   if (sub.status !== "active" && sub.status !== "trial") return false;
   if (!sub.currentPeriodEnd) return true;
@@ -108,11 +136,24 @@ export async function getCurrentSubscription(supabase: SupabaseClient, userId: s
 
   const nonFree = list.filter((r) => r.plan_id && r.plan_id !== "free");
   let row: SubscriptionRow;
+  const planRank = (pid: string | null | undefined): number => {
+    if (pid === "agency") return 3;
+    if (pid === "pro") return 2;
+    if (pid === "starter") return 1;
+    return 0;
+  };
+
   if (nonFree.length > 0) {
     nonFree.sort((a, b) => {
       const aStripe = a.stripe_subscription_id && String(a.stripe_subscription_id).length > 0 ? 1 : 0;
       const bStripe = b.stripe_subscription_id && String(b.stripe_subscription_id).length > 0 ? 1 : 0;
       if (bStripe !== aStripe) return bStripe - aStripe;
+      const endA = a.current_period_end ? new Date(a.current_period_end).getTime() : 0;
+      const endB = b.current_period_end ? new Date(b.current_period_end).getTime() : 0;
+      if (endB !== endA) return endB - endA;
+      const ra = planRank(a.plan_id);
+      const rb = planRank(b.plan_id);
+      if (rb !== ra) return rb - ra;
       const ta = new Date(a.created_at ?? 0).getTime();
       const tb = new Date(b.created_at ?? 0).getTime();
       return tb - ta;
@@ -122,6 +163,12 @@ export async function getCurrentSubscription(supabase: SupabaseClient, userId: s
     const withStripe = list.filter((r) => r.stripe_subscription_id && String(r.stripe_subscription_id).length > 0);
     if (withStripe.length > 0) {
       withStripe.sort((a, b) => {
+        const endA = a.current_period_end ? new Date(a.current_period_end).getTime() : 0;
+        const endB = b.current_period_end ? new Date(b.current_period_end).getTime() : 0;
+        if (endB !== endA) return endB - endA;
+        const ra = planRank(a.plan_id);
+        const rb = planRank(b.plan_id);
+        if (rb !== ra) return rb - ra;
         const ta = new Date(a.created_at ?? 0).getTime();
         const tb = new Date(b.created_at ?? 0).getTime();
         return tb - ta;
