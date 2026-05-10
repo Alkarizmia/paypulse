@@ -3,6 +3,63 @@ import type Stripe from "stripe";
 import type { PlanId } from "@/lib/plans";
 import type { SubscriptionStatus } from "@/lib/subscriptions";
 
+/**
+ * Stripe copie en principe `subscription_data.metadata` sur l’abonnement, mais selon
+ * le moment du webhook ou la version d’API, on peut s’appuyer sur la session Checkout
+ * (`metadata`, `client_reference_id`) pour retrouver user + plan.
+ */
+export function subscriptionWithCheckoutSessionFallback(
+  sub: Stripe.Subscription,
+  session: Stripe.Checkout.Session,
+): Stripe.Subscription {
+  const fromSubUser = sub.metadata?.supabase_user_id?.trim() ?? "";
+  const fromSubPlan = sub.metadata?.plan_id?.trim() ?? "";
+  const fromSessionUser =
+    (typeof session.metadata?.supabase_user_id === "string" ? session.metadata.supabase_user_id : "")?.trim() ?? "";
+  const fromSessionPlan =
+    (typeof session.metadata?.plan_id === "string" ? session.metadata.plan_id : "")?.trim() ?? "";
+  const fromClientRef = session.client_reference_id?.trim() ?? "";
+
+  const supabase_user_id = fromSubUser || fromSessionUser || fromClientRef;
+  const plan_id = fromSubPlan || fromSessionPlan;
+
+  const nextMeta: Stripe.Metadata = { ...(sub.metadata ?? {}) };
+  if (supabase_user_id) nextMeta.supabase_user_id = supabase_user_id;
+  if (plan_id) nextMeta.plan_id = plan_id;
+
+  return { ...sub, metadata: nextMeta } as Stripe.Subscription;
+}
+
+/** Enregistre un paiement Checkout (idempotent par `stripe_checkout_session_id`). */
+export async function upsertBillingRecordFromCheckoutSession(
+  admin: SupabaseClient,
+  session: Stripe.Checkout.Session,
+  userId: string,
+): Promise<void> {
+  if (session.mode !== "subscription" || !session.id) return;
+  const total = typeof session.amount_total === "number" ? session.amount_total : 0;
+  if (total <= 0 || !userId) return;
+  const currency = (session.currency ?? "eur").toUpperCase();
+  const paidAt =
+    typeof session.created === "number" ? new Date(session.created * 1000).toISOString() : new Date().toISOString();
+
+  const row = {
+    user_id: userId,
+    amount_cents: total,
+    currency: currency.length > 0 ? currency : "EUR",
+    status: "paid",
+    paid_at: paidAt,
+    provider: "stripe",
+    stripe_checkout_session_id: session.id,
+  };
+
+  const { error } = await admin.from("billing_records").upsert(row, {
+    onConflict: "stripe_checkout_session_id",
+    ignoreDuplicates: true,
+  });
+  if (error) throw error;
+}
+
 function parsePaidPlanId(raw: string | undefined | null): Exclude<PlanId, "free"> | null {
   const v = typeof raw === "string" ? raw.trim() : "";
   if (v === "starter" || v === "pro" || v === "agency") return v;

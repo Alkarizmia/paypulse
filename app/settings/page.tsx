@@ -378,7 +378,9 @@ export default function SettingsPage() {
         <h2 className="text-base font-semibold text-slate-900">{locale === "fr" ? "Facturation récente" : "Recent billing"}</h2>
         {billing.length === 0 ? (
           <p className="mt-3 text-sm text-slate-600">
-            {locale === "fr" ? "Aucune transaction pour le moment (source: table billing_records)." : "No transactions yet (source: billing_records table)."}
+            {locale === "fr"
+              ? "Aucun paiement enregistré pour le moment. Après un achat Stripe, la ligne apparaît ici une fois le webhook reçu."
+              : "No recorded payments yet. After a Stripe purchase, entries appear here once the webhook is received."}
           </p>
         ) : (
           <ul className="mt-4 space-y-2">

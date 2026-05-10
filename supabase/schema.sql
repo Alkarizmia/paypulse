@@ -92,8 +92,16 @@ create table if not exists public.billing_records (
   currency text not null default 'EUR',
   status text not null default 'paid',
   paid_at timestamptz not null default now(),
-  provider text not null default 'mock'
+  provider text not null default 'mock',
+  stripe_checkout_session_id text
 );
+
+alter table public.billing_records
+  add column if not exists stripe_checkout_session_id text;
+
+create unique index if not exists billing_records_stripe_checkout_session_key
+  on public.billing_records (stripe_checkout_session_id)
+  where stripe_checkout_session_id is not null;
 
 create index if not exists billing_records_user_paid_idx on public.billing_records (user_id, paid_at desc);
 

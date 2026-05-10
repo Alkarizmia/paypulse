@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getSupabaseServerClient } from "@/lib/server-supabase";
 import { getStripe } from "@/lib/stripe-server";
-import { upsertSubscriptionRowFromStripe } from "@/lib/stripe-sync-subscription";
+import {
+  subscriptionWithCheckoutSessionFallback,
+  upsertBillingRecordFromCheckoutSession,
+  upsertSubscriptionRowFromStripe,
+} from "@/lib/stripe-sync-subscription";
 
 export const runtime = "nodejs";
 
@@ -41,10 +45,14 @@ export async function POST(request: Request) {
         const subId = typeof subRef === "string" ? subRef : subRef?.id;
         if (!subId) break;
         const sub = await stripe.subscriptions.retrieve(subId);
-        const synced = await upsertSubscriptionRowFromStripe(admin, sub);
+        const subForSync = subscriptionWithCheckoutSessionFallback(sub, session);
+        const synced = await upsertSubscriptionRowFromStripe(admin, subForSync);
         if (!synced.ok) {
-          // Session sans metadata utile : ignorer sans échec HTTP (évite boucles Stripe)
           break;
+        }
+        const billUserId = subForSync.metadata?.supabase_user_id?.trim() ?? "";
+        if (billUserId) {
+          await upsertBillingRecordFromCheckoutSession(admin, session, billUserId);
         }
         break;
       }
