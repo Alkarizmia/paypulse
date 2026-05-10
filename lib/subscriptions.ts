@@ -60,7 +60,8 @@ export function billingRecordsWithSubscriptionSnapshot(
   sub: UserSubscription | null,
 ): BillingRecord[] {
   if (records.length > 0) return records;
-  if (!sub || sub.planId === "free" || sub.amountCents <= 0) return [];
+  // Même avec amount_cents = 0 (sync incomplète ou ancienne ligne), afficher un aperçu si le plan est payant.
+  if (!sub || sub.planId === "free") return [];
   return [
     {
       id: "__stripe_subscription_snapshot",
