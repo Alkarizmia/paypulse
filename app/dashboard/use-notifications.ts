@@ -35,12 +35,19 @@ export function useNotifications(userId: string | null | undefined) {
 
   useEffect(() => {
     if (!supabase || !userId) return;
-    const timer = window.setInterval(() => void refresh(), 25_000);
-    return () => window.clearInterval(timer);
-  }, [supabase, userId, refresh]);
 
-  useEffect(() => {
-    if (!supabase || !userId) return;
+    let fallbackTimer: number | null = null;
+    const startFallbackPolling = () => {
+      if (fallbackTimer !== null) return;
+      fallbackTimer = window.setInterval(() => void refresh(), 120_000);
+    };
+    const stopFallbackPolling = () => {
+      if (fallbackTimer !== null) {
+        window.clearInterval(fallbackTimer);
+        fallbackTimer = null;
+      }
+    };
+
     const channel = supabase
       .channel(`notifications:${userId}`)
       .on(
@@ -48,8 +55,16 @@ export function useNotifications(userId: string | null | undefined) {
         { event: "*", schema: "public", table: "notifications", filter: `recipient_user_id=eq.${userId}` },
         () => void refresh(),
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          stopFallbackPolling();
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          startFallbackPolling();
+        }
+      });
+
     return () => {
+      stopFallbackPolling();
       void supabase.removeChannel(channel);
     };
   }, [supabase, userId, refresh]);
