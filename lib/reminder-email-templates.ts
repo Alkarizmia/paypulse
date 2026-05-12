@@ -38,15 +38,19 @@ function mapRow(row: ReminderEmailTemplateRow): ReminderEmailTemplate {
   };
 }
 
+// Projection mise à dispo pour les autres modules qui chargent les modèles (cf. reminder-automation).
+// On exclut volontairement `created_at` / `updated_at` : ces colonnes ne sont lues par aucun mapping
+// et chaque modèle contient un corps HTML lourd → on évite de payer l'egress sur des champs morts.
+export const REMINDER_EMAIL_TEMPLATE_SELECT =
+  "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order";
+
 export async function listReminderEmailTemplates(
   supabase: SupabaseClient,
   workspaceId: string,
 ): Promise<ReminderEmailTemplate[]> {
   const { data, error } = await supabase
     .from("reminder_email_templates")
-    .select(
-      "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order,created_at,updated_at",
-    )
+    .select(REMINDER_EMAIL_TEMPLATE_SELECT)
     .eq("workspace_id", workspaceId)
     .order("sort_order", { ascending: true })
     .order("days_after_due", { ascending: true });
@@ -85,9 +89,7 @@ export async function replaceReminderEmailTemplatesForWorkspace(
   const { data, error } = await supabase
     .from("reminder_email_templates")
     .insert(rows)
-    .select(
-      "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order,created_at,updated_at",
-    );
+    .select(REMINDER_EMAIL_TEMPLATE_SELECT);
   if (error) throw error;
   return (data ?? []).map((r) => mapRow(r as ReminderEmailTemplateRow));
 }

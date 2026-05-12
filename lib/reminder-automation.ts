@@ -5,6 +5,7 @@ import { getCurrentSubscription } from "@/lib/subscriptions";
 import { sendResendReminderEmail } from "@/lib/resend-reminder-send";
 import {
   listReminderEmailTemplates,
+  REMINDER_EMAIL_TEMPLATE_SELECT,
   type ReminderEmailTemplate,
   type ReminderEmailTemplateRow,
   scheduleDaysFromTemplates,
@@ -241,9 +242,7 @@ async function loadTemplatesByWorkspaceMap(
   if (workspaceIds.length === 0) return map;
   const { data, error } = await supabase
     .from("reminder_email_templates")
-    .select(
-      "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order,created_at,updated_at",
-    )
+    .select(REMINDER_EMAIL_TEMPLATE_SELECT)
     .in("workspace_id", workspaceIds);
   if (error) throw error;
   for (const row of data ?? []) {
