@@ -115,3 +115,51 @@ Les routes sensibles peuvent tracer des lignes **`serverStructuredLog(...)` JSON
 - **Modales** relance / cycle suivant : import **dynamique** (`next/dynamic`, `ssr: false`) — JS initial du dashboard un peu plus léger tant que les modales ne sont pas ouvertes.
 - **Routes** `/dashboard`, `/dashboard/modeles-relance`, `/dashboard/dossiers`, `/dashboard/bilan`, `/dashboard/corbeille` : fichier **`loading.tsx`** + squelette partagé — l’utilisateur voit tout de suite un gabarit pendant le chargement client.
 - **Limites** : le squelette ne remplace pas le coût des requêtes Supabase ; en serverless, le **cold start** hébergeur reste possible ; le rate limit API en mémoire ne s’applique **pas** entre plusieurs instances.
+
+## Quota Supabase (plan Free)
+
+Le projet est calibré pour rester confortablement sur le **plan Supabase Free** :
+
+| Ressource | Limite Free | Stratégie côté code |
+|---|---|---|
+| Database size | 500 Mo | Rétention auto via `pg_cron` (migration `018`) |
+| **Egress / Bandwidth** | **5 Go / mois** | Notifications via Realtime + SELECT minimal |
+| Storage (fichiers) | 1 Go | Non utilisé |
+| Realtime messages | 2M / mois | Un seul canal `notifications:<userId>` |
+| Auth MAU | 50 000 | OK |
+
+### Optimisations mises en place
+
+1. **Notifications sans polling double** (`app/dashboard/use-notifications.ts`) : un seul abonnement Realtime, polling de secours uniquement si le canal renvoie `CHANNEL_ERROR` / `TIMED_OUT` (toutes les 2 min). Évite ~3 400 requêtes/jour/utilisateur.
+2. **`select` minimal** : aucun `select('*')` dans `lib/`. `reminder_email_templates` n'envoie plus `created_at` / `updated_at` inutiles (cf. `REMINDER_EMAIL_TEMPLATE_SELECT`).
+3. **Index ciblés** (migration `017_perf_indexes.sql`) :
+   - `clients(workspace_id, created_at desc) where deleted_at is null` — `fetchClients`
+   - `clients(workspace_id, deleted_at desc) where deleted_at is not null` — corbeille
+   - `clients(workspace_id, email) where deleted_at is null` — `advanceClientToNextInvoiceCycle`
+   - `subscriptions(user_id, created_at desc)` — `getCurrentSubscription`
+   - `billing_records(user_id, paid_at desc)` — `getBillingRecords`
+4. **Rétention auto** (migration `018_retention_cron.sql`) : tâche `pg_cron` quotidienne (`03:00 UTC`) qui supprime les `notifications` lues > 60 jours et les `reminder_events` > 365 jours. `billing_records`, `subscriptions`, `profiles`, `workspaces`, `clients`, `reminder_jobs`, `auth.users` **ne sont jamais touchés**.
+5. **Évite les `auth.updateUser` redondants** (`lib/profile.ts`) : `syncAuthUserFromProfile(supabase, profile, previousProfile?)` accepte un profil précédent optionnel et n'émet aucun appel GoTrue si rien n'a changé.
+
+### Vérifier la consommation
+
+- **Dashboard Supabase → Settings → Usage** : voit en temps réel quelle ressource approche la limite.
+- **Reports → API** : trie les endpoints les plus consommateurs.
+- **Database → Tables (size)** : repère les tables qui grossissent.
+
+### Garder le projet actif (anti-pause)
+
+Sur le plan Free, un projet sans activité pendant ~7 jours reçoit un avertissement puis est mis en pause. Pour éviter ça :
+
+- Soit te connecter au dashboard Supabase 1× par semaine.
+- Soit ajouter un cron Vercel hebdomadaire (gratuit) qui pingue n'importe quelle route applicative — la requête DB déclenchée suffit à réinitialiser le compteur.
+
+### Lancer le nettoyage manuellement
+
+Si `pg_cron` n'est pas activable sur ton projet (selon la région / le plan), la migration `018` crée quand même la fonction `public.cleanup_old_data()`. Tu peux la déclencher :
+
+```sql
+select public.cleanup_old_data();
+```
+
+…depuis le SQL Editor Supabase ou depuis un scheduler externe (GitHub Action, cron Vercel).
