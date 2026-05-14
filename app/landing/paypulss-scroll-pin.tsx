@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- Avatars SVG DiceBear (URL externe). */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion, useMotionTemplate, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useLocale } from "@/app/locale-context";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
 
@@ -18,20 +18,34 @@ const DEMO_FACES = [
   { seed: "Paypulss-Sam", altFr: "Avatar illustratif D", altEn: "Illustrative avatar D" },
 ] as const;
 
-/** Rail court : après la carte confiance, le scroll reprend normalement vers le reste du site. */
+/**
+ * Hauteur du rail = distance de scroll pour animer le sticky.
+ * Mobile : rail plus court (moins de « friction »), sans min 2200px qui forçait ~3 écrans de scroll.
+ * Desktop : un peu plus long pour un scrub plus doux.
+ */
 function usePinRailHeightPx() {
-  const [px, setPx] = useState(2600);
+  const [px, setPx] = useState(2000);
   const measure = () => {
     if (typeof window === "undefined") return;
     const h = window.innerHeight || 800;
-    setPx(Math.max(2200, Math.round(h * 2.35)));
+    const w = window.innerWidth;
+    let next: number;
+    if (w < 640) {
+      next = Math.max(1280, Math.round(h * 1.65));
+    } else if (w < 1024) {
+      next = Math.max(1600, Math.round(h * 1.95));
+    } else {
+      next = Math.max(2100, Math.round(h * 2.45));
+    }
+    setPx(next);
   };
   useLayoutEffect(() => {
     measure();
   }, []);
   useEffect(() => {
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const onResize = () => requestAnimationFrame(measure);
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
   }, []);
   return px;
 }
@@ -59,8 +73,8 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
   const chip3Op = useTransform(scrollYProgress, [0.05, 0.08, 0.12, 0.14], [0, 1, 1, 0]);
 
   const facesGroupOpacity = useTransform(scrollYProgress, [0, 0.06, 0.12, 0.2], [1, 1, 1, 0]);
-  const facesBlurPx = useTransform(scrollYProgress, [0, 0.05, 0.05, 0.11, 0.17], [0, 0, 0, 14, 18]);
-  const facesFilter = useMotionTemplate`blur(${facesBlurPx}px)`;
+  /** Pas de blur au scroll (très coûteux sur mobile) : léger lift GPU + fondu. */
+  const facesLiftY = useTransform(scrollYProgress, [0, 0.08, 0.12, 0.2], [0, 0, 0, 10]);
 
   const captionOpacity = useTransform(scrollYProgress, [0, 0.08, 0.16], [1, 1, 0]);
 
@@ -156,7 +170,7 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
   return (
     <div
       ref={ref}
-      className="relative isolate text-slate-900"
+      className="relative isolate touch-pan-y text-slate-900"
       style={{
         minHeight: railHeightPx,
         background: PIN_RAIL_SURFACE,
@@ -164,7 +178,7 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
       id="paypulss-scroll-pin"
     >
       <div
-        className="sticky top-0 z-20 isolate flex h-[100dvh] min-h-[100svh] w-full flex-col overflow-x-clip"
+        className="sticky top-0 z-20 isolate flex h-[100dvh] min-h-[100svh] w-full flex-col overflow-x-clip will-change-transform"
         style={{ background: PIN_RAIL_SURFACE }}
       >
         <motion.div
@@ -218,8 +232,8 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
           style={{ opacity: facesGroupOpacity }}
         >
           <motion.div
-            className="flex flex-wrap justify-center gap-3 will-change-[filter] sm:gap-4"
-            style={{ filter: facesFilter }}
+            className="flex flex-wrap justify-center gap-3 sm:gap-4"
+            style={{ y: facesLiftY, willChange: "transform" }}
           >
             {DEMO_FACES.map((f) => (
               <img
@@ -229,8 +243,9 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
                 width={56}
                 height={56}
                 className="h-14 w-14 rounded-full ring-2 ring-slate-100 shadow-md shadow-slate-900/15 sm:h-16 sm:w-16"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
+                fetchPriority="low"
               />
             ))}
           </motion.div>
