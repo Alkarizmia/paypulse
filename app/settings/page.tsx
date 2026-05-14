@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { getProfile, upsertProfile, type UserProfile } from "@/lib/profile";
+import { getProfile, syncAuthUserFromProfile, upsertProfile, type UserProfile } from "@/lib/profile";
 import {
   billingRecordsWithSubscriptionSnapshot,
   getBillingRecords,
@@ -233,9 +233,94 @@ export default function SettingsPage() {
     setSavingProfile(true);
     try {
       await upsertProfile(supabase, { userId: user.id, ...profile });
+
+      let { data: sess } = await supabase.auth.getSession();
+      let token = sess.session?.access_token;
+      if (!token) {
+        const refreshed = await supabase.auth.refreshSession();
+        token = refreshed.data.session?.access_token ?? undefined;
+      }
+
+      let message: string;
+
+      if (token) {
+        const origin =
+          typeof window !== "undefined" && window.location?.origin ? window.location.origin : "";
+        const res = await fetch(`${origin}/api/sync-auth-profile`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fullName: profile.fullName,
+            companyName: profile.companyName,
+            phone: profile.phone,
+            address: profile.address,
+            country: profile.country,
+          }),
+        });
+
+        let j = {} as { ok?: boolean; phoneSkipped?: boolean; skipped?: boolean; error?: string };
+        try {
+          j = (await res.json()) as typeof j;
+        } catch {
+          j = {};
+        }
+
+        if (res.ok) {
+          if (j.phoneSkipped) {
+            message =
+              locale === "fr"
+                ? "Profil mis à jour. Le téléphone « Auth » n’a pas pu être enregistré (fournisseur SMS / config GoTrue) — il reste dans les métadonnées (contact_phone)."
+                : "Profile updated. Auth phone could not be set (SMS provider / GoTrue) — it remains in metadata (contact_phone).";
+          } else {
+            message = locale === "fr" ? "Profil mis à jour." : "Profile updated.";
+          }
+        } else if (res.status === 503) {
+          const authSync = await syncAuthUserFromProfile(supabase, profile);
+          if (!authSync.ok) {
+            message =
+              locale === "fr"
+                ? `Profil enregistré. Ajoute SUPABASE_SERVICE_ROLE_KEY sur le serveur (ex. Vercel) pour remplir le tableau Auth. Erreur client : ${authSync.message}`
+                : `Profile saved. Add SUPABASE_SERVICE_ROLE_KEY on the server to fill Auth dashboard. Client sync error: ${authSync.message}`;
+          } else {
+            message =
+              locale === "fr"
+                ? "Profil mis à jour. Ajoute SUPABASE_SERVICE_ROLE_KEY sur Vercel pour que le nom et le téléphone apparaissent dans Authentication → Users."
+                : "Profile updated. Add SUPABASE_SERVICE_ROLE_KEY on your host so name and phone appear under Authentication → Users.";
+          }
+        } else {
+          const authSync = await syncAuthUserFromProfile(supabase, profile);
+          const errText = typeof j.error === "string" ? j.error : res.statusText;
+          if (!authSync.ok) {
+            message =
+              locale === "fr"
+                ? `Profil enregistré. Synchro Auth serveur : ${errText}. Synchro client : ${authSync.message}`
+                : `Profile saved. Server Auth sync: ${errText}. Client sync: ${authSync.message}`;
+          } else {
+            message =
+              locale === "fr"
+                ? `Profil enregistré. Erreur serveur Auth (${errText}) ; une partie peut avoir été synchronisée côté client uniquement.`
+                : `Profile saved. Server Auth error (${errText}); partial client sync may have applied.`;
+          }
+        }
+      } else {
+        const authSync = await syncAuthUserFromProfile(supabase, profile);
+        if (!authSync.ok) {
+          message =
+            locale === "fr"
+              ? `Profil enregistré, mais la synchro Supabase Auth a échoué : ${authSync.message}`
+              : `Profile saved, but Supabase Auth sync failed: ${authSync.message}`;
+        } else {
+          message = locale === "fr" ? "Profil mis à jour." : "Profile updated.";
+        }
+      }
+
+      await supabase.auth.refreshSession();
       writeStoredUiThemePreference(profile.uiTheme);
       setLocale(profile.language);
-      setProfileMessage(locale === "fr" ? "Profil mis à jour." : "Profile updated.");
+      setProfileMessage(message);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Mise à jour impossible.";
       setProfileMessage(message);

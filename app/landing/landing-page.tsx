@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
 import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
 import { useLocale } from "@/app/locale-context";
@@ -14,6 +14,8 @@ import {
   HeroEntrance,
   Reveal,
 } from "@/app/landing/landing-motion";
+import { ScrollShiftSection } from "@/app/landing/scroll-shift-section";
+import { PaypulssScrollPin } from "@/app/landing/paypulss-scroll-pin";
 import { ProofStatsSection } from "@/app/landing/proof-stats-section";
 import { LandingGreyWaveBackdrop } from "@/app/landing/landing-wave-backdrop";
 
@@ -22,15 +24,12 @@ import {
   type ChartsMockCopy,
   type DashboardMockTheme,
 } from "@/app/landing/dashboard-charts-mock";
-import { ProductTourClientsPreview, ProductTourRemindersPreview } from "@/app/landing/product-tour-previews";
+import { ProductTourMarquee } from "@/app/landing/product-tour-marquee";
 
 const ACCENT = "#34D399";
-/** Capture produit : tableau de bord cash, image générée, ratio ~1.54 (proche du cadre 800/520). */
-const PRODUCT_TOUR_TREASURY_IMG = "/images/landing/product-tour-treasury-v2.png";
 const BG = "#f8fafc";
 const FOUNDER_NAME = "El Fahmi Bilal";
 const FOUNDER_IMAGE_SRC = "/images/founder-bilal.png";
-const RECURRING_CYCLE_IMAGE_SRC = "/images/recurring-cycle-illustration.png";
 
 type BillingCycle = "monthly" | "annual";
 
@@ -44,39 +43,6 @@ const ANNUAL_PRICING: Partial<Record<PlanId, AnnualPricing>> = {
   pro: { annual: "182.40€", oldAnnual: "228€" },
   agency: { annual: "374.40€", oldAnnual: "468€" },
 };
-
-/** Flèche demi-tour décorative : zoom uniquement sur ce picto au survol. */
-function RecurringCycleArrowDecor({
-  ariaLabel,
-  isAnimating,
-  onTrigger,
-}: {
-  ariaLabel: string;
-  isAnimating: boolean;
-  onTrigger: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="group/arrow pointer-events-auto absolute right-[2.5%] top-[3.5%] z-10 flex h-11 w-11 cursor-default items-center justify-center rounded-xl border border-sky-500/50 bg-sky-950/55 p-1.5 shadow-md shadow-black/35 backdrop-blur-[2px] sm:right-[3.5%] sm:top-[4%] sm:h-12 sm:w-12"
-      aria-label={ariaLabel}
-      onClick={onTrigger}
-    >
-      <svg
-        className={`h-full w-full max-h-[1.35rem] max-w-[1.35rem] text-sky-200 transition-transform duration-300 ease-out group-hover/arrow:scale-[1.28] motion-reduce:transition-none motion-reduce:group-hover/arrow:scale-100 sm:max-h-6 sm:max-w-6 ${
-          isAnimating ? "scale-[1.28] text-violet-200" : ""
-        }`}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        aria-hidden
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-      </svg>
-    </button>
-  );
-}
 
 const PLAN_FR: Record<
   PlanId,
@@ -361,6 +327,13 @@ export function LandingPage() {
           heroLine2: "que votre trésorerie attendait.",
           body: "",
           microNoCard: "Aucune carte requise",
+          heroTrustIntro: "Transparence & confiance",
+          heroTrustPills: [
+            "Chiffrement HTTPS",
+            "Supabase ou mode local",
+            "PWA installable",
+            "Relances calibrées sur l’échéance",
+          ],
           socialProof: "Déjà utilisé par plus de 100 freelances",
           statsTitle: "Une solution qui change le quotidien",
           statsSub: "Synthèse des retours utilisateurs, ordres de grandeur indicatifs.",
@@ -383,6 +356,12 @@ export function LandingPage() {
           recurringImgAlt:
             "Illustration : carte facture avec badge Payé ; la flèche demi-tour à côté est un aperçu interactif du produit.",
           recurringArrowAria: "Aperçu : flèche demi-tour pour la facture du mois suivant (animation au survol).",
+          recurringStep1Label: "Étape 1",
+          recurringStep1Badge: "Payée",
+          recurringStep1Body: "La facture du mois en cours est réglée.",
+          recurringStep2Label: "Étape 2",
+          recurringStep2Badge: "Impayé retard",
+          recurringStep2Body: "La nouvelle ligne est créée pour le mois suivant, avec relance active.",
           demoTitle: "Ce que fait le produit (MVP)",
           demoSub:
             "Un écran simple : clients, factures, statuts, relances, et des graphiques comme sur le dashboard (encaissements, répartition). L’IA pour rédiger les relances arrive plus tard.",
@@ -442,7 +421,7 @@ export function LandingPage() {
           pricingBillingMonthly: "Mensuel",
           pricingBillingAnnual: "Annuel",
           pricingAnnualSavingsNote: "Économisez 20% avec la facturation annuelle",
-          pricingAnnualSavingsBadge: "-20%",
+          pricingAnnualSavingsBadge: "20 %",
           pricingAnnualOldLabel: "au lieu de",
           popular: "Populaire",
           footerProduct: "Produit",
@@ -468,7 +447,18 @@ export function LandingPage() {
           },
           visualShowcaseTitle: "Le produit en images",
           visualShowcaseSub:
-            "Extraits de l’interface réelle (données de démo), pas des dessins marketing.",
+            "Schémas minimalistes des grands usages. L’interface détaillée est dans l’app.",
+          visualShowcaseScrollHint:
+            "Défilement automatique. Survolez le bandeau pour mettre en pause et lire une carte.",
+          visualMarqueeDueTitle: "Échéances visibles",
+          visualMarqueeDueBody:
+            "Dates et retards lisibles avant d’envoyer la moindre relance.",
+          visualMarqueeSecurityTitle: "Données maîtrisées",
+          visualMarqueeSecurityBody:
+            "Mode local ou cloud : vous gardez la main sur où vit l’information.",
+          visualMarqueeRhythmTitle: "Rythme posé",
+          visualMarqueeRhythmBody:
+            "Relances calées pour soigner votre image sans harceler.",
           visualClientsTitle: "Clients & factures",
           visualClientsBody: "Chaque dossier : montant, échéance, statut. Fini le tableur éclaté.",
           visualClientsAlt: "Aperçu interface PayPulss : liste des dossiers avec montants et statuts",
@@ -586,6 +576,13 @@ export function LandingPage() {
           heroLine2: "your cashflow deserves.",
           body: "",
           microNoCard: "No credit card required",
+          heroTrustIntro: "Trust & clarity",
+          heroTrustPills: [
+            "HTTPS encryption",
+            "Supabase or local mode",
+            "Installable PWA",
+            "Nudges aligned with due dates",
+          ],
           socialProof: "Trusted by 100+ freelancers already",
           statsTitle: "Outcomes you can feel",
           statsSub: "Based on user feedback, illustrative ranges.",
@@ -608,6 +605,12 @@ export function LandingPage() {
           recurringImgAlt:
             "Illustration: invoice card with Paid badge; the U-turn control beside it is an interactive product preview.",
           recurringArrowAria: "Preview: U-turn for the next billing cycle (hover to animate).",
+          recurringStep1Label: "Step 1",
+          recurringStep1Badge: "Paid",
+          recurringStep1Body: "The current month’s invoice is settled.",
+          recurringStep2Label: "Step 2",
+          recurringStep2Badge: "Unpaid overdue",
+          recurringStep2Body: "A new row is created for the next month, with follow-up active.",
           demoTitle: "What the MVP covers",
           demoSub:
             "One calm screen: clients, invoices, statuses, nudges, and dashboard-style charts (cash-in trend, paid vs pending breakdown). AI-written reminders come later.",
@@ -665,7 +668,7 @@ export function LandingPage() {
           pricingBillingMonthly: "Monthly",
           pricingBillingAnnual: "Yearly",
           pricingAnnualSavingsNote: "Save 20% with yearly billing",
-          pricingAnnualSavingsBadge: "-20%",
+          pricingAnnualSavingsBadge: "20%",
           pricingAnnualOldLabel: "instead of",
           popular: "Popular",
           footerProduct: "Product",
@@ -690,7 +693,15 @@ export function LandingPage() {
             footerHowLink: "How it works",
           },
           visualShowcaseTitle: "See the product visually",
-          visualShowcaseSub: "Clips of the real UI (sample data), not marketing artwork.",
+          visualShowcaseSub: "Minimal schematics of core flows. The full UI lives in the app.",
+          visualShowcaseScrollHint:
+            "Auto-scrolling row. Hover the band to pause and read a card.",
+          visualMarqueeDueTitle: "Due dates in view",
+          visualMarqueeDueBody: "Deadlines and delays read clearly before any nudge goes out.",
+          visualMarqueeSecurityTitle: "Data under your control",
+          visualMarqueeSecurityBody: "Local or cloud: you choose where information lives.",
+          visualMarqueeRhythmTitle: "Steady cadence",
+          visualMarqueeRhythmBody: "Follow-ups paced to stay professional without nagging.",
           visualClientsTitle: "Clients & invoices",
           visualClientsBody: "Every case: amount, due date, status. No scattered spreadsheet.",
           visualClientsAlt: "PayPulss UI preview: case list with amounts and status chips",
@@ -820,7 +831,7 @@ export function LandingPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden antialiased text-slate-900" style={{ backgroundColor: BG }}>
+    <div className="relative min-h-screen overflow-x-clip antialiased text-slate-900" style={{ backgroundColor: BG }}>
       <div className="pp-landing-ambient" aria-hidden>
         <div
           className="pp-landing-ambient__blob left-[-20%] top-[-25%] h-[min(520px,55vw)] w-[min(520px,55vw)]"
@@ -883,7 +894,7 @@ export function LandingPage() {
 
             <HeroEntrance delay={0.55} className="relative mt-2 w-full">
               <h1 className="relative z-10 mx-auto max-w-[min(100%,52rem)] font-semibold tracking-tight text-slate-900 drop-shadow-[0_6px_20px_rgba(148,163,184,0.2)] [font-size:clamp(1.35rem,5.4vw,3.5rem)] [line-height:1.12]">
-                <span className="block whitespace-nowrap">{t.heroLine1}</span>
+                <span className="pp-chromatic-hero-line block whitespace-nowrap text-slate-900">{t.heroLine1}</span>
                 <span className="mt-1 block whitespace-nowrap bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-500 bg-clip-text text-transparent [text-shadow:0_0_30px_rgba(59,130,246,0.2)] sm:mt-2">
                   {t.heroLine2}
                 </span>
@@ -938,8 +949,10 @@ export function LandingPage() {
           </div>
         </section>
 
+        <PaypulssScrollPin trustIntro={t.heroTrustIntro} trustPills={t.heroTrustPills} />
+
         {/* Section 2 & 3, Problème + Solution */}
-        <section id="story" className="scroll-mt-24 border-t border-slate-200 bg-slate-50 px-4 py-20 sm:px-6 sm:py-28">
+        <ScrollShiftSection id="story" shift={1} className="scroll-mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-100 to-slate-50 px-4 py-20 sm:px-6 sm:py-28">
           <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 lg:gap-10">
             <motion.div whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 280, damping: 22 }}>
               <Reveal className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-8 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:p-10">
@@ -962,9 +975,9 @@ export function LandingPage() {
               </Reveal>
             </motion.div>
           </div>
-        </section>
+        </ScrollShiftSection>
 
-        <section id="features" className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
+        <ScrollShiftSection id="features" shift={-1} className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <Reveal className="text-center">
               <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.featuresTitle}</h2>
@@ -1027,7 +1040,7 @@ export function LandingPage() {
               </a>
             </div>
           </div>
-        </section>
+        </ScrollShiftSection>
 
         <section
           id="product-tour"
@@ -1040,115 +1053,105 @@ export function LandingPage() {
             <Reveal className="mx-auto mt-3 max-w-2xl text-center text-slate-600" delay={0.06}>
               <p>{t.visualShowcaseSub}</p>
             </Reveal>
-            <div className="mt-12 grid gap-8 lg:grid-cols-3">
-              {(
-                [
-                  {
-                    title: t.visualClientsTitle,
-                    body: t.visualClientsBody,
-                    alt: t.visualClientsAlt,
-                    accent: "clients" as const,
-                    node: <ProductTourClientsPreview locale={locale} />,
-                  },
-                  {
-                    title: t.visualRelancesTitle,
-                    body: t.visualRelancesBody,
-                    alt: t.visualRelancesAlt,
-                    accent: "relances" as const,
-                    node: <ProductTourRemindersPreview locale={locale} />,
-                  },
-                  {
-                    title: t.visualTreasuryTitle,
-                    body: t.visualTreasuryBody,
-                    alt: t.visualTreasuryAlt,
-                    accent: "tresorerie" as const,
-                    imageSrc: PRODUCT_TOUR_TREASURY_IMG,
-                  },
-                ] as const
-              ).map((panel) => (
-                <Reveal key={panel.title}>
-                  <div data-tour-accent={panel.accent} className="pp-product-tour-card flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div className="pp-product-tour-visual aspect-[800/520] w-full">
-                      {"imageSrc" in panel && panel.imageSrc ? (
-                        <div className="pp-product-tour-img absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-white via-slate-50 to-violet-50/40">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={panel.imageSrc}
-                            alt={panel.alt}
-                            className="block h-full w-full object-cover object-top"
-                            decoding="async"
-                            loading="lazy"
-                          />
-                        </div>
-                      ) : (
-                        <div className="pp-product-tour-img pointer-events-none absolute inset-0 z-0" role="img" aria-label={panel.alt}>
-                          {"node" in panel ? panel.node : null}
-                        </div>
-                      )}
-                      <div className="pp-product-tour-glow" aria-hidden />
-                      <div className="pp-product-tour-shine" aria-hidden />
-                    </div>
-                    <div className="relative z-[1] flex flex-1 flex-col bg-white p-6">
-                      <h3 className="text-lg font-semibold text-slate-900">{panel.title}</h3>
-                      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{panel.body}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+            <ProductTourMarquee
+              scrollHint={t.visualShowcaseScrollHint}
+              panels={[
+                {
+                  kind: "clients",
+                  title: t.visualClientsTitle,
+                  body: t.visualClientsBody,
+                },
+                {
+                  kind: "reminders",
+                  title: t.visualRelancesTitle,
+                  body: t.visualRelancesBody,
+                },
+                {
+                  kind: "treasury",
+                  title: t.visualTreasuryTitle,
+                  body: t.visualTreasuryBody,
+                },
+                {
+                  kind: "deadlines",
+                  title: t.visualMarqueeDueTitle,
+                  body: t.visualMarqueeDueBody,
+                },
+                {
+                  kind: "security",
+                  title: t.visualMarqueeSecurityTitle,
+                  body: t.visualMarqueeSecurityBody,
+                },
+                {
+                  kind: "rhythm",
+                  title: t.visualMarqueeRhythmTitle,
+                  body: t.visualMarqueeRhythmBody,
+                },
+              ]}
+            />
           </div>
         </section>
 
         <section id="recurring-cycle" className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
-            <Reveal className="flex min-w-0 flex-col justify-center lg:py-2">
+          <div className="mx-auto flex max-w-2xl flex-col items-stretch gap-10">
+            <Reveal className="flex min-w-0 flex-col justify-center">
               <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.recurringTitle}</h2>
               <p className="mt-5 text-sm leading-relaxed text-slate-600 sm:text-base">{t.recurringBody}</p>
             </Reveal>
-            <Reveal className="relative min-w-0 w-full" delay={0.08}>
-              {/* Ratio 1200×680 : pleine largeur de colonne, hauteur dérivée, image en fill + object-cover */}
-              <div className="relative aspect-[1200/680] w-full overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_15%_10%,rgba(139,92,246,0.2),transparent_45%),linear-gradient(160deg,#030712,#0b1025)] shadow-[0_24px_56px_-12px_rgba(0,0,0,0.45),0_0_40px_-8px_rgba(139,92,246,0.1)] ring-1 ring-white/10">
+            <Reveal className="relative flex w-full justify-center" delay={0.08}>
+              {/* Même empilement vertical partout (mobile / tablette / desktop), largeur type « carte » */}
+              <div
+                className="relative w-full max-w-md overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_15%_10%,rgba(139,92,246,0.2),transparent_45%),linear-gradient(160deg,#030712,#0b1025)] p-5 shadow-[0_24px_56px_-12px_rgba(0,0,0,0.45),0_0_40px_-8px_rgba(139,92,246,0.1)] ring-1 ring-white/10 sm:p-6"
+                role="img"
+                aria-label={t.recurringImgAlt}
+              >
                 <motion.div
-                  className="absolute inset-0"
+                  className="pointer-events-none absolute inset-0"
                   initial={false}
                   animate={{ opacity: [0.85, 1, 0.86] }}
                   transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <div className="absolute inset-x-6 top-6 rounded-xl border border-emerald-400/35 bg-emerald-500/12 p-3 backdrop-blur-sm sm:inset-x-8">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/90">Etape 1</p>
-                    <span className="rounded-full bg-emerald-400/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
-                      Paye
-                    </span>
+                <div className="relative flex flex-col gap-4">
+                  <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/12 p-4 backdrop-blur-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/90">
+                        {t.recurringStep1Label}
+                      </p>
+                      <span className="shrink-0 rounded-full bg-emerald-400/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                        {t.recurringStep1Badge}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-100/90">{t.recurringStep1Body}</p>
                   </div>
-                  <p className="mt-2 text-sm text-slate-100/90">La facture du mois en cours est reglee.</p>
-                </div>
-                <motion.div
-                  className="absolute left-1/2 top-[38%] z-[5] -translate-x-1/2 rounded-full border border-sky-400/40 bg-sky-500/10 p-2 text-sky-200 shadow-lg"
-                  animate={{ rotate: [0, -12, 0, 12, 0], scale: [1, 1.08, 1] }}
-                  transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-                  </svg>
-                </motion.div>
-                <div className="absolute inset-x-6 bottom-6 rounded-xl border border-orange-300/35 bg-orange-500/12 p-3 backdrop-blur-sm sm:inset-x-8">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/90">Etape 2</p>
-                    <span className="rounded-full bg-orange-400/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-orange-100">
-                      Impaye / Retard
-                    </span>
+                  <div className="flex justify-center">
+                    <motion.div
+                      className="rounded-full border border-sky-400/40 bg-sky-500/10 p-2 text-sky-200 shadow-lg"
+                      animate={{ rotate: [0, -12, 0, 12, 0], scale: [1, 1.08, 1] }}
+                      transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                      aria-label={t.recurringArrowAria}
+                    >
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                      </svg>
+                    </motion.div>
                   </div>
-                  <p className="mt-2 text-sm text-slate-100/90">
-                    La nouvelle ligne est creee pour le mois suivant, avec relance active.
-                  </p>
+                  <div className="rounded-xl border border-orange-300/35 bg-orange-500/12 p-4 backdrop-blur-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/90">
+                        {t.recurringStep2Label}
+                      </p>
+                      <span className="max-w-[min(100%,11rem)] shrink-0 rounded-full bg-orange-400/25 px-2.5 py-1 text-center text-[10px] font-semibold uppercase leading-tight tracking-wide text-orange-100">
+                        {t.recurringStep2Badge}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-100/90">{t.recurringStep2Body}</p>
+                  </div>
                 </div>
               </div>
             </Reveal>
           </div>
         </section>
 
-        <section id={t.demoAnchor} className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
+        <ScrollShiftSection id={t.demoAnchor} shift={1} className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <Reveal className="text-center">
               <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.demoTitle}</h2>
@@ -1201,7 +1204,7 @@ export function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </ScrollShiftSection>
 
         {/* Fondateur + valeurs (après l’explication produit) */}
         <section id="about" className="scroll-mt-28 border-t border-slate-200 bg-slate-50 px-4 py-20 sm:px-6 sm:py-24">
@@ -1375,7 +1378,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id={t.pricingAnchor} className="scroll-mt-28 px-4 py-20 sm:px-6">
+        <ScrollShiftSection id={t.pricingAnchor} shift={-1} className="scroll-mt-28 px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <Reveal className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-slate-900">{t.pricingTitle}</h2>
@@ -1384,14 +1387,15 @@ export function LandingPage() {
                 <div
                   role="tablist"
                   aria-label={locale === "fr" ? "Choix de facturation mensuelle ou annuelle" : "Choose monthly or yearly billing"}
-                  className="relative flex h-[52px] w-[min(100%,18.75rem)] shrink-0 items-stretch rounded-full border-2 border-slate-500/55 bg-gradient-to-b from-slate-200 via-slate-200 to-slate-300 p-2 shadow-[inset_0_3px_14px_rgba(15,23,42,0.14)] ring-2 ring-white ring-offset-[3px] ring-offset-slate-100 sm:h-14 sm:w-[19.5rem]"
+                  className="relative flex h-[52px] w-[min(100%,20.5rem)] shrink-0 items-stretch rounded-full border border-slate-200/95 bg-slate-100/90 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_28px_-14px_rgba(15,23,42,0.18)] sm:h-14 sm:w-[21rem]"
                 >
                   <motion.div
                     aria-hidden
-                    className="pointer-events-none absolute bottom-2 left-2 top-2 z-0 w-[calc(50%-12px)] rounded-full bg-gradient-to-b from-white via-white to-slate-50 shadow-[0_10px_28px_-6px_rgba(124,58,237,0.55),0_4px_14px_rgba(15,23,42,0.14)] ring-2 ring-violet-400/55 ring-offset-[3px] ring-offset-slate-200"
+                    className="pointer-events-none absolute inset-y-2 left-2 z-0 w-[calc(50%-0.5rem)] rounded-full bg-white shadow-[0_4px_16px_rgba(15,23,42,0.1),0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.06]"
                     initial={false}
                     animate={{
-                      x: billingCycle === "annual" ? "calc(100% + 12px)" : 0,
+                      /* 100% = exactement une demi-piste (même largeur que le thumb), aligné sur le padding p-2 */
+                      x: billingCycle === "annual" ? "100%" : 0,
                     }}
                     transition={
                       reduceMotion
@@ -1404,8 +1408,8 @@ export function LandingPage() {
                     role="tab"
                     aria-selected={billingCycle === "monthly"}
                     onClick={() => setBillingCycle("monthly")}
-                    whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-                    className={`relative z-10 flex flex-1 items-center justify-center rounded-full px-4 text-sm font-bold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 sm:text-[15px] ${
+                    whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                    className={`relative z-10 flex min-w-0 flex-1 items-center justify-center rounded-full px-1 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 sm:text-[15px] ${
                       billingCycle === "monthly" ? "text-slate-900" : "text-slate-500 hover:text-slate-800"
                     }`}
                   >
@@ -1416,20 +1420,22 @@ export function LandingPage() {
                     role="tab"
                     aria-selected={billingCycle === "annual"}
                     onClick={() => setBillingCycle("annual")}
-                    whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-                    className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 text-sm font-bold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-100 sm:gap-2 sm:px-4 sm:text-[15px] ${
+                    whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                    className={`relative z-10 flex min-w-0 flex-1 items-center justify-center rounded-full px-1 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 sm:text-[15px] ${
                       billingCycle === "annual" ? "text-slate-900" : "text-slate-500 hover:text-slate-800"
                     }`}
                   >
-                    <span>{t.pricingBillingAnnual}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide shadow-sm sm:text-[11px] ${
-                        billingCycle === "annual"
-                          ? "bg-emerald-500 text-white shadow-emerald-500/30"
-                          : "border border-emerald-600/25 bg-emerald-500/12 text-emerald-800"
-                      }`}
-                    >
-                      {t.pricingAnnualSavingsBadge}
+                    <span className="inline-flex max-w-full items-center justify-center gap-2 whitespace-nowrap sm:gap-2.5">
+                      <span>{t.pricingBillingAnnual}</span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums tracking-tight sm:text-[11px] ${
+                          billingCycle === "annual"
+                            ? "bg-emerald-600 text-white shadow-sm shadow-emerald-700/20"
+                            : "border border-emerald-600/20 bg-emerald-500/10 text-emerald-800"
+                        }`}
+                      >
+                        {t.pricingAnnualSavingsBadge}
+                      </span>
                     </span>
                   </motion.button>
                 </div>
@@ -1526,7 +1532,7 @@ export function LandingPage() {
               })}
             </motion.div>
           </div>
-        </section>
+        </ScrollShiftSection>
 
         <section id="faq" className="scroll-mt-28 border-t border-slate-200 bg-slate-50 px-4 py-16 sm:px-6">
           <div className="mx-auto max-w-3xl">

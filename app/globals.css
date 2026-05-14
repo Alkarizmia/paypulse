@@ -62,6 +62,39 @@ body {
   }
 }
 
+/* Frange chromatique très légère (hero) — désactivée si reduced motion ou data-low-performance */
+@keyframes pp-chromatic-fringe {
+  0%,
+  100% {
+    text-shadow:
+      0.45px 0 0 rgba(56, 189, 248, 0.22),
+      -0.45px 0 0 rgba(244, 114, 182, 0.18),
+      0 0 24px rgba(99, 102, 241, 0.08);
+  }
+  50% {
+    text-shadow:
+      0.7px 0 0 rgba(56, 189, 248, 0.28),
+      -0.7px 0 0 rgba(244, 114, 182, 0.22),
+      0 0 28px rgba(139, 92, 246, 0.1);
+  }
+}
+
+.pp-chromatic-hero-line {
+  animation: pp-chromatic-fringe 10s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-chromatic-hero-line {
+    animation: none !important;
+    text-shadow: none !important;
+  }
+}
+
+html[data-low-performance="true"] .pp-chromatic-hero-line {
+  animation: none !important;
+  text-shadow: none !important;
+}
+
 /* Landing #demo : mock dashboard léger balancement + ombre */
 @keyframes pp-float-dashboard {
   0%,
@@ -618,7 +651,8 @@ body {
     radial-gradient(circle at 90% 20%, rgba(139, 92, 246, 0.28), transparent 48%);
 }
 
-.pp-product-tour-card[data-tour-accent="relances"] .pp-product-tour-glow {
+.pp-product-tour-card[data-tour-accent="relances"] .pp-product-tour-glow,
+.pp-product-tour-card[data-tour-accent="reminders"] .pp-product-tour-glow {
   background: radial-gradient(ellipse 100% 85% at 50% 100%, rgba(52, 211, 153, 0.35), transparent 58%),
     radial-gradient(circle at 15% 18%, rgba(129, 140, 248, 0.3), transparent 46%);
 }
@@ -628,13 +662,15 @@ body {
  * les deux autres cartes). On reste donc en `multiply` (glow par défaut) pour
  * faire mieux ressortir les couleurs au hover, sans laver l’image.
  */
-.pp-product-tour-card[data-tour-accent="tresorerie"] .pp-product-tour-glow {
+.pp-product-tour-card[data-tour-accent="tresorerie"] .pp-product-tour-glow,
+.pp-product-tour-card[data-tour-accent="treasury"] .pp-product-tour-glow {
   background: radial-gradient(ellipse 100% 85% at 55% 100%, rgba(139, 92, 246, 0.38), transparent 58%),
     radial-gradient(circle at 18% 18%, rgba(56, 189, 248, 0.32), transparent 48%),
     radial-gradient(circle at 86% 22%, rgba(52, 211, 153, 0.32), transparent 46%);
 }
 
-.pp-product-tour-card[data-tour-accent="tresorerie"] .pp-product-tour-shine {
+.pp-product-tour-card[data-tour-accent="tresorerie"] .pp-product-tour-shine,
+.pp-product-tour-card[data-tour-accent="treasury"] .pp-product-tour-shine {
   background: linear-gradient(
     118deg,
     transparent 32%,
@@ -643,6 +679,61 @@ body {
     rgba(52, 211, 153, 0.18) 56%,
     transparent 68%
   );
+}
+
+.pp-product-tour-card[data-tour-accent="deadlines"] .pp-product-tour-glow {
+  background: radial-gradient(ellipse 100% 85% at 45% 100%, rgba(56, 189, 248, 0.34), transparent 58%),
+    radial-gradient(circle at 80% 15%, rgba(99, 102, 241, 0.26), transparent 48%);
+}
+
+.pp-product-tour-card[data-tour-accent="security"] .pp-product-tour-glow {
+  background: radial-gradient(ellipse 100% 85% at 50% 100%, rgba(16, 185, 129, 0.32), transparent 58%),
+    radial-gradient(circle at 20% 20%, rgba(148, 163, 184, 0.35), transparent 46%);
+}
+
+.pp-product-tour-card[data-tour-accent="rhythm"] .pp-product-tour-glow {
+  background: radial-gradient(ellipse 100% 85% at 50% 100%, rgba(139, 92, 246, 0.34), transparent 58%),
+    radial-gradient(circle at 85% 30%, rgba(52, 211, 153, 0.28), transparent 48%);
+}
+
+/* Bandeau « produit en images » : défilement horizontal auto en boucle (deux séries de cartes). */
+.pp-product-tour-marquee-wrap {
+  position: relative;
+}
+
+.pp-product-tour-marquee-viewport {
+  overflow: hidden;
+}
+
+.pp-product-tour-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 1.5rem;
+  padding-right: 1.5rem;
+  animation: pp-product-tour-marquee-scroll 52s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-product-tour-marquee-wrap:hover .pp-product-tour-marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes pp-product-tour-marquee-scroll {
+  /* Contenu qui défile de la gauche vers la droite (translation +X). */
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-product-tour-marquee-track {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -752,6 +843,11 @@ html[data-low-performance="true"] .pp-hero-color-lines-mobile {
 html[data-low-performance="true"] .pp-landing-ambient__blob,
 html[data-low-performance="true"] .pp-landing-ambient__blob--2 {
   animation: none !important;
+}
+
+html[data-low-performance="true"] .pp-product-tour-marquee-track {
+  animation: none !important;
+  transform: none !important;
 }
 
 html[data-low-performance="true"] .pp-landing-wave-disk--a,

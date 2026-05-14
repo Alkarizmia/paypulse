@@ -64,6 +64,103 @@ export async function getProfile(supabase: SupabaseClient, userId: string): Prom
   return mapProfile(data as ProfileRow);
 }
 
+/**
+ * Tente de produire un E.164 pour `auth.users.phone` (colonne « Phone » du dashboard).
+ * Si impossible, le numéro reste uniquement dans `user_metadata.contact_phone`.
+ */
+export function profilePhoneToAuthE164(raw: string): string | null {
+  const s = raw.trim().replace(/[\s.\-/]/g, "");
+  if (!s) return null;
+  if (/^\+[1-9]\d{7,14}$/.test(s)) return s;
+  // Belgique : 0XXXXXXXXX (9–10 chiffres après le 0)
+  if (/^0[1-9]\d{7,8}$/.test(s)) return `+32${s.slice(1)}`;
+  return null;
+}
+
+export type SyncAuthUserProfileResult = { ok: true } | { ok: false; message: string };
+
+/** Données à fusionner dans `auth.users.raw_user_meta_data` + téléphone E.164 si possible. */
+export function buildAuthUserMetadataFromProfile(
+  profile: Pick<UserProfile, "fullName" | "companyName" | "phone" | "address" | "country">,
+): { metadata: Record<string, string>; e164: string | null } {
+  const fullName = profile.fullName.trim();
+  const company = profile.companyName.trim();
+  const phone = profile.phone.trim();
+  const address = profile.address.trim();
+  const country = profile.country.trim();
+
+  const metadata: Record<string, string> = {};
+  if (fullName) {
+    metadata.full_name = fullName;
+    metadata.display_name = fullName;
+    metadata.name = fullName;
+  }
+  if (company) metadata.company_name = company;
+  if (phone) metadata.contact_phone = phone;
+  if (address) metadata.address = address;
+  if (country) metadata.country = country;
+
+  return { metadata, e164: profilePhoneToAuthE164(phone) };
+}
+
+type AuthSyncableProfile = Pick<UserProfile, "fullName" | "companyName" | "phone" | "address" | "country">;
+
+/** Vrai si au moins un champ pertinent pour la synchro Auth diffère entre les deux profils. */
+function authSyncProfileDiffers(a: AuthSyncableProfile, b: AuthSyncableProfile): boolean {
+  return (
+    a.fullName.trim() !== b.fullName.trim() ||
+    a.companyName.trim() !== b.companyName.trim() ||
+    a.phone.trim() !== b.phone.trim() ||
+    a.address.trim() !== b.address.trim() ||
+    a.country.trim() !== b.country.trim()
+  );
+}
+
+/**
+ * Met à jour `auth.users` (métadonnées visibles dans Authentication → Users).
+ * Le tableau Supabase lit souvent `full_name` / `name` / `display_name` dans `user_metadata`.
+ * La colonne Auth `phone` n’est mise à jour côté client que si GoTrue l’accepte (sinon ignorée).
+ *
+ * Si `previousProfile` est fourni et identique au profil courant sur tous les champs pertinents,
+ * aucun appel `auth.updateUser` n'est émis (économie d'egress + de hits GoTrue).
+ */
+export async function syncAuthUserFromProfile(
+  supabase: SupabaseClient,
+  profile: AuthSyncableProfile,
+  previousProfile?: AuthSyncableProfile,
+): Promise<SyncAuthUserProfileResult> {
+  if (previousProfile && !authSyncProfileDiffers(profile, previousProfile)) {
+    return { ok: true };
+  }
+
+  const { metadata, e164 } = buildAuthUserMetadataFromProfile(profile);
+
+  if (Object.keys(metadata).length > 0) {
+    const { error: metaError } = await supabase.auth.updateUser({ data: metadata });
+    if (metaError) {
+      return { ok: false, message: metaError.message };
+    }
+  }
+
+  if (!e164) {
+    return { ok: true };
+  }
+
+  if (previousProfile) {
+    const prevE164 = profilePhoneToAuthE164(previousProfile.phone);
+    if (prevE164 === e164) {
+      return { ok: true };
+    }
+  }
+
+  const { error: phoneError } = await supabase.auth.updateUser({ phone: e164 });
+  if (phoneError) {
+    return { ok: true };
+  }
+
+  return { ok: true };
+}
+
 export async function upsertProfile(
   supabase: SupabaseClient,
   input: Omit<UserProfile, "userId"> & { userId: string },
