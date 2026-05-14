@@ -25,6 +25,7 @@ import {
   type DashboardMockTheme,
 } from "@/app/landing/dashboard-charts-mock";
 import { ProductTourMarquee } from "@/app/landing/product-tour-marquee";
+import { FeaturesRevealGrid } from "@/app/landing/features-reveal-grid";
 
 const ACCENT = "#34D399";
 const BG = "#f8fafc";
@@ -949,7 +950,9 @@ export function LandingPage() {
           </div>
         </section>
 
-        <PaypulssScrollPin trustIntro={t.heroTrustIntro} trustPills={t.heroTrustPills} />
+        <div className="hidden md:block">
+          <PaypulssScrollPin trustIntro={t.heroTrustIntro} trustPills={t.heroTrustPills} />
+        </div>
 
         {/* Section 2 & 3, Problème + Solution */}
         <ScrollShiftSection id="story" shift={1} className="scroll-mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-100 to-slate-50 px-4 py-20 sm:px-6 sm:py-28">
@@ -985,44 +988,7 @@ export function LandingPage() {
             <Reveal className="mx-auto mt-3 max-w-2xl text-center text-slate-600" delay={0.06}>
               <p>{t.featuresSub}</p>
             </Reveal>
-            <motion.div
-              className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ margin: "-48px", amount: 0.2 }}
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } },
-              }}
-            >
-              {featureCards.map((card) => (
-                <motion.div
-                  key={card.title}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    show: { opacity: 1, y: 0, transition: { duration: 0.52, ease: [0.22, 1, 0.36, 1] } },
-                  }}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm backdrop-blur-md"
-                  whileHover={{
-                    y: -4,
-                    borderColor: "rgba(167, 139, 250, 0.22)",
-                    boxShadow:
-                      "0 20px 40px -24px rgba(15,23,42,0.35), 0 0 0 1px rgba(139,92,246,0.2), 0 0 40px -18px rgba(139, 92, 246, 0.35)",
-                  }}
-                  transition={{ type: "spring", stiffness: 380, damping: 26 }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-[0_0_24px_-12px_rgba(139,92,246,0.3)]">
-                      {card.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-900">{card.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{card.body}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+            <FeaturesRevealGrid items={featureCards} reduceMotion={reduceMotion} />
             <div className="mx-auto mt-12 flex flex-wrap items-center justify-center gap-4">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link

@@ -31,7 +31,7 @@ function usePinRailHeightPx() {
     const w = window.innerWidth;
     let next: number;
     if (w < 640) {
-      next = Math.max(1280, Math.round(h * 1.65));
+      next = Math.max(1480, Math.round(h * 1.78));
     } else if (w < 1024) {
       next = Math.max(1600, Math.round(h * 1.95));
     } else {
@@ -80,11 +80,11 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
 
   const tintOpacity = useTransform(scrollYProgress, [0, 0.08, 0.16], [1, 1, 0]);
 
-  const trustOpacity = useTransform(scrollYProgress, [0, 0.1, 0.14, 0.42, 0.52], [0, 0, 1, 1, 0]);
-  const trustY = useTransform(scrollYProgress, [0.1, 0.14, 0.4, 0.54], [18, 0, 0, -12]);
-  const trustScale = useTransform(scrollYProgress, [0.1, 0.14, 0.4, 0.54], [0.98, 1, 1, 0.98]);
+  const trustOpacity = useTransform(scrollYProgress, [0, 0.08, 0.12, 0.48, 0.62], [0, 0, 1, 1, 0]);
+  const trustY = useTransform(scrollYProgress, [0.08, 0.12, 0.44, 0.62], [18, 0, 0, -12]);
+  const trustScale = useTransform(scrollYProgress, [0.08, 0.12, 0.44, 0.62], [0.98, 1, 1, 0.98]);
 
-  const scrollMoreOpacity = useTransform(scrollYProgress, [0, 0.44, 0.52, 1], [0, 0, 1, 1]);
+  const scrollMoreOpacity = useTransform(scrollYProgress, [0, 0.48, 0.58, 1], [0, 0, 1, 1]);
 
   const copy =
     locale === "fr"
@@ -147,16 +147,18 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
           </div>
           <p className="mt-3 text-[11px] text-slate-500">{copy.facesCaption}</p>
 
-          <h3 className="mt-10 text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">{trustIntro}</h3>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {trustPills.map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-[11px] font-medium text-slate-700 shadow-sm"
-              >
-                {label}
-              </span>
-            ))}
+          <div className="mx-auto mt-10 w-full max-w-2xl rounded-2xl border border-slate-200/90 bg-white px-5 py-8 text-center shadow-md shadow-slate-900/5 ring-1 ring-slate-200/60 sm:px-8">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 sm:text-sm">{trustIntro}</h3>
+            <div className="mt-5 flex flex-wrap justify-center gap-2 sm:gap-2.5">
+              {trustPills.map((label) => (
+                <span
+                  key={label}
+                  className="rounded-full border border-slate-200/90 bg-slate-50/90 px-3 py-1.5 text-[11px] font-medium text-slate-700 shadow-sm sm:text-xs"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
           <p className="mt-8 text-xs text-slate-500" aria-hidden>
             ↓
