@@ -932,3 +932,144 @@ html[data-low-performance="true"] .pp-hero-warp-layer {
 html[data-low-performance="true"] .pp-hero-warp-layer--b {
   opacity: 0;
 }
+
+/* Connexion / auth : fond blanc premium + boule & vagues au curseur (GPU, pas de canvas) */
+.pp-auth-premium-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: auto;
+  contain: layout paint style;
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 38%, #f1f5f9 100%);
+}
+
+.pp-auth-premium-bg__base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 12% 8%, rgba(255, 255, 255, 0.95), transparent 55%),
+    radial-gradient(ellipse 75% 55% at 88% 92%, rgba(219, 234, 254, 0.45), transparent 52%),
+    radial-gradient(ellipse 60% 45% at 72% 18%, rgba(167, 243, 208, 0.22), transparent 48%);
+}
+
+.pp-auth-premium-bg__sheen {
+  position: absolute;
+  inset: -20% -10%;
+  background: linear-gradient(
+    118deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.75) 48%,
+    rgba(255, 255, 255, 0.35) 52%,
+    transparent 62%
+  );
+  opacity: 0.55;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.pp-auth-premium-bg__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, black 20%, transparent 72%);
+  pointer-events: none;
+}
+
+.pp-auth-premium-bg__wave {
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0) scale(1);
+  opacity: 0.55;
+  background: radial-gradient(
+    circle at var(--pp-auth-x, 50%) var(--pp-auth-y, 50%),
+    rgba(59, 130, 246, 0.14) 0%,
+    rgba(139, 92, 246, 0.08) 22%,
+    transparent 52%
+  );
+  transition: opacity 0.35s ease;
+}
+
+.pp-auth-premium-bg__wave--b {
+  opacity: 0.4;
+  background: radial-gradient(
+    circle at var(--pp-auth-x, 50%) var(--pp-auth-y, 50%),
+    rgba(52, 211, 153, 0.12) 0%,
+    rgba(56, 189, 248, 0.07) 28%,
+    transparent 58%
+  );
+}
+
+.pp-auth-premium-bg__wave--c {
+  opacity: 0.35;
+  transform: scale(1.15);
+  background: radial-gradient(
+    circle at var(--pp-auth-x, 50%) var(--pp-auth-y, 50%),
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(226, 232, 240, 0.2) 18%,
+    transparent 45%
+  );
+}
+
+.pp-auth-premium-bg--interactive[data-pulse="1"] .pp-auth-premium-bg__wave--a {
+  animation: pp-auth-wave-pulse 0.55s ease-out;
+}
+
+.pp-auth-premium-bg--interactive[data-pulse="1"] .pp-auth-premium-bg__wave--b {
+  animation: pp-auth-wave-pulse 0.65s ease-out 0.04s;
+}
+
+.pp-auth-premium-bg__ball {
+  position: absolute;
+  left: var(--pp-auth-x, 50%);
+  top: var(--pp-auth-y, 50%);
+  width: min(22rem, 42vw);
+  height: min(22rem, 42vw);
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate3d(-50%, -50%, 0);
+  background: radial-gradient(
+    circle at 35% 32%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(191, 219, 254, 0.55) 28%,
+    rgba(139, 92, 246, 0.2) 52%,
+    transparent 68%
+  );
+  box-shadow:
+    0 0 80px rgba(59, 130, 246, 0.18),
+    0 0 120px rgba(167, 139, 250, 0.12);
+  filter: blur(2px);
+}
+
+@keyframes pp-auth-wave-pulse {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.92);
+    opacity: 0.45;
+  }
+  45% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.08);
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-auth-premium-bg__wave,
+  .pp-auth-premium-bg__ball {
+    display: none;
+  }
+}
+
+html[data-low-performance="true"] .pp-auth-premium-bg__wave,
+html[data-low-performance="true"] .pp-auth-premium-bg__ball {
+  display: none;
+}
