@@ -3,18 +3,20 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 /**
- * Heuristique « appareil modeste » (≈ 4 Go RAM ou équivalent) :
- * - Chrome : `navigator.deviceMemory <= 4` quand disponible
- * - Sinon : mobile tactile étroit + peu de cœurs logiques
- * - `prefers-reduced-data` active aussi le mode léger (économie réseau + souvent batterie)
+ * Allège surtout les animations CSS coûteuses (`data-low-performance` dans globals.css).
+ * Ne doit pas couper les animations Framer « métier » (scroll, reveals) sur un PC bureau 4 Go.
+ *
+ * Déclenchement :
+ * - `prefers-reduced-data: reduce`
+ * - RAM ≤ 2 Go (si le navigateur expose `deviceMemory`)
+ * - Mobile tactile étroit + (RAM ≤ 4 Go ou ≤ 4 cœurs logiques)
+ *
+ * Un PC fixe avec 4 Go (ex. i5-3470) n’est plus traité comme « sans animation ».
  */
 export function computeLowPerformanceDevice(): boolean {
   if (typeof window === "undefined") return false;
 
   const nav = navigator as Navigator & { deviceMemory?: number };
-  if (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4) {
-    return true;
-  }
 
   try {
     if (window.matchMedia("(prefers-reduced-data: reduce)").matches) {
@@ -24,12 +26,22 @@ export function computeLowPerformanceDevice(): boolean {
     /* Safari ancien */
   }
 
+  const mem = typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
+  if (mem !== null && mem <= 2) {
+    return true;
+  }
+
   const narrow = window.matchMedia("(max-width: 767px)").matches;
   const coarse = window.matchMedia("(pointer: coarse)").matches;
-  const cores = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : 8;
+  const mobile = narrow && coarse;
+  if (!mobile) {
+    return false;
+  }
 
-  if (narrow && coarse && cores <= 4) return true;
-  if (narrow && cores <= 2) return true;
+  const cores = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : 8;
+  if (mem !== null && mem <= 4) return true;
+  if (cores <= 4) return true;
+  if (cores <= 2) return true;
 
   return false;
 }

@@ -808,8 +808,8 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
 }
 
 /*
- * Appareils modestes (~4 Go RAM / mobile budget) : même esprit que reduced-motion
- * pour les animations CSS continues (Framer est déjà court-circuité côté JS).
+ * Mobile modeste ou RAM ≤ 2 Go : allège les animations CSS continues (blobs, hero, marquee).
+ * Les animations Framer (scroll, reveals) restent actives sauf « réduire les animations » OS.
  */
 html[data-low-performance="true"] .pp-rise,
 html[data-low-performance="true"] .pp-float,
