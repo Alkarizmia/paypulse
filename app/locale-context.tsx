@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { type AppLocale, isAppLocale } from "@/lib/app-locale";
 
-type Locale = "fr" | "en";
+export type Locale = AppLocale;
 
 type LocaleContextValue = {
   locale: Locale;
@@ -16,7 +17,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return "fr";
     try {
       const stored = window.localStorage.getItem("paypulse_locale");
-      return stored === "fr" || stored === "en" ? stored : "fr";
+      return isAppLocale(stored) ? stored : "fr";
     } catch {
       return "fr";
     }
@@ -42,3 +43,5 @@ export function useLocale() {
   }
   return ctx;
 }
+
+export type { AppLocale } from "@/lib/app-locale";

@@ -3,7 +3,7 @@
 export function DashboardRouteSkeleton() {
   return (
     <div className="min-h-screen bg-[#08080c] px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-6 animate-pulse">
+      <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6 animate-pulse">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="h-8 w-40 rounded-lg bg-white/[0.08]" />
           <div className="flex gap-2">

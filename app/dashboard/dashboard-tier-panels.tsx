@@ -2,9 +2,10 @@
 
 import type { PlanCapabilities } from "@/lib/plans";
 import type { UiResolvedAppearance } from "@/lib/ui-theme";
+import type { AppLocale } from "@/lib/app-locale";
 
 type Props = {
-  locale: "fr" | "en";
+  locale: AppLocale;
   caps: PlanCapabilities;
   appearance: UiResolvedAppearance;
   /** Préférence utilisateur (toggle), combinée avec caps.autoReminders. */
@@ -14,7 +15,7 @@ type Props = {
   workspaces?: { id: string; name: string }[];
 };
 
-function getTierCopy(locale: "fr" | "en") {
+function getTierCopy(locale: AppLocale) {
   return locale === "fr"
     ? {
         relanceTitle: "Relances par e-mail",

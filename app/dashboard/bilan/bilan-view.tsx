@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useWorkspace } from "@/app/workspace-context";
 import { useLocale } from "@/app/locale-context";
+import { useMoney } from "@/app/display-currency-context";
+import { intlLocaleFor } from "@/lib/app-locale";
 import { DashboardShell } from "@/app/dashboard/dashboard-shell";
 import type { Client } from "@/app/dashboard/types";
 import { eachRecognizedPayment, filterClientsInWindow } from "@/lib/dashboard-metrics";
@@ -15,9 +17,6 @@ import { getActiveLocalClients } from "@/lib/local-clients";
 import { getCurrentSubscription, type UserSubscription } from "@/lib/subscriptions";
 import { getSupabaseBrowserClient, isSupabaseReady } from "@/lib/supabase";
 import { useResolvedUiAppearance } from "@/lib/ui-theme";
-
-const money = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" });
 
 type RangeKey = "7d" | "30d" | "90d" | "365d" | "1095d";
 
@@ -46,6 +45,8 @@ function lastPaidIso(c: Client): string | null {
 
 export function BilanView() {
   const { locale } = useLocale();
+  const money = useMoney();
+  const dateFmt = useMemo(() => new Intl.DateTimeFormat(intlLocaleFor(locale), { dateStyle: "medium" }), [locale]);
   const { signOut, user } = useAuth();
   const ws = useWorkspace();
   const router = useRouter();
@@ -186,8 +187,7 @@ export function BilanView() {
 
   const planId = plan?.planId ?? "free";
   const showThreeYearRange = canViewBilanThreeYears(planId);
-  const memberReadOnly =
-    Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const memberReadOnly = ws.collaboratorNoClientMgmt;
   const appearance = useResolvedUiAppearance();
   const light = appearance === "light";
 

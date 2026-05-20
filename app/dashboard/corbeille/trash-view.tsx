@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useWorkspace } from "@/app/workspace-context";
 import { useLocale } from "@/app/locale-context";
+import { useMoney } from "@/app/display-currency-context";
+import { intlLocaleFor } from "@/lib/app-locale";
 import { DashboardShell } from "@/app/dashboard/dashboard-shell";
 import type { Client } from "@/app/dashboard/types";
 import { fetchTrashedClients, permanentDeleteClient, restoreClient } from "@/lib/clients";
@@ -13,11 +15,10 @@ import { loadLocalClientStore, removeLocalClientById, replaceLocalClientById } f
 import { getCurrentSubscription, type UserSubscription } from "@/lib/subscriptions";
 import { getSupabaseBrowserClient, isSupabaseReady } from "@/lib/supabase";
 
-const money = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" });
-
 export function TrashView() {
   const { locale } = useLocale();
+  const money = useMoney();
+  const dateFmt = useMemo(() => new Intl.DateTimeFormat(intlLocaleFor(locale), { dateStyle: "medium" }), [locale]);
   const { signOut, user } = useAuth();
   const ws = useWorkspace();
   const router = useRouter();
@@ -130,8 +131,7 @@ export function TrashView() {
   }
 
   const planId = plan?.planId ?? "free";
-  const memberReadOnly =
-    Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const memberReadOnly = ws.collaboratorNoClientMgmt;
 
   if (memberReadOnly) {
     return (

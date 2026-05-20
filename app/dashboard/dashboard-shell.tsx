@@ -6,7 +6,13 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
 import { PayPulseLogo } from "./pay-pulse-logo";
-import { hasReminderTemplatesEditor, usesAgencyWorkspaceUi, type PlanId } from "@/lib/plans";
+import {
+  canAccessTeamPage,
+  getMaxWorkspaces,
+  hasReminderTemplatesEditor,
+  usesAgencyWorkspaceUi,
+  type PlanId,
+} from "@/lib/plans";
 import { useWorkspaceOptional } from "@/app/workspace-context";
 import {
   readStoredUiThemePreference,
@@ -17,28 +23,15 @@ import {
 } from "@/lib/ui-theme";
 import { formatDashboardNotificationCopy } from "@/lib/notification-display";
 import { useNotifications } from "./use-notifications";
+import type { AppLocale } from "@/lib/app-locale";
+import { getDashboardHomeCopy } from "@/lib/messages/dashboard-home-copy";
 
-export type DashboardNavId = "overview" | "invoices" | "clients" | "relances" | "paiements";
+export type DashboardNavId = "overview" | "invoices" | "relances" | "paiements" | "clients";
 
 type NavItem = { id: DashboardNavId; label: string; icon: ReactNode };
 
-function navItems(locale: "fr" | "en"): NavItem[] {
-  const t =
-    locale === "fr"
-      ? {
-          dashboard: "Dashboard",
-          invoices: "Factures",
-          clients: "Clients",
-          relances: "Relances",
-          paiements: "Paiements",
-        }
-      : {
-          dashboard: "Dashboard",
-          invoices: "Invoices",
-          clients: "Clients",
-          relances: "Reminders",
-          paiements: "Payments",
-        };
+function navItems(locale: AppLocale): NavItem[] {
+  const t = getDashboardHomeCopy(locale);
   const icon = (d: string) => (
     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d={d} />
@@ -47,31 +40,32 @@ function navItems(locale: "fr" | "en"): NavItem[] {
   return [
     {
       id: "overview",
-      label: t.dashboard,
+      label: t.navHome,
       icon: icon("M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"),
     },
     {
       id: "invoices",
-      label: t.invoices,
-      icon: icon("M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"),
-    },
-    {
-      id: "clients",
-      label: t.clients,
+      label: t.navClients,
       icon: icon("M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.813-4.003M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"),
     },
     {
       id: "relances",
-      label: t.relances,
+      label: t.navRelances,
       icon: icon("M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"),
     },
     {
       id: "paiements",
-      label: t.paiements,
+      label: t.navTreasury,
       icon: icon("M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a1.5 1.5 0 001.5-1.5V6.75a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6.75v12A1.5 1.5 0 003.75 21z"),
     },
   ];
 }
+
+const pipelineIcon = (
+  <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-2.25A1.125 1.125 0 013 16.875v-3.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-8.25zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+  </svg>
+);
 
 const bilanIcon = (
   <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -101,8 +95,20 @@ const templatesNavIcon = (
   </svg>
 );
 
+const TEMPLATES_SUB_NAV_KEY = "paypulss_templates_sub_nav_open_v1";
+
+function readTemplatesSubNavOpen(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(TEMPLATES_SUB_NAV_KEY) !== "0";
+}
+
+function persistTemplatesSubNavOpen(open: boolean): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TEMPLATES_SUB_NAV_KEY, open ? "1" : "0");
+}
+
 type DashboardShellProps = {
-  locale: "fr" | "en";
+  locale: AppLocale;
   planId: PlanId;
   activeNav: DashboardNavId;
   onNav: (id: DashboardNavId) => void;
@@ -121,12 +127,12 @@ function shellNavBtn(active: boolean, light: boolean) {
   if (light) {
     return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
       active
-        ? "bg-violet-100 text-violet-900 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]"
+        ? "bg-emerald-50 text-emerald-900 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     }`;
   }
   return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-    active ? "bg-violet-600/20 text-violet-200 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+    active ? "bg-emerald-500/15 text-emerald-200 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
   }`;
 }
 
@@ -134,19 +140,19 @@ function shellNavLink(active: boolean, light: boolean) {
   if (light) {
     return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
       active
-        ? "bg-violet-100 text-violet-900 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]"
+        ? "bg-emerald-50 text-emerald-900 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     }`;
   }
   return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-    active ? "bg-violet-600/20 text-violet-200 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+    active ? "bg-emerald-500/15 text-emerald-200 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
   }`;
 }
 
-function DashboardWorkspaceSelect({ locale, light }: { locale: "fr" | "en"; light: boolean }) {
+function DashboardWorkspaceSelect({ locale, light }: { locale: AppLocale; light: boolean }) {
   const ws = useWorkspaceOptional();
   if (!ws?.supabaseMode || !ws.ready || ws.workspaces.length === 0) return null;
-  if (!usesAgencyWorkspaceUi(ws.planId)) return null;
+  if (ws.workspaces.length <= 1 && getMaxWorkspaces(ws.planId) <= 1) return null;
   const t =
     locale === "fr"
       ? { label: "Portefeuille", settingsHint: "Gérer dans Paramètres" }
@@ -180,7 +186,7 @@ function DashboardWorkspaceSelect({ locale, light }: { locale: "fr" | "en"; ligh
   );
 }
 
-function DashboardAccountSelect({ locale, light }: { locale: "fr" | "en"; light: boolean }) {
+function DashboardAccountSelect({ locale, light }: { locale: AppLocale; light: boolean }) {
   const ws = useWorkspaceOptional();
   const { user } = useAuth();
   const ownerIds = useMemo(() => {
@@ -262,6 +268,7 @@ export function DashboardShell({
   const onTemplatesRegistry = pathnameNorm.startsWith("/dashboard/modeles-relance/enregistrements");
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [templatesSubOpen, setTemplatesSubOpen] = useState(true);
   const [notifOpen, setNotifOpen] = useState(false);
   const [showFoldersHint, setShowFoldersHint] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
@@ -284,6 +291,8 @@ export function DashboardShell({
           corbeille: "Corbeille",
           modelesRelance: "Modèles de relance",
           autoReminderSaved: "Synthèse envois auto",
+          expandTemplatesSub: "Afficher la synthèse envois auto",
+          collapseTemplatesSub: "Masquer la synthèse envois auto",
           dossiers: "Dossiers",
           foldersHintTitle: "Nouveau : Dossiers",
           foldersHintBody: "Organisez vos clients en dossiers, ajoutez des notes et gardez tout au même endroit.",
@@ -308,6 +317,8 @@ export function DashboardShell({
           corbeille: "Trash",
           modelesRelance: "Reminder templates",
           autoReminderSaved: "Auto-send summary",
+          expandTemplatesSub: "Show auto-send summary",
+          collapseTemplatesSub: "Hide auto-send summary",
           dossiers: "Folders",
           foldersHintTitle: "New: Folders",
           foldersHintBody: "Organize clients in folders, add notes, and keep everything in one place.",
@@ -319,10 +330,19 @@ export function DashboardShell({
         };
 
   const items = navItems(locale);
+  const homeCopy = getDashboardHomeCopy(locale);
+  const wsCtx = useWorkspaceOptional();
+  const workspaceLabel =
+    wsCtx?.workspaces.find((w) => w.id === wsCtx.activeWorkspaceId)?.name ??
+    wsCtx?.workspaces[0]?.name ??
+    null;
+  const showTeamNav = canAccessTeamPage(planId);
+  const onEquipe = pathnameNorm.startsWith("/dashboard/equipe");
+  const onOrganisation = pathnameNorm.startsWith("/dashboard/organisation");
   const initial = (userEmail?.[0] ?? "?").toUpperCase();
-  const topItems = items.slice(0, 4);
-  const paiementsItem = items[4];
   const showTemplatesNav = hasReminderTemplatesEditor(planId);
+  const onIntegrations = pathnameNorm.startsWith("/dashboard/integrations");
+  const onPipeline = pathnameNorm.startsWith("/dashboard/pipeline");
 
   function scrollOrHome(id: DashboardNavId) {
     if (navScrollMode && isDashHome) {
@@ -340,11 +360,41 @@ export function DashboardShell({
   }, [pathname]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNowTs(Date.now()), 30_000);
-    return () => window.clearInterval(timer);
+    let timer: number | null = null;
+    const start = () => {
+      if (timer !== null) return;
+      timer = window.setInterval(() => setNowTs(Date.now()), 30_000);
+    };
+    const stop = () => {
+      if (timer !== null) {
+        window.clearInterval(timer);
+        timer = null;
+      }
+    };
+    const onVis = () => {
+      if (document.hidden) stop();
+      else {
+        setNowTs(Date.now());
+        start();
+      }
+    };
+    onVis();
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      stop();
+    };
   }, []);
 
   useEffect(() => subscribeUiThemePreferenceChange((pref) => setStoredThemePref(pref)), []);
+
+  useEffect(() => {
+    if (onTemplatesRegistry) {
+      setTemplatesSubOpen(true);
+      return;
+    }
+    setTemplatesSubOpen(readTemplatesSubNavOpen());
+  }, [onTemplatesRegistry, pathnameNorm]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -354,7 +404,7 @@ export function DashboardShell({
     }
   }, [pathname]);
 
-  const navIconActive = light ? "text-violet-600" : "text-violet-300";
+  const navIconActive = light ? "text-emerald-600" : "text-emerald-300";
   const navIconIdle = "text-slate-500";
 
   function renderScrollableItem(item: NavItem) {
@@ -372,6 +422,65 @@ export function DashboardShell({
         <span className={navIconIdle}>{item.icon}</span>
         {item.label}
       </Link>
+    );
+  }
+
+  function toggleTemplatesSubNav() {
+    setTemplatesSubOpen((prev) => {
+      const next = !prev;
+      persistTemplatesSubNavOpen(next);
+      return next;
+    });
+  }
+
+  function renderTemplatesNav(onNavigate?: () => void) {
+    const subToggleClass = light
+      ? "shrink-0 rounded-xl px-2 py-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+      : "shrink-0 rounded-xl px-2 py-2.5 text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200";
+
+    return (
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-stretch gap-0.5">
+          <Link
+            href="/dashboard/modeles-relance"
+            onClick={onNavigate}
+            className={`${shellNavLink(onTemplatesHub, light)} min-w-0 flex-1`}
+          >
+            <span className={onTemplatesHub ? navIconActive : navIconIdle}>{templatesNavIcon}</span>
+            <span className="min-w-0 flex-1 leading-snug">{t.modelesRelance}</span>
+          </Link>
+          <button
+            type="button"
+            onClick={toggleTemplatesSubNav}
+            className={subToggleClass}
+            aria-expanded={templatesSubOpen}
+            aria-controls="dashboard-templates-subnav"
+            aria-label={templatesSubOpen ? t.collapseTemplatesSub : t.expandTemplatesSub}
+          >
+            <svg
+              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${templatesSubOpen ? "" : "-rotate-90"}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+        </div>
+        {templatesSubOpen ? (
+          <Link
+            id="dashboard-templates-subnav"
+            href="/dashboard/modeles-relance/enregistrements"
+            onClick={onNavigate}
+            className={`${shellNavLink(onTemplatesRegistry, light)} pl-9 text-xs font-medium`}
+          >
+            <span className={onTemplatesRegistry ? navIconActive : `${navIconIdle} opacity-80`}>{templatesNavIcon}</span>
+            {t.autoReminderSaved}
+          </Link>
+        ) : null}
+      </div>
     );
   }
 
@@ -410,12 +519,28 @@ export function DashboardShell({
             : "fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-white/[0.06] bg-[#0c0c12] px-3 py-6 lg:flex"
         }
       >
-        <div className="flex items-center gap-2 px-2">
-          <PayPulseLogo className="h-8 w-8 shrink-0 text-violet-400" />
-          <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PAYPULSS</span>
+        <div className="flex flex-col gap-1 px-2">
+          <div className="flex items-center gap-2">
+            <PayPulseLogo className="h-8 w-8 shrink-0 text-emerald-500" />
+            <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
+          </div>
+          {workspaceLabel ? (
+            <p className={`truncate pl-10 text-xs font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{workspaceLabel}</p>
+          ) : null}
         </div>
-        <nav className="mt-10 flex flex-1 flex-col gap-0.5">
-          {topItems.map((item) => renderScrollableItem(item))}
+        <p
+          className={`mx-2 mt-6 rounded-lg border px-3 py-2 text-xs ${light ? "border-slate-200 bg-slate-50 text-slate-400" : "border-white/[0.06] bg-white/[0.03] text-slate-500"}`}
+          aria-hidden
+        >
+          {homeCopy.searchPlaceholder}
+        </p>
+        <nav className="mt-4 flex flex-1 flex-col gap-0.5">
+          {items.slice(0, 2).map((item) => renderScrollableItem(item))}
+          <Link href="/dashboard/pipeline" className={shellNavLink(onPipeline, light)}>
+            <span className={onPipeline ? navIconActive : navIconIdle}>{pipelineIcon}</span>
+            {homeCopy.navPipeline}
+          </Link>
+          {items.slice(2).map((item) => renderScrollableItem(item))}
           <Link
             href="/dashboard/bilan"
             className={shellNavLink(pathname.startsWith("/dashboard/bilan"), light)}
@@ -423,7 +548,6 @@ export function DashboardShell({
             <span className={pathname.startsWith("/dashboard/bilan") ? navIconActive : navIconIdle}>{bilanIcon}</span>
             {t.bilan}
           </Link>
-          {renderScrollableItem(paiementsItem)}
           {hideTrashNav ? null : (
             <Link
               href="/dashboard/corbeille"
@@ -433,21 +557,7 @@ export function DashboardShell({
               {t.corbeille}
             </Link>
           )}
-          {showTemplatesNav ? (
-            <div className="flex flex-col gap-0.5">
-              <Link href="/dashboard/modeles-relance" className={shellNavLink(onTemplatesHub, light)}>
-                <span className={onTemplatesHub ? navIconActive : navIconIdle}>{templatesNavIcon}</span>
-                {t.modelesRelance}
-              </Link>
-              <Link
-                href="/dashboard/modeles-relance/enregistrements"
-                className={`${shellNavLink(onTemplatesRegistry, light)} pl-9 text-xs font-medium`}
-              >
-                <span className={onTemplatesRegistry ? navIconActive : `${navIconIdle} opacity-80`}>{templatesNavIcon}</span>
-                {t.autoReminderSaved}
-              </Link>
-            </div>
-          ) : null}
+          {showTemplatesNav ? renderTemplatesNav() : null}
           <Link href="/dashboard/dossiers" className={shellNavLink(pathname.startsWith("/dashboard/dossiers"), light)}>
             <span className={pathname.startsWith("/dashboard/dossiers") ? navIconActive : navIconIdle}>
               <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -461,6 +571,35 @@ export function DashboardShell({
             </span>
             {t.dossiers}
           </Link>
+          <p className={`mt-4 px-3 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-400" : "text-slate-500"}`}>
+            {homeCopy.workspaceNav}
+          </p>
+          <Link href="/dashboard/organisation" className={shellNavLink(onOrganisation, light)}>
+            <span className={onOrganisation ? navIconActive : navIconIdle}>
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M2.25 21h19.5M4.5 3h15M6 3v3m12-3v3M4.5 9.75h15M4.5 15h15" />
+              </svg>
+            </span>
+            {homeCopy.navOrganization}
+          </Link>
+          <Link href="/dashboard/integrations" className={shellNavLink(onIntegrations, light)}>
+            <span className={onIntegrations ? navIconActive : navIconIdle}>
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+              </svg>
+            </span>
+            {homeCopy.navIntegrations}
+          </Link>
+          {showTeamNav ? (
+            <Link href="/dashboard/equipe" className={shellNavLink(onEquipe, light)}>
+              <span className={onEquipe ? navIconActive : navIconIdle}>
+                <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l-.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-2.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </span>
+              {homeCopy.navTeam}
+            </Link>
+          ) : null}
         </nav>
         <Link
           href="/settings"
@@ -715,31 +854,27 @@ export function DashboardShell({
             <div
               className={
                 light
-                  ? "hidden items-center overflow-hidden rounded-full border border-slate-200 text-[10px] font-semibold text-slate-600 sm:inline-flex"
-                  : "hidden items-center overflow-hidden rounded-full border border-white/10 text-[10px] font-semibold text-slate-300 sm:inline-flex"
+                  ? "hidden flex-wrap items-center justify-end gap-0.5 overflow-hidden rounded-full border border-slate-200 text-[10px] font-semibold text-slate-600 sm:inline-flex"
+                  : "hidden flex-wrap items-center justify-end gap-0.5 overflow-hidden rounded-full border border-white/10 text-[10px] font-semibold text-slate-300 sm:inline-flex"
               }
             >
-              <button
-                type="button"
-                onClick={() => setLocale("fr")}
-                className={`px-2.5 py-1 ${locale === "fr" ? "bg-violet-600 text-white" : light ? "hover:bg-slate-100" : "hover:bg-white/5"}`}
-              >
-                FR
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocale("en")}
-                className={`px-2.5 py-1 ${locale === "en" ? "bg-violet-600 text-white" : light ? "hover:bg-slate-100" : "hover:bg-white/5"}`}
-              >
-                EN
-              </button>
+              {(["fr", "en", "nl", "es"] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLocale(code)}
+                  className={`px-2 py-1 ${locale === code ? "bg-violet-600 text-white" : light ? "hover:bg-slate-100" : "hover:bg-white/5"}`}
+                >
+                  {code.toUpperCase()}
+                </button>
+              ))}
             </div>
           </div>
         </header>
 
         {showFoldersHint ? (
           <div className={light ? "border-b border-slate-200 bg-violet-50 px-3 py-3 sm:px-6" : "border-b border-white/[0.06] bg-violet-500/10 px-3 py-3 sm:px-6"}>
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+            <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-wrap items-center justify-between gap-3">
               <div>
                 <p className={light ? "text-sm font-semibold text-violet-900" : "text-sm font-semibold text-violet-100"}>{t.foldersHintTitle}</p>
                 <p className={light ? "text-xs text-violet-700" : "text-xs text-violet-200/90"}>{t.foldersHintBody}</p>
@@ -789,8 +924,8 @@ export function DashboardShell({
         >
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <PayPulseLogo className="h-7 w-7 text-violet-400" />
-              <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PAYPULSS</span>
+              <PayPulseLogo className="h-7 w-7 text-emerald-500" />
+              <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
             </div>
             <button
               type="button"
@@ -808,7 +943,32 @@ export function DashboardShell({
             </button>
           </div>
           <nav className="mt-6 flex flex-col gap-1">
-            {topItems.map((item) => {
+            {items.slice(0, 2).map((item) => {
+              const active = isDashHome && activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    scrollOrHome(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={shellNavBtn(active, light)}
+                >
+                  <span className={active ? navIconActive : navIconIdle}>{item.icon}</span>
+                  {item.label}
+                </button>
+              );
+            })}
+            <Link
+              href="/dashboard/pipeline"
+              onClick={() => setMobileMenuOpen(false)}
+              className={shellNavLink(onPipeline, light)}
+            >
+              <span className={onPipeline ? navIconActive : navIconIdle}>{pipelineIcon}</span>
+              {homeCopy.navPipeline}
+            </Link>
+            {items.slice(2).map((item) => {
               const active = isDashHome && activeNav === item.id;
               return (
                 <button
@@ -833,17 +993,6 @@ export function DashboardShell({
               <span className={pathname.startsWith("/dashboard/bilan") ? navIconActive : navIconIdle}>{bilanIcon}</span>
               {t.bilan}
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                scrollOrHome("paiements");
-                setMobileMenuOpen(false);
-              }}
-              className={shellNavBtn(isDashHome && activeNav === "paiements", light)}
-            >
-              <span className={isDashHome && activeNav === "paiements" ? navIconActive : navIconIdle}>{paiementsItem.icon}</span>
-              {paiementsItem.label}
-            </button>
             {hideTrashNav ? null : (
               <Link
                 href="/dashboard/corbeille"
@@ -854,26 +1003,7 @@ export function DashboardShell({
                 {t.corbeille}
               </Link>
             )}
-            {showTemplatesNav ? (
-              <>
-                <Link
-                  href="/dashboard/modeles-relance"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={shellNavLink(onTemplatesHub, light)}
-                >
-                  <span className={onTemplatesHub ? navIconActive : navIconIdle}>{templatesNavIcon}</span>
-                  {t.modelesRelance}
-                </Link>
-                <Link
-                  href="/dashboard/modeles-relance/enregistrements"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`${shellNavLink(onTemplatesRegistry, light)} pl-9 text-xs font-medium`}
-                >
-                  <span className={onTemplatesRegistry ? navIconActive : `${navIconIdle} opacity-80`}>{templatesNavIcon}</span>
-                  {t.autoReminderSaved}
-                </Link>
-              </>
-            ) : null}
+            {showTemplatesNav ? renderTemplatesNav(() => setMobileMenuOpen(false)) : null}
             <Link
               href="/dashboard/dossiers"
               onClick={() => setMobileMenuOpen(false)}
@@ -891,6 +1021,24 @@ export function DashboardShell({
               </span>
               {t.dossiers}
             </Link>
+            <p className={`mt-3 px-3 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-400" : "text-slate-500"}`}>
+              {homeCopy.workspaceNav}
+            </p>
+            <Link
+              href="/dashboard/organisation"
+              onClick={() => setMobileMenuOpen(false)}
+              className={shellNavLink(onOrganisation, light)}
+            >
+              {homeCopy.navOrganization}
+            </Link>
+            <Link href="/dashboard/integrations" onClick={() => setMobileMenuOpen(false)} className={shellNavLink(onIntegrations, light)}>
+              {homeCopy.navIntegrations}
+            </Link>
+            {showTeamNav ? (
+              <Link href="/dashboard/equipe" onClick={() => setMobileMenuOpen(false)} className={shellNavLink(onEquipe, light)}>
+                {homeCopy.navTeam}
+              </Link>
+            ) : null}
             <Link
               href="/settings"
               onClick={() => setMobileMenuOpen(false)}
@@ -958,7 +1106,7 @@ export function DashboardShell({
           </nav>
         </aside>
 
-        <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-3 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</main>
       </div>
     </div>
   );

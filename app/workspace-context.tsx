@@ -12,7 +12,8 @@ import { getCurrentSubscription } from "@/lib/subscriptions";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { getProfile, setProfileActiveWorkspace } from "@/lib/profile";
 import { ensureAtLeastOneWorkspace, fetchWorkspaces, type Workspace } from "@/lib/workspaces";
-import { fetchMembershipsForMember, type AccountMember } from "@/lib/team";
+import { collaboratorAccessFlags } from "@/lib/account-collaborator-access";
+import { fetchMembershipsForMember, type AccountMember, type AccountRole } from "@/lib/team";
 import type { PlanId } from "@/lib/plans";
 
 export type SharedAccountSummary = { ownerUserId: string; displayName: string };
@@ -22,7 +23,9 @@ type WorkspaceContextValue = {
   supabaseMode: boolean;
   effectiveOwnerUserId: string | null;
   isActingAsMember: boolean;
-  memberRoleOnEffectiveAccount: "admin" | "member" | null;
+  memberRoleOnEffectiveAccount: AccountRole | null;
+  collaboratorNoClientMgmt: boolean;
+  collaboratorInvoiceReadOnly: boolean;
   myMemberships: AccountMember[];
   /** Libellés pour le sélecteur de compte (profil du propriétaire invité). */
   sharedAccountSummaries: SharedAccountSummary[];
@@ -194,11 +197,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const isActingAsMember = Boolean(user?.id && effectiveOwnerUserId && effectiveOwnerUserId !== user.id);
 
-  const memberRoleOnEffectiveAccount = useMemo((): "admin" | "member" | null => {
+  const memberRoleOnEffectiveAccount = useMemo((): AccountRole | null => {
     if (!isActingAsMember || !effectiveOwnerUserId) return null;
     const m = myMemberships.find((x) => x.ownerUserId === effectiveOwnerUserId);
     return m?.role ?? null;
   }, [isActingAsMember, effectiveOwnerUserId, myMemberships]);
+
+  const { noClientManagement: collaboratorNoClientMgmt, invoiceReadOnly: collaboratorInvoiceReadOnly } =
+    useMemo(
+      () => collaboratorAccessFlags(isActingAsMember, memberRoleOnEffectiveAccount),
+      [isActingAsMember, memberRoleOnEffectiveAccount],
+    );
 
   const supabaseMode = Boolean(supabase);
   const value = useMemo<WorkspaceContextValue>(
@@ -208,6 +217,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       effectiveOwnerUserId,
       isActingAsMember,
       memberRoleOnEffectiveAccount,
+      collaboratorNoClientMgmt,
+      collaboratorInvoiceReadOnly,
       myMemberships,
       sharedAccountSummaries,
       planId,
@@ -224,6 +235,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       effectiveOwnerUserId,
       isActingAsMember,
       memberRoleOnEffectiveAccount,
+      collaboratorNoClientMgmt,
+      collaboratorInvoiceReadOnly,
       myMemberships,
       sharedAccountSummaries,
       planId,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { fetchNotifications, markAllNotificationsRead, markNotificationRead, type DashboardNotification } from "@/lib/notifications";
 
@@ -33,41 +33,72 @@ export function useNotifications(userId: string | null | undefined) {
     void refresh();
   }, [refresh]);
 
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+
   useEffect(() => {
     if (!supabase || !userId) return;
 
     let fallbackTimer: number | null = null;
-    const startFallbackPolling = () => {
+    let useFallbackPolling = false;
+    let cancelled = false;
+
+    const syncFallbackTimer = () => {
+      if (!useFallbackPolling || document.hidden) {
+        if (fallbackTimer !== null) {
+          window.clearInterval(fallbackTimer);
+          fallbackTimer = null;
+        }
+        return;
+      }
       if (fallbackTimer !== null) return;
-      fallbackTimer = window.setInterval(() => void refresh(), 120_000);
+      fallbackTimer = window.setInterval(() => void refreshRef.current(), 120_000);
     };
+
+    const startFallbackPolling = () => {
+      useFallbackPolling = true;
+      syncFallbackTimer();
+    };
+
     const stopFallbackPolling = () => {
+      useFallbackPolling = false;
       if (fallbackTimer !== null) {
         window.clearInterval(fallbackTimer);
         fallbackTimer = null;
       }
     };
 
-    const channel = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `recipient_user_id=eq.${userId}` },
-        () => void refresh(),
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          stopFallbackPolling();
-        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          startFallbackPolling();
-        }
-      });
+    const onVis = () => {
+      syncFallbackTimer();
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    const channelName = `notifications:${userId}`;
+    const channel = supabase.channel(channelName);
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "notifications", filter: `recipient_user_id=eq.${userId}` },
+      () => {
+        if (!cancelled) void refreshRef.current();
+      },
+    );
+    channel.subscribe((status) => {
+      if (cancelled) return;
+      if (status === "SUBSCRIBED") {
+        stopFallbackPolling();
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        startFallbackPolling();
+      }
+    });
 
     return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
       stopFallbackPolling();
+      void channel.unsubscribe();
       void supabase.removeChannel(channel);
     };
-  }, [supabase, userId, refresh]);
+  }, [supabase, userId]);
 
   const unreadCount = useMemo(() => items.filter((n) => !n.readAt).length, [items]);
 

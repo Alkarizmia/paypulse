@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  AGENCY_MAX_WORKSPACES,
   getMaxWorkspaces,
-  usesAgencyWorkspaceUi,
   type PlanId,
 } from "@/lib/plans";
 import {
@@ -17,12 +15,13 @@ import {
   type Workspace,
 } from "@/lib/workspaces";
 import { setProfileActiveWorkspace } from "@/lib/profile";
+import type { AppLocale } from "@/lib/app-locale";
 
 type Props = {
   supabase: SupabaseClient;
   userId: string;
   planId: PlanId;
-  locale: "fr" | "en";
+  locale: AppLocale;
 };
 
 export function WorkspacesSettings({ supabase, userId, planId, locale }: Props) {
@@ -33,18 +32,20 @@ export function WorkspacesSettings({ supabase, userId, planId, locale }: Props) 
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
-  const show = usesAgencyWorkspaceUi(planId);
   const max = getMaxWorkspaces(planId);
+  const isMulti = max > 1;
 
   const t =
     locale === "fr"
       ? {
-          title: "Espaces / portefeuilles",
-          intro: `Jusqu’à ${AGENCY_MAX_WORKSPACES} portefeuilles : données (clients, relances, modèles) séparées. Le sélecteur du dashboard applique le portefeuille actif.`,
+          title: "Portefeuilles",
+          intro: isMulti
+            ? `Jusqu’à ${max} portefeuilles : clients, relances et modèles sont séparés. Le portefeuille actif s’applique sur tout le dashboard.`
+            : `Un portefeuille pour regrouper vos clients. Renommez-le ci-dessous. Passez au plan Pro pour jusqu’à 2 portefeuilles.`,
           loadError: "Impossible de charger les portefeuilles.",
           namePlaceholder: "Nom du portefeuille",
           add: "Ajouter",
-          limit: `Limite atteinte (${AGENCY_MAX_WORKSPACES} portefeuilles).`,
+          limit: `Limite atteinte (${max} portefeuilles).`,
           rename: "Renommer",
           save: "Enregistrer",
           cancel: "Annuler",
@@ -58,12 +59,14 @@ export function WorkspacesSettings({ supabase, userId, planId, locale }: Props) 
           confirmDelete: "Supprimer ce portefeuille ? (uniquement s’il est vide)",
         }
       : {
-          title: "Spaces / wallets",
-          intro: `Up to ${AGENCY_MAX_WORKSPACES} wallets: clients, reminders and templates are isolated per wallet. Use the dashboard selector for the active wallet.`,
+          title: "Wallets",
+          intro: isMulti
+            ? `Up to ${max} wallets: clients, reminders and templates are isolated. The active wallet applies across the dashboard.`
+            : `One wallet for your clients. Rename it below. Upgrade to Pro for up to 2 wallets.`,
           loadError: "Could not load wallets.",
           namePlaceholder: "Wallet name",
           add: "Add",
-          limit: `Limit reached (${AGENCY_MAX_WORKSPACES} wallets).`,
+          limit: `Limit reached (${max} wallets).`,
           rename: "Rename",
           save: "Save",
           cancel: "Cancel",
@@ -92,9 +95,8 @@ export function WorkspacesSettings({ supabase, userId, planId, locale }: Props) 
   }, [supabase, userId, t.loadError]);
 
   useEffect(() => {
-    if (!show) return;
     void refresh();
-  }, [show, refresh]);
+  }, [refresh]);
 
   async function handleAdd() {
     setMessage(null);
@@ -151,10 +153,8 @@ export function WorkspacesSettings({ supabase, userId, planId, locale }: Props) 
 
   const canAdd = list.length < max;
 
-  if (!show) return null;
-
   return (
-    <section id="workspaces" className="rounded-2xl border border-slate-200 bg-white p-6">
+    <section id="workspaces" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6">
       <h2 className="text-lg font-semibold text-slate-900">{t.title}</h2>
       <p className="mt-2 text-sm text-slate-600">{t.intro}</p>
       {message ? (
@@ -179,7 +179,14 @@ export function WorkspacesSettings({ supabase, userId, planId, locale }: Props) 
           {t.add}
         </button>
       </div>
-      {!canAdd ? <p className="mt-2 text-xs text-amber-700">{t.limit}</p> : null}
+      {!canAdd && isMulti ? <p className="mt-2 text-xs text-amber-700">{t.limit}</p> : null}
+      {!isMulti ? (
+        <p className="mt-2 text-xs text-slate-500">
+          {locale === "fr"
+            ? "Plan Pro : 2 portefeuilles max. Plan Agency : 3 portefeuilles max."
+            : "Pro plan: 2 wallets max. Agency plan: 3 wallets max."}
+        </p>
+      ) : null}
       {loading ? (
         <p className="mt-4 text-sm text-slate-600">…</p>
       ) : (

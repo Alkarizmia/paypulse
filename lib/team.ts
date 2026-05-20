@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type AccountRole = "admin" | "member";
+export type AccountRole = "admin" | "member" | "spectator";
+
+export function isAccountRole(v: string | null | undefined): v is AccountRole {
+  return v === "admin" || v === "member" || v === "spectator";
+}
 
 export type AccountInvite = {
   id: string;
@@ -117,6 +121,12 @@ export async function cancelAccountInvite(supabase: SupabaseClient, inviteId: st
 export async function removeAccountMember(supabase: SupabaseClient, memberRowId: string): Promise<void> {
   const { error } = await supabase.from("account_members").delete().eq("id", memberRowId);
   if (error) throw error;
+}
+
+/** Membres actifs + invitations en attente (plafond plan Pro / Agency). */
+export function countTeamSlots(members: AccountMember[], invites: AccountInvite[]): number {
+  const pending = invites.filter((i) => i.status === "pending").length;
+  return members.length + pending;
 }
 
 export async function acceptAccountInviteRpc(

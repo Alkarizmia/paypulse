@@ -79,7 +79,7 @@ export function SiteFooter() {
 
         <div className="mt-12 border-t border-slate-200 pt-8">
           <p className="text-center text-xs leading-relaxed text-slate-500 sm:text-left">
-            © {YEAR} Alkarizmia — entreprise enregistrée sous le numéro {KBO} (BCE/KBO).
+            © {YEAR} Alkarizmia, entreprise enregistrée sous le numéro {KBO} (BCE/KBO).
           </p>
           <p className="mt-2 text-center text-xs text-slate-500 sm:text-left">
             PayPulss est une marque et un service proposé par Alkarizmia.

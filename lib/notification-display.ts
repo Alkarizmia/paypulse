@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/lib/app-locale";
 import type { DashboardNotification } from "@/lib/notifications";
 
 function utcDayDiff(fromIsoDay: string): number {
@@ -12,7 +13,7 @@ function utcDayDiff(fromIsoDay: string): number {
 /** Libellés cohérents (FR/EN) à partir du type + payload, sans dépendre du texte stocké en base. */
 export function formatDashboardNotificationCopy(
   n: DashboardNotification,
-  locale: "fr" | "en",
+  locale: AppLocale,
 ): { title: string; body: string } {
   const p = n.payload ?? {};
   const str = (k: string) => (typeof p[k] === "string" ? (p[k] as string).trim() : "");

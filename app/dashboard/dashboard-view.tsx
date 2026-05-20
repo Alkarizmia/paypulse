@@ -21,14 +21,16 @@ import {
   FREE_TIER_MAX_CLIENTS,
   FREE_TIER_MAX_INVOICES,
   countDistinctClientEmailsForQuota,
-  getMaxEmailTemplates,
   getPlanCapabilities,
   paidPlanTier,
   usesAgencyWorkspaceUi,
   type PlanId,
 } from "@/lib/plans";
-import { loadReminderTemplates } from "@/lib/reminder-templates-storage";
+import { buildManualReminderDraftFields } from "@/lib/manual-reminder-draft";
 import { getProfile, updateProfileAutoReminders } from "@/lib/profile";
+import { intlLocaleFor, type AppLocale } from "@/lib/app-locale";
+import { getDashboardViewCopy, withName } from "@/lib/messages/dashboard-view-copy";
+import { pickQuad } from "@/lib/messages/pick";
 import {
   usePrefersColorSchemeDark,
   resolveUiTheme,
@@ -38,13 +40,14 @@ import {
   type UiThemePreference,
 } from "@/lib/ui-theme";
 import { getSupabaseBrowserClient, getSupabaseEnvHint, isSupabaseReady } from "@/lib/supabase";
-import { AddClientForm } from "./add-client-form";
+import { AddClientModal } from "./add-client-modal";
 import { ClientList } from "./client-list";
 import { DashboardAnalytics } from "./dashboard-analytics";
 import { DashboardShell, type DashboardNavId } from "./dashboard-shell";
 import { DashboardAddonTierPanels, DashboardRelancePanel } from "./dashboard-tier-panels";
 import type { Client } from "./types";
 import { useLocale } from "@/app/locale-context";
+import { useMoney } from "@/app/display-currency-context";
 import { useAuth } from "@/app/auth-context";
 import { useWorkspace } from "@/app/workspace-context";
 import {
@@ -57,6 +60,14 @@ import {
 } from "@/lib/subscriptions";
 import { buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
 import { createMemberActionNotifications } from "@/lib/notifications";
+import { markClientReminderSent, countClientRemindersSent } from "@/lib/client-reminder-track";
+import { getDashboardHomeCopy } from "@/lib/messages/dashboard-home-copy";
+import { IntegrationsBanner } from "./integrations-banner";
+import { DashboardHomeKpi } from "./dashboard-home-kpi";
+import { CollectionPipeline } from "./collection-pipeline";
+import { PriorityRemindTable } from "./priority-remind-table";
+import { DashboardHomeAside } from "./dashboard-home-aside";
+import { OnboardingTasks } from "./onboarding-tasks";
 
 const ReminderSendModal = dynamic(
   () => import("./reminder-send-modal").then((m) => ({ default: m.ReminderSendModal })),
@@ -108,48 +119,6 @@ async function triggerOverdueScan(params: {
 
 type ReminderToast = { tone: "info" | "warn"; text: string };
 
-function buildManualReminderDraftFields(
-  client: Client,
-  options: {
-    locale: "fr" | "en";
-    aiReminderDrafts: boolean;
-    currentPlanId: PlanId;
-    templateWorkspaceKey: string;
-  },
-): { subject: string; body: string } {
-  const { locale, aiReminderDrafts, currentPlanId, templateWorkspaceKey } = options;
-  if (aiReminderDrafts) {
-    const st = loadReminderTemplates(locale, getMaxEmailTemplates(currentPlanId), templateWorkspaceKey);
-    return { subject: st.draftSubject, body: st.draftBody };
-  }
-  if (locale === "fr") {
-    return {
-      subject: `Rappel : facture en attente, ${client.name}`,
-      body: [
-        `Bonjour,`,
-        ``,
-        `Nous vous contactons concernant un montant de ${client.amountDue} € dû pour le ${client.dueDate}.`,
-        `Merci de régulariser la situation ou de nous indiquer un délai.`,
-        ``,
-        `Cordialement,`,
-        `PayPulss`,
-      ].join("\n"),
-    };
-  }
-  return {
-    subject: `Reminder: pending invoice, ${client.name}`,
-    body: [
-      `Hello,`,
-      ``,
-      `We're reaching out about an amount of ${client.amountDue} EUR due on ${client.dueDate}.`,
-      `Please settle when you can or let us know a timeline.`,
-      ``,
-      `Regards,`,
-      `PayPulss`,
-    ].join("\n"),
-  };
-}
-
 export function DashboardView() {
   const { locale } = useLocale();
   const { signOut, user, loading: authLoading } = useAuth();
@@ -157,12 +126,15 @@ export function DashboardView() {
   const [activeNav, setActiveNav] = useState<DashboardNavId>("overview");
   const overviewRef = useRef<HTMLDivElement>(null);
   const invoicesRef = useRef<HTMLDivElement>(null);
-  const clientsRef = useRef<HTMLDivElement>(null);
+  const [addClientModalOpen, setAddClientModalOpen] = useState(false);
   const relancesRef = useRef<HTMLDivElement>(null);
   const paiementsRef = useRef<HTMLDivElement>(null);
+  const [profileCompany, setProfileCompany] = useState("");
+  const [profileCountry, setProfileCountry] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [trashedClients, setTrashedClients] = useState<Client[]>([]);
   const [autoRemindersUserEnabled, setAutoRemindersUserEnabled] = useState(true);
+  const [invoiceListCompact, setInvoiceListCompact] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
@@ -321,6 +293,9 @@ export function DashboardView() {
           writeAutoRemindersEnabled(p.autoRemindersEnabled);
           setUiThemePref(p.uiTheme);
           writeStoredUiThemePreference(p.uiTheme);
+          setInvoiceListCompact(p.invoiceListCompact);
+          setProfileCompany(p.companyName);
+          setProfileCountry(p.country);
         }
       } catch {
         /* colonne absente tant que migration SQL non appliquée */
@@ -333,15 +308,7 @@ export function DashboardView() {
 
   useEffect(() => subscribeUiThemePreferenceChange((pref) => setUiThemePref(pref)), []);
 
-  const moneyFmt = useMemo(
-    () =>
-      new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
-      }),
-    [],
-  );
+  const money = useMoney();
 
   const { totalAmountDue, paidCount, clientCount, paymentRate } = useMemo(() => {
     let total = 0;
@@ -373,14 +340,45 @@ export function DashboardView() {
       aiReminderDrafts: caps.aiReminderDrafts,
       currentPlanId,
       templateWorkspaceKey: tplWs,
+      formatAmount: money.format,
     });
-  }, [reminderModalClient, locale, caps.aiReminderDrafts, currentPlanId, supabase, ws.activeWorkspaceId]);
+  }, [reminderModalClient, locale, caps.aiReminderDrafts, currentPlanId, supabase, ws.activeWorkspaceId, money]);
+
+  const remindersSentCount = useMemo(
+    () => countClientRemindersSent(clients.map((c) => c.id)),
+    [clients],
+  );
+
+  const hasSentReminder = remindersSentCount > 0;
+
+  const homeCopy = getDashboardHomeCopy(locale);
+
+  const closeAddClientModal = useCallback(() => {
+    setAddClientModalOpen(false);
+    if (typeof window !== "undefined" && window.location.hash === "#add-client") {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+  }, []);
+
+  const openAddClientModal = useCallback(() => {
+    setAddError(null);
+    setAddClientModalOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      if (window.location.hash === "#add-client") openAddClientModal();
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, [openAddClientModal]);
 
   const scrollToSection = useCallback((id: DashboardNavId) => {
     const map: Record<DashboardNavId, RefObject<HTMLDivElement | null>> = {
       overview: overviewRef,
       invoices: invoicesRef,
-      clients: clientsRef,
+      clients: invoicesRef,
       relances: relancesRef,
       paiements: paiementsRef,
     };
@@ -389,160 +387,22 @@ export function DashboardView() {
 
   const handleNav = useCallback(
     (id: DashboardNavId) => {
+      if (id === "clients") {
+        openAddClientModal();
+        return;
+      }
       setActiveNav(id);
       scrollToSection(id);
     },
-    [scrollToSection],
+    [scrollToSection, openAddClientModal],
   );
 
-  const copy = locale === "fr"
-    ? {
-        upgrade: "Upgrade plan",
-        modeLocal: "Mode local",
-        title: "Dashboard analytics",
-        clientsTitle: "Vos clients",
-        clientsSubtitle: "Statut des montants et relances, « Envoyer relance » ouvre votre messagerie (mailto).",
-        emptyTitle: "Aucun client pour le moment, ajoute ton premier client",
-        emptyBody: "Ajoute ta première fiche client pour démarrer le suivi des paiements.",
-        paid: "Payé",
-        unpaid: "Impayé",
-        due: "Échéance",
-        remind: "Envoyer relance",
-        formTitle: "Nouveau client",
-        formSubtitle:
-          "Nom, email, montant dû et date d'échéance, stockage local ou Supabase selon configuration.",
-        portfolio: "Portefeuille",
-        name: "Nom",
-        company: "Entreprise (optionnel)",
-        email: "Email",
-        amount: "Montant dû (€)",
-        dueDate: "Date d'échéance",
-        status: "Statut",
-        submit: "Ajouter le client",
-        saving: "Enregistrement…",
-        remove: "Corbeille",
-        markPaid: "Marquer comme payé",
-        nextCycle: "Mois suivant : repasser en impayé (historique conservé)",
-        nextCycleModalTitle: "Nouvelle facture (cycle suivant)",
-        nextCycleModalSubtitle: "Montant et échéance pour",
-        nextCycleModalAmount: "Montant dû (€)",
-        nextCycleModalDue: "Date d’échéance",
-        nextCycleModalCancel: "Annuler",
-        nextCycleModalConfirm: "Créer la ligne",
-        nextCycleModalInvalidAmount: "Montant invalide (nombre ≥ 0).",
-        nextCycleModalInvalidDate: "Date invalide (format AAAA-MM-JJ).",
-        deleteError: "Envoi en corbeille impossible.",
-        statusError: "Mise à jour du statut impossible.",
-        cycleError: "Impossible de passer au mois suivant.",
-        freeLimitClients: `Plan gratuit : maximum ${FREE_TIER_MAX_CLIENTS} clients distincts (e-mails différents).`,
-        freeLimitInvoices: `Plan gratuit : maximum ${FREE_TIER_MAX_INVOICES} factures.`,
-        planUpdated: "Abonnement mis à jour :",
-        planCheckoutFailed:
-          "Paiement en ligne indisponible pour le moment. Votre plan n’a pas été modifié. Vérifiez la configuration ou réessayez plus tard.",
-        planCheckoutAuthRequired:
-          "Reconnectez-vous puis choisissez de nouveau votre plan (session expirée ou indisponible).",
-        planStripeEnvIncomplete:
-          "Paiement indisponible : variables Stripe manquantes côté serveur (Vercel → Settings → Environment Variables → Production). Ajoutez notamment :",
-        planAlreadySubscribed:
-          "Tu as déjà un abonnement actif pour ce plan — pas de nouveau paiement tant que la période en cours n’est pas terminée.",
-        planFreeBlockedWhileSubscribed:
-          "Impossible de passer au plan gratuit : ton abonnement payant (Stripe) couvre encore la période en cours. Pour revenir au gratuit, annule le renouvellement dans le portail Stripe puis attends la fin de période.",
-        planStripeDowngradeBlocked:
-          "Tu as déjà un abonnement plus complet pour la période en cours. Utilise le portail Stripe pour changer ou résilier ; un plan inférieur ne peut pas être souscrit tant que celui-ci est actif.",
-        planPeriodEndsLabel: "Fin de période :",
-        stripePaymentSynced: "Paiement confirmé — votre abonnement est à jour.",
-        stripePaymentPendingSync:
-          "Stripe a bien encaissé, mais ton plan affiche encore « gratuit » : le webhook n’a probablement pas mis à jour la base. Actualise la page dans 1–2 min ; sinon vérifie sur Vercel STRIPE_WEBHOOK_SECRET et SUPABASE_SERVICE_ROLE_KEY, et dans Stripe que l’URL du webhook est bien …/api/stripe/webhook sur le même domaine que l’app (événement checkout.session.completed).",
-        stripePaymentCancelled: "Paiement annulé. Aucun changement d’abonnement.",
-        paiementsTitle: "Synthèse paiements",
-        paiementsSub: "Vue agrégée des montants marqués payés et en attente.",
-        reminderModalTitle: "Envoyer une relance",
-        reminderModalRecipient: "Destinataire",
-        reminderModalSubject: "Objet",
-        reminderModalBody: "Message",
-        reminderModalCancel: "Annuler",
-        reminderModalSend: "Ouvrir ma messagerie",
-        reminderModalSending: "Ouverture…",
-        reminderModalSubjectRequired: "L’objet est obligatoire.",
-        reminderModalMailtoTooLong:
-          "Le message est trop long pour un lien mailto. Raccourcissez le corps ou l’objet, puis réessayez.",
-        reminderModalMailtoDone: "Votre application de messagerie devrait s’ouvrir avec le brouillon prêt à envoyer.",
-      }
-    : {
-        upgrade: "Upgrade plan",
-        modeLocal: "Local mode",
-        title: "Analytics dashboard",
-        clientsTitle: "Your clients",
-        clientsSubtitle: "Payment status and reminders, “Send reminder” opens your mail app (mailto).",
-        emptyTitle: "No clients yet, add your first client",
-        emptyBody: "Add your first client to start tracking your cashflow.",
-        paid: "Paid",
-        unpaid: "Unpaid",
-        due: "Due date",
-        remind: "Send reminder",
-        formTitle: "Add client",
-        formSubtitle: "Name, email, due amount and due date, stored locally or in Supabase.",
-        portfolio: "Wallet",
-        name: "Name",
-        company: "Company (optional)",
-        email: "Email",
-        amount: "Amount due (€)",
-        dueDate: "Due date",
-        status: "Status",
-        submit: "Add client",
-        saving: "Saving...",
-        remove: "Trash",
-        markPaid: "Mark as paid",
-        nextCycle: "Next month: mark unpaid again (history kept)",
-        nextCycleModalTitle: "New invoice (next cycle)",
-        nextCycleModalSubtitle: "Amount and due date for",
-        nextCycleModalAmount: "Amount due (€)",
-        nextCycleModalDue: "Due date",
-        nextCycleModalCancel: "Cancel",
-        nextCycleModalConfirm: "Create row",
-        nextCycleModalInvalidAmount: "Invalid amount (number ≥ 0).",
-        nextCycleModalInvalidDate: "Invalid date (YYYY-MM-DD).",
-        deleteError: "Could not move to trash.",
-        statusError: "Status update failed.",
-        cycleError: "Could not advance to next billing cycle.",
-        freeLimitClients: `Free plan: at most ${FREE_TIER_MAX_CLIENTS} distinct clients (different emails).`,
-        freeLimitInvoices: `Free plan: at most ${FREE_TIER_MAX_INVOICES} invoices.`,
-        planUpdated: "Subscription updated:",
-        planCheckoutFailed:
-          "Online checkout is unavailable. Your plan was not changed. Try again later or contact support.",
-        planCheckoutAuthRequired: "Please sign in again, then pick your plan (session expired or unavailable).",
-        planStripeEnvIncomplete:
-          "Checkout unavailable: Stripe environment variables are missing on the server (Vercel → Settings → Environment Variables → Production). Add at least:",
-        planAlreadySubscribed:
-          "You already have an active subscription for this plan — no new payment until the current billing period ends.",
-        planFreeBlockedWhileSubscribed:
-          "You cannot switch to the free plan while your paid Stripe subscription still covers the current period. Cancel renewal in the Stripe customer portal, then wait until the period ends.",
-        planStripeDowngradeBlocked:
-          "You already have a higher-tier subscription for the current period. Use the Stripe customer portal to change or cancel before choosing a lower plan.",
-        planPeriodEndsLabel: "Current period ends:",
-        stripePaymentSynced: "Payment confirmed — your subscription is synced.",
-        stripePaymentPendingSync:
-          "Stripe charged successfully, but your plan still shows as free: the webhook likely did not update the database. Refresh in 1–2 minutes; if it persists, check Vercel for STRIPE_WEBHOOK_SECRET and SUPABASE_SERVICE_ROLE_KEY, and in Stripe that the webhook URL is your site’s /api/stripe/webhook (checkout.session.completed).",
-        stripePaymentCancelled: "Payment cancelled. Your plan was not changed.",
-        paiementsTitle: "Payments summary",
-        paiementsSub: "Aggregated view of marked paid vs pending amounts.",
-        reminderModalTitle: "Send a reminder",
-        reminderModalRecipient: "Recipient",
-        reminderModalSubject: "Subject",
-        reminderModalBody: "Message",
-        reminderModalCancel: "Cancel",
-        reminderModalSend: "Open my mail app",
-        reminderModalSending: "Opening…",
-        reminderModalSubjectRequired: "Subject is required.",
-        reminderModalMailtoTooLong:
-          "The message is too long for a mailto link. Shorten the body or subject and try again.",
-        reminderModalMailtoDone: "Your mail app should open with the draft ready to send.",
-      };
+  const copy = getDashboardViewCopy(locale);
 
   const planNoticePrefix = copy.planUpdated;
 
-  const memberReadOnly =
-    Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const memberReadOnly = ws.collaboratorNoClientMgmt;
+  const invoiceReadOnly = ws.collaboratorInvoiceReadOnly;
 
   async function notifyMemberAction(title: string, body: string, payload?: Record<string, unknown>) {
     if (!supabase || !user?.id) return;
@@ -565,82 +425,64 @@ export function DashboardView() {
     return ws.workspaces.map((w) => ({ id: w.id, name: w.name }));
   }, [currentPlanId, supabase, ws.ready, ws.workspaces]);
 
+  function failAdd(message: string): never {
+    setAddError(message);
+    throw new Error("ADD_CLIENT_FAILED");
+  }
+
   async function handleAdd(data: Omit<Client, "id"> & { targetWorkspaceId?: string }) {
     setAddError(null);
     if (isFreePlan) {
       if (clients.length >= FREE_TIER_MAX_INVOICES) {
-        setAddError(copy.freeLimitInvoices);
-        return;
+        failAdd(copy.freeLimitInvoices);
       }
       const emails = new Set(
         [...clients, ...trashedClients].map((c) => c.email.trim().toLowerCase()),
       );
       const nextEmail = data.email.trim().toLowerCase();
       if (!emails.has(nextEmail) && emails.size >= FREE_TIER_MAX_CLIENTS) {
-        setAddError(copy.freeLimitClients);
-        return;
+        failAdd(copy.freeLimitClients);
       }
     }
     if (supabase) {
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData.user;
+      if (!user) failAdd(copy.sessionExpired);
+      if (memberReadOnly) failAdd(copy.memberCannotAddClient);
+      const wsId = data.targetWorkspaceId ?? ws.activeWorkspaceId;
+      if (!wsId) failAdd(copy.walletNotReady);
+      const ownerRowUserId = ws.effectiveOwnerUserId ?? user.id;
       try {
-        const { data: authData } = await supabase.auth.getUser();
-        const user = authData.user;
-        if (!user) {
-          setAddError(locale === "fr" ? "Session expirée. Reconnectez-vous." : "Session expired. Please login again.");
-          return;
-        }
-        if (memberReadOnly) {
-          setAddError(
-            locale === "fr"
-              ? "Les membres (lecture seule) ne peuvent pas ajouter de clients."
-              : "Read-only members cannot add clients.",
-          );
-          return;
-        }
-        const wsId = data.targetWorkspaceId ?? ws.activeWorkspaceId;
-        if (!wsId) {
-          setAddError(locale === "fr" ? "Portefeuille non prêt. Réessayez." : "Wallet not ready. Try again.");
-          return;
-        }
-        const ownerRowUserId = ws.effectiveOwnerUserId ?? user.id;
         const created = await insertClient(supabase, { ...data, userId: ownerRowUserId, workspaceId: wsId });
         setClients((prev) => [created, ...prev]);
         await notifyMemberAction(
-          locale === "fr" ? "Client ajouté" : "Client added",
-          locale === "fr" ? `${created.name} a été ajouté au dashboard.` : `${created.name} was added to dashboard.`,
+          copy.clientAddedTitle,
+          withName(copy.clientAddedBody, created.name),
           { clientId: created.id, action: "client_created" },
         );
       } catch (e) {
         const rawMessage =
           typeof e === "object" && e !== null && "message" in e ? String((e as { message?: unknown }).message ?? "") : "";
         if (rawMessage.toUpperCase().includes("FREE_PLAN_LIMIT_REACHED")) {
-          setAddError(copy.freeLimitInvoices);
-          return;
+          failAdd(copy.freeLimitInvoices);
         }
-        const message = rawMessage || (locale === "fr" ? "Impossible d’ajouter le client." : "Could not add client.");
-        setAddError(message);
+        failAdd(rawMessage || copy.addClientFailed);
       }
       return;
     }
 
-    try {
-      const now = new Date().toISOString();
-      const initialPaidEvents =
-        data.status === "paid" ? [{ at: now, amount: data.amountDue }] : undefined;
-      const created: Client = {
-        ...data,
-        id: newId(),
-        createdAt: now,
-        paidAt: data.status === "paid" ? now : null,
-        deletedAt: null,
-        paidEvents: initialPaidEvents,
-      };
-      appendLocalClient(created);
-      setClients((prev) => [created, ...prev]);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Impossible d’ajouter le client.";
-      setAddError(message);
-    }
+    const now = new Date().toISOString();
+    const initialPaidEvents = data.status === "paid" ? [{ at: now, amount: data.amountDue }] : undefined;
+    const created: Client = {
+      ...data,
+      id: newId(),
+      createdAt: now,
+      paidAt: data.status === "paid" ? now : null,
+      deletedAt: null,
+      paidEvents: initialPaidEvents,
+    };
+    appendLocalClient(created);
+    setClients((prev) => [created, ...prev]);
   }
 
   function handleRequestSendReminder(client: Client) {
@@ -650,9 +492,7 @@ export function DashboardView() {
     const cooldownEnd = remindCooldownUntil[client.id];
     if (typeof cooldownEnd === "number" && Date.now() < cooldownEnd) return;
     if (!client.email?.trim()) {
-      setReminderMailHardError(
-        locale === "fr" ? "Adresse e-mail du client manquante." : "Client email is missing.",
-      );
+      setReminderMailHardError(copy.clientEmailMissing);
       return;
     }
     setReminderModalClient(client);
@@ -663,24 +503,22 @@ export function DashboardView() {
     if (!client) return;
     const to = client.email?.trim();
     if (!to) {
-      setReminderMailHardError(
-        locale === "fr" ? "Adresse e-mail du client manquante." : "Client email is missing.",
-      );
+      setReminderMailHardError(copy.clientEmailMissing);
       return;
     }
 
-    const footer =
-      locale === "fr"
-        ? `\n\n${client.name} · ${client.amountDue} € · échéance ${client.dueDate}`
-        : `\n\n${client.name} · ${client.amountDue} € · due ${client.dueDate}`;
+    const amountLabel = money.format(client.amountDue);
+    const footer = pickQuad(locale, {
+      fr: `\n\n${client.name} · ${amountLabel} · échéance ${client.dueDate}`,
+      en: `\n\n${client.name} · ${amountLabel} · due ${client.dueDate}`,
+      nl: `\n\n${client.name} · ${amountLabel} · vervaldatum ${client.dueDate}`,
+      es: `\n\n${client.name} · ${amountLabel} · vencimiento ${client.dueDate}`,
+    });
 
     const autoEffective = caps.autoReminders && autoRemindersUserEnabled;
     let extra = "";
     if (autoEffective && !caps.basicRemindersOnly && !caps.aiReminderDrafts) {
-      extra =
-        locale === "fr"
-          ? "\n\nProchaine relance programmée dans 3 jours si aucun paiement."
-          : "\n\nNext reminder scheduled in 3 days if unpaid.";
+      extra = copy.reminderScheduled3d;
     }
     const bodyWithFooter = `${payload.body}${footer}${extra}`;
     const href = buildMailtoSingleRecipient(to, payload.subject, bodyWithFooter);
@@ -707,16 +545,13 @@ export function DashboardView() {
       text: copy.reminderModalMailtoDone,
     });
     startRemindCooldown(client.id);
+    markClientReminderSent(client.id);
   }
 
   async function handleMoveToTrash(clientId: string) {
     setAddError(null);
     if (memberReadOnly) {
-      setAddError(
-        locale === "fr"
-          ? "Les membres (lecture seule) ne peuvent pas mettre en corbeille."
-          : "Read-only members cannot move items to trash.",
-      );
+      setAddError(copy.memberCannotTrash);
       return;
     }
     const now = new Date().toISOString();
@@ -735,8 +570,8 @@ export function DashboardView() {
       if (row) {
         setTrashedClients((prev) => [{ ...row, deletedAt: now }, ...prev]);
         await notifyMemberAction(
-          locale === "fr" ? "Client déplacé en corbeille" : "Client moved to trash",
-          locale === "fr" ? `${row.name} a été déplacé en corbeille.` : `${row.name} was moved to trash.`,
+          copy.trashNotificationTitle,
+          withName(copy.trashNotificationBody, row.name),
           { clientId: row.id, action: "client_trashed" },
         );
       }
@@ -767,8 +602,8 @@ export function DashboardView() {
       const updated = await updateClientStatus(supabase, clientId, "paid");
       setClients((prev) => prev.map((client) => (client.id === clientId ? updated : client)));
       await notifyMemberAction(
-        locale === "fr" ? "Facture marquée payée" : "Invoice marked paid",
-        locale === "fr" ? `${updated.name} a été marqué payé.` : `${updated.name} was marked paid.`,
+        copy.invoicePaidNotificationTitle,
+        withName(copy.invoicePaidNotificationBody, updated.name),
         { clientId: updated.id, action: "client_mark_paid" },
       );
     } catch (e) {
@@ -780,12 +615,8 @@ export function DashboardView() {
 
   function openAdvanceCycleModal(clientId: string) {
     setAddError(null);
-    if (memberReadOnly) {
-      setAddError(
-        locale === "fr"
-          ? "Les membres (lecture seule) ne peuvent pas modifier les factures."
-          : "Read-only members cannot change invoices.",
-      );
+    if (invoiceReadOnly) {
+      setAddError(copy.memberCannotChangeInvoices);
       return;
     }
     if (isFreePlan && clientCount >= FREE_TIER_MAX_INVOICES) {
@@ -847,10 +678,8 @@ export function DashboardView() {
       const created = await advanceClientToNextInvoiceCycle(supabase, draft.clientId, payload);
       setClients((prev) => [created, ...prev]);
       await notifyMemberAction(
-        locale === "fr" ? "Cycle suivant créé" : "Next cycle created",
-        locale === "fr"
-          ? `Nouvelle ligne ${created.name} créée pour le cycle suivant.`
-          : `New row ${created.name} created for next cycle.`,
+        copy.advanceCycleCreatedTitle,
+        withName(copy.advanceCycleCreatedBody, created.name),
         { clientId: created.id, action: "client_advance_cycle" },
       );
       setAdvanceModal(null);
@@ -858,15 +687,11 @@ export function DashboardView() {
       const raw =
         typeof e === "object" && e !== null && "message" in e ? String((e as { message?: unknown }).message ?? "") : "";
       if (raw === "CLIENT_NOT_PAID") {
-        setAddError(locale === "fr" ? "Cette fiche n’est pas marquée payée." : "This row is not marked paid.");
+        setAddError(copy.rowNotMarkedPaid);
         return;
       }
       if (raw === "CLIENT_MISSING_WORKSPACE_OR_USER") {
-        setAddError(
-          locale === "fr"
-            ? "Ligne incomplète (workspace). Réessayez après rechargement ou contactez le support."
-            : "Incomplete row (workspace). Reload or contact support.",
-        );
+        setAddError(copy.incompleteWorkspaceRow);
         return;
       }
       if (raw.toUpperCase().includes("FREE_PLAN_LIMIT_REACHED")) {
@@ -939,7 +764,7 @@ export function DashboardView() {
                 higher
                   ? copy.planStripeDowngradeBlocked
                   : end
-                    ? `${copy.planAlreadySubscribed} (${copy.planPeriodEndsLabel} ${new Date(end).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US")})`
+                    ? `${copy.planAlreadySubscribed} (${copy.planPeriodEndsLabel} ${new Date(end).toLocaleDateString(intlLocaleFor(locale))})`
                     : copy.planAlreadySubscribed,
               );
               void ws.refreshWorkspaces();
@@ -1151,7 +976,7 @@ export function DashboardView() {
 
         {addError ? (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
-            <strong className="font-semibold">Ajout impossible.</strong> {addError}
+            <strong className="font-semibold">{copy.addErrorStrongTitle}</strong> {addError}
           </div>
         ) : null}
 
@@ -1173,13 +998,7 @@ export function DashboardView() {
             aria-live="polite"
           >
             <strong className="block font-semibold text-slate-900">
-              {reminderToast.tone === "info"
-                ? locale === "fr"
-                  ? "Relance envoyée"
-                  : "Reminder sent"
-                : locale === "fr"
-                  ? "Relance"
-                  : "Reminder"}
+              {reminderToast.tone === "info" ? copy.reminderToastSentInfo : copy.reminderToastWarnTitle}
             </strong>
             <span
               className={
@@ -1195,49 +1014,141 @@ export function DashboardView() {
 
         {reminderMailHardError ? (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
-            <strong className="font-semibold">{locale === "fr" ? "Relance." : "Reminder."}</strong> {reminderMailHardError}
+            <strong className="font-semibold">{copy.reminderHardErrorLabel}</strong> {reminderMailHardError}
           </div>
         ) : null}
 
         {isFreePlan ? (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <span className="font-semibold text-amber-950">FREE</span> ·{" "}
-            {locale === "fr" ? "Quotas : " : "Limits: "}
+            {copy.quotasLabel}
             <span className="tabular-nums text-amber-950">
-              {quotaDistinctEmails}/{FREE_TIER_MAX_CLIENTS}{" "}
-              {locale === "fr" ? "clients distincts" : "distinct clients"}
+              {quotaDistinctEmails}/{FREE_TIER_MAX_CLIENTS} {copy.distinctClientsLabel}
             </span>
             {" · "}
             <span className="tabular-nums text-amber-950">
-              {clientCount}/{FREE_TIER_MAX_INVOICES} {locale === "fr" ? "factures" : "invoices"}
+              {clientCount}/{FREE_TIER_MAX_INVOICES} {copy.invoicesLabel}
             </span>
             {quotaDistinctEmails >= FREE_TIER_MAX_CLIENTS && clientCount < FREE_TIER_MAX_INVOICES ? (
-              <p className="mt-2 text-xs text-amber-800">
-                {locale === "fr"
-                  ? "Vous pouvez encore ajouter des factures pour les e-mails déjà connus."
-                  : "You can still add invoices for emails already on file."}
-              </p>
+              <p className="mt-2 text-xs text-amber-800">{copy.quotaSameEmailHint}</p>
             ) : null}
           </div>
         ) : null}
 
         <div ref={overviewRef} className="min-w-0 scroll-mt-28 space-y-6">
-          <DashboardAnalytics
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className={`text-lg font-bold tracking-tight sm:text-xl ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
+                {homeCopy.navHome}
+              </h2>
+              <p className={`mt-1 text-sm ${shellAppearance === "light" ? "text-slate-600" : "text-slate-400"}`}>
+                {homeCopy.homeGreeting}
+                {user?.email ? ` · ${user.email.split("@")[0]}` : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={openAddClientModal}
+                disabled={memberReadOnly}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 ${
+                  shellAppearance === "light" ? "bg-violet-600 hover:bg-violet-700" : "bg-violet-600/90 hover:bg-violet-600"
+                }`}
+              >
+                {homeCopy.newClient}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNav("relances")}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
+                  shellAppearance === "light" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-emerald-600/90 hover:bg-emerald-600"
+                }`}
+              >
+                {homeCopy.sendReminder}
+              </button>
+            </div>
+          </div>
+
+          <IntegrationsBanner locale={locale} appearance={shellAppearance} />
+
+          <DashboardHomeKpi
             clients={clients}
             locale={locale}
-            fullCharts={caps.fullDashboardCharts}
-            advancedStats={caps.advancedStats}
             appearance={shellAppearance}
+            remindersSentCount={remindersSentCount}
           />
-          <DashboardAddonTierPanels
-            locale={locale}
-            caps={caps}
-            appearance={shellAppearance}
-            workspaces={supabase && ws.ready ? ws.workspaces.map((w) => ({ id: w.id, name: w.name })) : undefined}
-          />
+
+          <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_min(17.5rem,300px)] xl:items-start">
+            <div className="min-w-0 space-y-6">
+              <DashboardAnalytics
+                clients={clients}
+                locale={locale}
+                fullCharts={caps.fullDashboardCharts}
+                advancedStats={caps.advancedStats}
+                appearance={shellAppearance}
+                skipSummaryCards
+                treasuryInSidebar={caps.fullDashboardCharts}
+              />
+              <CollectionPipeline
+                clients={clients}
+                locale={locale}
+                appearance={shellAppearance}
+                variant="preview"
+                onClientClick={(c) => {
+                  if (c.status === "unpaid") handleRequestSendReminder(c);
+                }}
+              />
+              <PriorityRemindTable
+                clients={clients}
+                locale={locale}
+                appearance={shellAppearance}
+                onRemind={handleRequestSendReminder}
+                remindCooldownUntil={remindCooldownUntil}
+                invoiceActionsDisabled={invoiceReadOnly}
+              />
+              <DashboardAddonTierPanels
+                locale={locale}
+                caps={caps}
+                appearance={shellAppearance}
+                workspaces={supabase && ws.ready ? ws.workspaces.map((w) => ({ id: w.id, name: w.name })) : undefined}
+              />
+            </div>
+
+            <div className="hidden min-w-0 xl:block">
+              <div className="sticky top-24">
+                <DashboardHomeAside
+                  locale={locale}
+                  appearance={shellAppearance}
+                  clients={clients}
+                  fullCharts={caps.fullDashboardCharts}
+                  profile={{ companyName: profileCompany, country: profileCountry }}
+                  clientCount={clientCount}
+                  hasSentReminder={hasSentReminder}
+                  autoRemindersEnabled={autoRemindersUserEnabled}
+                  googleClientIdConfigured={Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim())}
+                  userEmail={user?.email}
+                  onOpenAddClient={openAddClientModal}
+                  memberReadOnly={memberReadOnly}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="xl:hidden">
+            <OnboardingTasks
+              layout="floating"
+              locale={locale}
+              appearance={shellAppearance}
+              profile={{ companyName: profileCompany, country: profileCountry }}
+              clientCount={clientCount}
+              hasSentReminder={hasSentReminder}
+              autoRemindersEnabled={autoRemindersUserEnabled}
+              googleClientIdConfigured={Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim())}
+            />
+          </div>
         </div>
 
-        <div ref={relancesRef} className="min-w-0 scroll-mt-28 mt-10 space-y-6">
+        <div ref={relancesRef} id="relances" className="min-w-0 scroll-mt-28 mt-10 space-y-6">
           <DashboardRelancePanel
             locale={locale}
             caps={caps}
@@ -1266,12 +1177,14 @@ export function DashboardView() {
                   : "border-white/[0.08] bg-[#14141c] text-slate-400 hover:border-white/12"
               }`}
             >
-              {locale === "fr" ? "Chargement des factures…" : "Loading invoices…"}
+              {copy.loadingInvoices}
             </div>
           ) : (
               <ClientList
                 appearance={shellAppearance}
                 clients={clients}
+                compact={invoiceListCompact}
+                formatLocale={intlLocaleFor(locale)}
                 onSendReminder={handleRequestSendReminder}
                 remindCooldownUntil={remindCooldownUntil}
                 onDelete={handleMoveToTrash}
@@ -1279,7 +1192,7 @@ export function DashboardView() {
                 onAdvanceNextCycle={memberReadOnly ? undefined : openAdvanceCycleModal}
                 hideDelete={memberReadOnly}
               labels={{
-                title: locale === "fr" ? "Factures & dossiers" : "Invoices & cases",
+                title: copy.invoicesAndCasesTitle,
                 subtitle: copy.clientsSubtitle,
                 emptyTitle: copy.emptyTitle,
                 emptyBody: copy.emptyBody,
@@ -1293,37 +1206,6 @@ export function DashboardView() {
               }}
             />
           )}
-        </div>
-
-        <div ref={clientsRef} className="min-w-0 scroll-mt-28 mt-12">
-          <AddClientForm
-            appearance={shellAppearance}
-            onAdd={handleAdd}
-            disabled={tableLoading || memberReadOnly}
-            supabaseActive={supabaseReady}
-            freeInvoiceLimitReached={freeInvoiceLimitReached}
-            freeClientDistinctCount={quotaDistinctEmails}
-            freeClientMax={isFreePlan ? FREE_TIER_MAX_CLIENTS : undefined}
-            locale={locale}
-            portfolioOptions={agencyPortfolioOptions}
-            portfolioWorkspaceId={addTargetWorkspaceId ?? ws.activeWorkspaceId}
-            onPortfolioChange={setAddTargetWorkspaceId}
-            labels={{
-              title: copy.formTitle,
-              subtitle: copy.formSubtitle,
-              portfolio: copy.portfolio,
-              name: copy.name,
-              company: copy.company,
-              email: copy.email,
-              amount: copy.amount,
-              dueDate: copy.dueDate,
-              status: copy.status,
-              paid: copy.paid,
-              unpaid: copy.unpaid,
-              submit: copy.submit,
-              saving: copy.saving,
-            }}
-          />
         </div>
 
         <div ref={paiementsRef} className="min-w-0 scroll-mt-28 mt-12">
@@ -1347,10 +1229,10 @@ export function DashboardView() {
                 }`}
               >
                 <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
-                  {locale === "fr" ? "Encours total" : "Total outstanding"}
+                  {copy.totalOutstandingLabel}
                 </dt>
                 <dd className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
-                  {moneyFmt.format(totalAmountDue)}
+                  {money.format(totalAmountDue)}
                 </dd>
               </div>
               <div
@@ -1359,7 +1241,7 @@ export function DashboardView() {
                 }`}
               >
                 <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
-                  {locale === "fr" ? "Factures payées" : "Paid invoices"}
+                  {copy.paidInvoicesLabel}
                 </dt>
                 <dd
                   className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${
@@ -1375,7 +1257,7 @@ export function DashboardView() {
                 }`}
               >
                 <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
-                  {locale === "fr" ? "Taux de paiement" : "Payment rate"}
+                  {copy.paymentRateLabel}
                 </dt>
                 <dd
                   className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${
@@ -1405,7 +1287,7 @@ export function DashboardView() {
                     : "border-white/15 bg-black/30 text-slate-200 hover:bg-white/10"
                 }`}
               >
-                {locale === "fr" ? "Paramètres compte" : "Account settings"}
+                {copy.accountSettingsLink}
               </Link>
             </div>
           </section>
@@ -1433,6 +1315,40 @@ export function DashboardView() {
           }}
         />
       ) : null}
+      <AddClientModal
+        open={addClientModalOpen}
+        appearance={shellAppearance}
+        locale={locale}
+        onClose={closeAddClientModal}
+        onAdd={handleAdd}
+        disabled={tableLoading || invoiceReadOnly}
+        supabaseActive={supabaseReady}
+        freeInvoiceLimitReached={freeInvoiceLimitReached}
+        freeClientDistinctCount={quotaDistinctEmails}
+        freeClientMax={isFreePlan ? FREE_TIER_MAX_CLIENTS : undefined}
+        portfolioOptions={agencyPortfolioOptions}
+        portfolioWorkspaceId={addTargetWorkspaceId ?? ws.activeWorkspaceId}
+        onPortfolioChange={setAddTargetWorkspaceId}
+        serverError={addClientModalOpen ? addError : null}
+        labels={{
+          title: copy.formTitle,
+          subtitle: copy.formSubtitle,
+          portfolio: copy.portfolio,
+          name: copy.name,
+          company: copy.company,
+          domain: copy.domain,
+          phone: copy.phone,
+          email: copy.email,
+          amount: copy.amount,
+          dueDate: copy.dueDate,
+          status: copy.status,
+          paid: copy.paid,
+          unpaid: copy.unpaid,
+          submit: copy.submit,
+          saving: copy.saving,
+          cancel: copy.formCancel,
+        }}
+      />
       {reminderModalClient && reminderModalDraft ? (
         <ReminderSendModal
           key={reminderModalClient.id}

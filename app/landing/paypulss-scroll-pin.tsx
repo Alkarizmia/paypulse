@@ -6,36 +6,31 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useLocale } from "@/app/locale-context";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
+import { getScrollPinCopy } from "@/lib/messages/scroll-pin-copy";
 
 /** Fond du rail (sticky) : même gris que l’entrée du pin. */
 const PIN_RAIL_SURFACE =
   "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 12%, #e8edf4 48%, #eef1f7 100%)";
 
-const DEMO_FACES = [
-  { seed: "Paypulss-Aya", altFr: "Avatar illustratif A", altEn: "Illustrative avatar A" },
-  { seed: "Paypulss-Lucas", altFr: "Avatar illustratif B", altEn: "Illustrative avatar B" },
-  { seed: "Paypulss-Mira", altFr: "Avatar illustratif C", altEn: "Illustrative avatar C" },
-  { seed: "Paypulss-Sam", altFr: "Avatar illustratif D", altEn: "Illustrative avatar D" },
-] as const;
+const DEMO_FACES = [{ seed: "Paypulss-Aya" }, { seed: "Paypulss-Lucas" }, { seed: "Paypulss-Mira" }, { seed: "Paypulss-Sam" }] as const;
 
 /**
  * Hauteur du rail = distance de scroll pour animer le sticky.
- * Mobile : rail plus court (moins de « friction »), sans min 2200px qui forçait ~3 écrans de scroll.
- * Desktop : un peu plus long pour un scrub plus doux.
+ * Assez long pour lire la scène, pas trop pour éviter un « tunnel » de défilement.
  */
 function usePinRailHeightPx() {
-  const [px, setPx] = useState(2000);
+  const [px, setPx] = useState(1400);
   const measure = () => {
     if (typeof window === "undefined") return;
     const h = window.innerHeight || 800;
     const w = window.innerWidth;
     let next: number;
     if (w < 640) {
-      next = Math.max(1480, Math.round(h * 1.78));
+      next = Math.max(1180, Math.round(h * 1.35));
     } else if (w < 1024) {
-      next = Math.max(1600, Math.round(h * 1.95));
+      next = Math.max(1280, Math.round(h * 1.42));
     } else {
-      next = Math.max(2100, Math.round(h * 2.45));
+      next = Math.max(1580, Math.round(h * 1.72));
     }
     setPx(next);
   };
@@ -66,56 +61,33 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
     offset: ["start start", "end end"],
   });
 
-  const introOpacity = useTransform(scrollYProgress, [0, 0.08, 0.14], [1, 1, 0]);
+  const introOpacity = useTransform(scrollYProgress, [0, 0.08, 0.17], [1, 1, 0]);
 
-  const chip1Op = useTransform(scrollYProgress, [0.02, 0.05, 0.12, 0.14], [0, 1, 1, 0]);
-  const chip2Op = useTransform(scrollYProgress, [0.035, 0.065, 0.12, 0.14], [0, 1, 1, 0]);
-  const chip3Op = useTransform(scrollYProgress, [0.05, 0.08, 0.12, 0.14], [0, 1, 1, 0]);
+  const chip1Op = useTransform(scrollYProgress, [0.025, 0.06, 0.12, 0.17], [0, 1, 1, 0]);
+  const chip2Op = useTransform(scrollYProgress, [0.04, 0.075, 0.12, 0.17], [0, 1, 1, 0]);
+  const chip3Op = useTransform(scrollYProgress, [0.055, 0.09, 0.12, 0.17], [0, 1, 1, 0]);
 
-  const facesGroupOpacity = useTransform(scrollYProgress, [0, 0.06, 0.12, 0.2], [1, 1, 1, 0]);
+  const facesGroupOpacity = useTransform(scrollYProgress, [0, 0.06, 0.12, 0.22], [1, 1, 1, 0]);
   /** Pas de blur au scroll (très coûteux sur mobile) : léger lift GPU + fondu. */
-  const facesLiftY = useTransform(scrollYProgress, [0, 0.08, 0.12, 0.2], [0, 0, 0, 10]);
+  const facesLiftY = useTransform(scrollYProgress, [0, 0.1, 0.14, 0.22], [0, 0, 0, 10]);
 
-  const captionOpacity = useTransform(scrollYProgress, [0, 0.08, 0.16], [1, 1, 0]);
+  const tintOpacity = useTransform(scrollYProgress, [0, 0.08, 0.17], [1, 1, 0]);
 
-  const tintOpacity = useTransform(scrollYProgress, [0, 0.08, 0.16], [1, 1, 0]);
+  /* Confiance uniquement après disparition complète de l’intro (évite le texte superposé). */
+  const trustOpacity = useTransform(scrollYProgress, [0, 0.17, 0.19, 0.72, 0.82], [0, 0, 1, 1, 0]);
+  const trustY = useTransform(scrollYProgress, [0.17, 0.19, 0.66, 0.82], [18, 0, 0, -12]);
+  const trustScale = useTransform(scrollYProgress, [0.17, 0.19, 0.66, 0.82], [0.98, 1, 1, 0.98]);
 
-  const trustOpacity = useTransform(scrollYProgress, [0, 0.08, 0.12, 0.48, 0.62], [0, 0, 1, 1, 0]);
-  const trustY = useTransform(scrollYProgress, [0.08, 0.12, 0.44, 0.62], [18, 0, 0, -12]);
-  const trustScale = useTransform(scrollYProgress, [0.08, 0.12, 0.44, 0.62], [0.98, 1, 1, 0.98]);
+  /* Flèche / texte : visible surtout en fin de pin, sans longue zone « vide » avant la section suivante. */
+  const scrollMoreOpacity = useTransform(scrollYProgress, [0, 0.62, 0.72, 0.92, 1], [0, 0, 1, 1, 0]);
 
-  const scrollMoreOpacity = useTransform(scrollYProgress, [0, 0.48, 0.58, 1], [0, 0, 1, 1]);
-
-  const copy =
-    locale === "fr"
-      ? {
-          kicker: "Faites défiler",
-          scene1Title: "Interface pensée pour l’encaissement",
-          scene1Sub:
-            "Statuts lisibles, relances calées sur l’échéance, tableau de bord aéré, sans surcharge visuelle.",
-          chip1: "Échéances visibles",
-          chip2: "Relances cadrées",
-          chip3: "Cash lisible",
-          facesCaption: "Portraits illustratifs (générés, style avatar). Aucun vrai client.",
-          arrowHint: "La suite du site est en dessous.",
-        }
-      : {
-          kicker: "Keep scrolling",
-          scene1Title: "Built for getting paid",
-          scene1Sub:
-            "Readable statuses, due-date nudges, a breathable dashboard, without visual noise.",
-          chip1: "Due dates at a glance",
-          chip2: "Nudges on schedule",
-          chip3: "Cash in view",
-          facesCaption: "Illustrative portraits (generated, avatar-style). Not real clients.",
-          arrowHint: "The rest of the site is below.",
-        };
+  const copy = getScrollPinCopy(locale);
 
   if (reduce) {
     return (
       <section
         className="border-y border-slate-200/80 bg-gradient-to-b from-slate-100 to-violet-50/40 py-14"
-        aria-label={locale === "fr" ? "Aperçu PayPulss" : "PayPulss preview"}
+        aria-label={copy.sectionAria}
       >
         <div className="mx-auto max-w-3xl px-4 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{copy.kicker}</p>
@@ -132,11 +104,11 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
             ))}
           </div>
           <div className="mt-8 flex justify-center gap-3">
-            {DEMO_FACES.map((f) => (
+            {DEMO_FACES.map((f, i) => (
               <img
                 key={f.seed}
                 src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(f.seed)}&backgroundType=gradientLinear`}
-                alt={locale === "fr" ? f.altFr : f.altEn}
+                alt={copy.faceAlts[i]}
                 width={56}
                 height={56}
                 className="h-14 w-14 rounded-full ring-2 ring-white shadow-md shadow-slate-900/10"
@@ -145,7 +117,6 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
               />
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-slate-500">{copy.facesCaption}</p>
 
           <div className="mx-auto mt-10 w-full max-w-2xl rounded-2xl border border-slate-200/90 bg-white px-5 py-8 text-center shadow-md shadow-slate-900/5 ring-1 ring-slate-200/60 sm:px-8">
             <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 sm:text-sm">{trustIntro}</h3>
@@ -237,11 +208,11 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
             className="flex flex-wrap justify-center gap-3 sm:gap-4"
             style={{ y: facesLiftY, willChange: "transform" }}
           >
-            {DEMO_FACES.map((f) => (
+            {DEMO_FACES.map((f, i) => (
               <img
                 key={f.seed}
                 src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(f.seed)}&backgroundType=gradientLinear`}
-                alt={locale === "fr" ? f.altFr : f.altEn}
+                alt={copy.faceAlts[i]}
                 width={56}
                 height={56}
                 className="h-14 w-14 rounded-full ring-2 ring-slate-100 shadow-md shadow-slate-900/15 sm:h-16 sm:w-16"
@@ -251,12 +222,6 @@ export function PaypulssScrollPin({ trustIntro, trustPills }: PaypulssScrollPinP
               />
             ))}
           </motion.div>
-          <motion.p
-            className="pointer-events-none mt-4 max-w-md text-center text-[11px] leading-snug text-slate-500"
-            style={{ opacity: captionOpacity }}
-          >
-            {copy.facesCaption}
-          </motion.p>
         </motion.div>
 
         <motion.div

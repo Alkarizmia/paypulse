@@ -1,22 +1,19 @@
 "use client";
 
-import { useId, useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import type { Client } from "./types";
 import {
   averagePaymentDelayDays,
   eachRecognizedPayment,
   formatPctChange,
-  monthlyPaidInflows,
-  monthLabel,
   rolling30dPaidComparison,
 } from "@/lib/dashboard-metrics";
 import type { UiResolvedAppearance } from "@/lib/ui-theme";
-
-const money = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
+import type { AppLocale } from "@/lib/app-locale";
+import { useMoney } from "@/app/display-currency-context";
+import { getDashboardAnalyticsCopy } from "@/lib/messages/dashboard-analytics-copy";
+import { CollectionEvolutionChart } from "./collection-evolution-chart";
+import { TreasuryForecastChart } from "./treasury-forecast-chart";
 
 function isOverdue(dueDate: string): boolean {
   const d = new Date(dueDate);
@@ -41,55 +38,31 @@ function calendarMonthPaidTotal(clients: Client[], year: number, month: number):
 
 type DashboardAnalyticsProps = {
   clients: Client[];
-  locale: "fr" | "en";
+  locale: AppLocale;
   fullCharts: boolean;
   advancedStats: boolean;
   appearance: UiResolvedAppearance;
+  /** Masque la rangée 3 KPI si déjà affichée sur l’accueil. */
+  skipSummaryCards?: boolean;
+  /** Affiche la carte trésorerie dans la grille (masquée en xl si treasuryInSidebar). */
+  showTreasuryInGrid?: boolean;
+  /** true sur l’accueil desktop : trésorerie déplacée dans la colonne latérale. */
+  treasuryInSidebar?: boolean;
 };
 
-export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats, appearance }: DashboardAnalyticsProps) {
-  const gradId = useId().replace(/:/g, "");
-  const fillId = `pp-line-fill-${gradId}`;
+export function DashboardAnalytics({
+  clients,
+  locale,
+  fullCharts,
+  advancedStats,
+  appearance,
+  skipSummaryCards = false,
+  showTreasuryInGrid = true,
+  treasuryInSidebar = false,
+}: DashboardAnalyticsProps) {
   const light = appearance === "light";
-  const chartGridSoft = light ? "#e2e8f0" : "rgba(148,163,184,0.14)";
-  const chartAxisMuted = light ? "#94a3b8" : "rgba(148,163,184,0.35)";
-
-  const t =
-    locale === "fr"
-      ? {
-          pending: "Montant en attente",
-          received: "Reçus ce mois",
-          overdue: "Factures en retard",
-          vsLastMonth: "vs mois dernier",
-          vsRolling: "30 j. vs 30 j. préc.",
-          instant: "Situation actuelle",
-          evolution: "Évolution des encaissements",
-          distribution: "Répartition des factures",
-          paid: "Payées",
-          pendingL: "En attente",
-          overdueL: "En retard",
-          avgDelay: "Délai moyen de paiement",
-          recovery: "Taux de recouvrement",
-          days: "jours",
-          noHistory: "Pas encore d’historique de paiements datés.",
-        }
-      : {
-          pending: "Amount pending",
-          received: "Received this month",
-          overdue: "Overdue invoices",
-          vsLastMonth: "vs last month",
-          vsRolling: "30d vs prior 30d",
-          instant: "Current position",
-          evolution: "Cash-in evolution",
-          distribution: "Invoice breakdown",
-          paid: "Paid",
-          pendingL: "Pending",
-          overdueL: "Overdue",
-          avgDelay: "Avg. payment delay",
-          recovery: "Recovery rate",
-          days: "days",
-          noHistory: "No dated payment history yet.",
-        };
+  const t = getDashboardAnalyticsCopy(locale);
+  const money = useMoney();
 
   const pendingAmount = useMemo(
     () => clients.filter((c) => c.status === "unpaid").reduce((s, c) => s + c.amountDue, 0),
@@ -141,9 +114,39 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats,
   const pendPct = Math.round(pendingShare * 100);
   const overPct = Math.max(0, 100 - paidPct - pendPct);
 
-  const monthly = useMemo(() => monthlyPaidInflows(clients, 6), [clients]);
-  const linePoints = monthly.map((m) => m.value);
-  const monthLabels = monthly.map((row) => monthLabel(row.ym, locale));
+  const distributionSegments = useMemo(() => {
+    let paidAmount = 0;
+    let pendingAmountSeg = 0;
+    let overdueAmount = 0;
+    let paidCount = 0;
+    let pendingCount = 0;
+    let overdueCountSeg = 0;
+    for (const c of clients) {
+      if (c.status === "paid") {
+        paidAmount += c.amountDue;
+        paidCount += 1;
+      } else if (isOverdue(c.dueDate)) {
+        overdueAmount += c.amountDue;
+        overdueCountSeg += 1;
+      } else {
+        pendingAmountSeg += c.amountDue;
+        pendingCount += 1;
+      }
+    }
+    return {
+      paidAmount,
+      pendingAmount: pendingAmountSeg,
+      overdueAmount,
+      paidCount,
+      pendingCount,
+      overdueCount: overdueCountSeg,
+    };
+  }, [clients]);
+
+  function invoiceCountLabel(n: number): string {
+    const word = n === 1 ? t.invoiceCount : t.invoiceCountPlural;
+    return `${n} ${word}`;
+  }
 
   const avgDelay = useMemo(() => averagePaymentDelayDays(clients), [clients]);
 
@@ -159,6 +162,7 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats,
 
   return (
     <div className="min-w-0 space-y-6">
+      {skipSummaryCards ? null : (
       <div className="grid min-w-0 gap-3 sm:gap-4 sm:grid-cols-3">
         <div
           className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
@@ -235,6 +239,7 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats,
           <p className={`mt-1 text-xs font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{t.instant}</p>
         </div>
       </div>
+      )}
 
       {advancedStats ? (
         <div className="grid min-w-0 gap-3 sm:gap-4 sm:grid-cols-2">
@@ -271,133 +276,136 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats,
       ) : null}
 
       {fullCharts ? (
-        <div className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-5">
+        <div className="min-w-0 space-y-4 sm:space-y-6">
           <div
-            className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-4 sm:p-5 lg:col-span-3 ${
+            className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-4 sm:p-6 ${
               light
-                ? "border-slate-200 bg-white hover:border-violet-300/60"
-                : "border-white/[0.08] bg-[#14141c] hover:border-violet-500/35"
+                ? "border-slate-200 bg-white hover:border-emerald-300/50"
+                : "border-white/[0.08] bg-[#14141c] hover:border-emerald-500/30"
             }`}
           >
             <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.evolution}</h3>
-            <p className={`mt-0.5 text-[11px] ${light ? "text-slate-500" : "text-slate-400"}`}>
-              {locale === "fr"
-                ? "Somme des encaissements enregistrés, par mois (historique conservé même si la fiche repasse en impayé)."
-                : "Sum of recorded cash-ins by month (history kept when a row goes back to unpaid)."}
-            </p>
-            <div className="mt-4 h-40 sm:mt-6 sm:h-52">
-              <svg viewBox="0 0 400 140" className="h-full w-full" preserveAspectRatio="none" aria-hidden>
-                <defs>
-                  <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.44" />
-                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id={`${fillId}-stroke`} x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#7c3aed" />
-                    <stop offset="100%" stopColor="#6366f1" />
-                  </linearGradient>
-                </defs>
-                <polyline fill="none" stroke={chartAxisMuted} strokeWidth="1" strokeDasharray="4 6" points="0,120 400,120" />
-                <polyline fill="none" stroke={chartGridSoft} strokeWidth="1" points="0,84 400,84" />
-                <polyline fill="none" stroke={chartGridSoft} strokeWidth="1" points="0,48 400,48" />
-                {(() => {
-                  const max = Math.max(...linePoints, 1);
-                  const minRaw = Math.min(...linePoints);
-                  const min = minRaw >= max ? 0 : minRaw * 0.9;
-                  const span = max - min || 1;
-                  const w = 400;
-                  const h = 120;
-                  const pad = 24;
-                  const n = linePoints.length;
-                  const pts = linePoints.map((v, i) => {
-                    const x = pad + (n <= 1 ? 0 : (i * (w - pad * 2)) / (n - 1));
-                    // Easing vertical scaling avoids a visually flat line when only one point spikes.
-                    const ratio = Math.max(0, Math.min(1, (v - min) / span));
-                    const eased = Math.pow(ratio, 0.72);
-                    const y = h - eased * (h - 20);
-                    return `${x},${y}`;
-                  });
-                  const area = `0,${h} ${pts.join(" ")} ${w},${h}`;
-                  return (
-                    <>
-                      <polygon fill={`url(#${fillId})`} points={area} />
-                      <polyline
-                        fill="none"
-                        stroke={`url(#${fillId}-stroke)`}
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        points={pts.join(" ")}
-                      />
-                      {linePoints.map((v, i) => {
-                        const x = pad + (n <= 1 ? 0 : (i * (w - pad * 2)) / (n - 1));
-                        const ratio = Math.max(0, Math.min(1, (v - min) / span));
-                        const eased = Math.pow(ratio, 0.72);
-                        const y = h - eased * (h - 20);
-                        return (
-                          <circle
-                            key={i}
-                            cx={x}
-                            cy={y}
-                            r={i === linePoints.length - 1 ? 4.8 : 4}
-                            fill={i === linePoints.length - 1 ? "#a78bfa" : "#c4b5fd"}
-                            stroke="#6d28d9"
-                            strokeWidth={i === linePoints.length - 1 ? 1.8 : 1.5}
-                          />
-                        );
-                      })}
-                    </>
-                  );
-                })()}
-              </svg>
-              <div className={`mt-1 flex justify-between px-1 text-[8px] sm:text-[10px] font-medium uppercase tracking-wider ${light ? "text-slate-500" : "text-slate-400"}`}>
-                {monthLabels.map((m) => (
-                  <span key={m}>{m}</span>
-                ))}
-              </div>
+            <div className="mt-3 sm:mt-4">
+              <CollectionEvolutionChart clients={clients} locale={locale} light={light} copy={t} />
             </div>
           </div>
+
           <div
-            className={`pp-dashboard-card-interactive min-w-0 overflow-hidden rounded-2xl border p-4 sm:p-5 lg:col-span-2 ${
-              light
-                ? "border-slate-200 bg-white hover:border-violet-300/60"
-                : "border-white/[0.08] bg-[#14141c] hover:border-violet-500/35"
+            className={`grid min-w-0 gap-4 sm:gap-6 ${
+              treasuryInSidebar ? "grid-cols-1" : showTreasuryInGrid ? "lg:grid-cols-2" : "grid-cols-1"
             }`}
           >
-            <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.distribution}</h3>
-            <div className="mt-4 flex min-w-0 flex-col items-center gap-3 md:flex-row md:justify-center md:gap-8">
-              <div className="relative grid h-28 w-28 sm:h-32 sm:w-32 md:h-36 md:w-36 shrink-0 place-items-center">
+            <div
+              className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-5 sm:p-6 ${
+                light
+                  ? "border-slate-200 bg-white hover:border-violet-300/60"
+                  : "border-white/[0.08] bg-[#14141c] hover:border-violet-500/35"
+              }`}
+            >
+              <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.distribution}</h3>
+              <div className="mt-6 grid min-w-0 grid-cols-1 items-center gap-6 sm:gap-8 md:grid-cols-[minmax(9rem,auto)_minmax(0,1fr)_minmax(10.5rem,13.5rem)] md:gap-6 lg:gap-8">
+                <div className="relative mx-auto grid h-36 w-36 shrink-0 place-items-center sm:mx-0">
+                  <div
+                    className="col-start-1 row-start-1 h-full w-full rounded-full p-[11px]"
+                    style={{
+                      background: `conic-gradient(from -90deg, #8b5cf6 0 ${paidPct}%, #3b82f6 ${paidPct}% ${paidPct + pendPct}%, #fb923c ${paidPct + pendPct}% 100%)`,
+                    }}
+                  >
+                    <div className={`flex h-full w-full items-center justify-center rounded-full ${light ? "bg-white" : "bg-[#14141c]"}`}>
+                      <div className="px-2 text-center">
+                        <span className={`block text-[10px] uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-400"}`}>
+                          {t.chartTotal}
+                        </span>
+                        <span className={`mt-0.5 block text-sm font-bold tabular-nums sm:text-base ${light ? "text-slate-900" : "text-white"}`}>
+                          {money.format(totalVolume)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <ul className={`flex min-w-0 flex-col gap-4 text-sm ${light ? "text-slate-700" : "text-slate-200"}`}>
+                  <li className="flex min-w-0 items-center justify-between gap-4">
+                    <span className="inline-flex min-w-0 items-center gap-2.5 whitespace-nowrap">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
+                      {t.paid}
+                    </span>
+                    <span className={`shrink-0 tabular-nums font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>
+                      {paidPct}%
+                    </span>
+                  </li>
+                  <li className="flex min-w-0 items-center justify-between gap-4">
+                    <span className="inline-flex min-w-0 items-center gap-2.5 whitespace-nowrap">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" aria-hidden />
+                      {t.pendingL}
+                    </span>
+                    <span className={`shrink-0 tabular-nums font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>
+                      {pendPct}%
+                    </span>
+                  </li>
+                  <li className="flex min-w-0 items-center justify-between gap-4">
+                    <span className="inline-flex min-w-0 items-center gap-2.5 whitespace-nowrap">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-orange-400" aria-hidden />
+                      {t.overdueL}
+                    </span>
+                    <span className={`shrink-0 tabular-nums font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>
+                      {overPct}%
+                    </span>
+                  </li>
+                </ul>
                 <div
-                  className="col-start-1 row-start-1 h-full w-full rounded-full p-[10px]"
-                  style={{
-                    background: `conic-gradient(from -90deg, #8b5cf6 0 ${paidPct}%, #3b82f6 ${paidPct}% ${paidPct + pendPct}%, #fb923c ${paidPct + pendPct}% 100%)`,
-                  }}
+                  className={`flex min-w-0 flex-col gap-3 border-t pt-5 md:border-t-0 md:border-l md:pl-6 md:pt-0 ${
+                    light ? "border-slate-200" : "border-white/[0.08]"
+                  }`}
                 >
-                  <div className={`flex h-full w-full items-center justify-center rounded-full ${light ? "bg-white" : "bg-[#14141c]"}`}>
-                    <div className="text-center">
-                      <span className={`block text-[10px] uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-400"}`}>Total</span>
-                      <span className={`text-xs font-bold tabular-nums sm:text-sm ${light ? "text-slate-900" : "text-white"}`}>
-                        {money.format(totalVolume)}
-                      </span>
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-400"}`}>
+                    {t.distributionAmounts}
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <p className={`text-xs font-medium ${light ? "text-slate-600" : "text-slate-300"}`}>{t.paid}</p>
+                      <p className={`mt-0.5 text-base font-bold tabular-nums ${light ? "text-slate-900" : "text-white"}`}>
+                        {money.format(distributionSegments.paidAmount)}
+                      </p>
+                      <p className={`mt-0.5 text-[11px] ${light ? "text-slate-500" : "text-slate-500"}`}>
+                        {invoiceCountLabel(distributionSegments.paidCount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={`text-xs font-medium ${light ? "text-slate-600" : "text-slate-300"}`}>{t.pendingL}</p>
+                      <p className={`mt-0.5 text-base font-bold tabular-nums ${light ? "text-slate-900" : "text-white"}`}>
+                        {money.format(distributionSegments.pendingAmount)}
+                      </p>
+                      <p className={`mt-0.5 text-[11px] ${light ? "text-slate-500" : "text-slate-500"}`}>
+                        {invoiceCountLabel(distributionSegments.pendingCount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={`text-xs font-medium ${light ? "text-slate-600" : "text-slate-300"}`}>{t.overdueL}</p>
+                      <p className={`mt-0.5 text-base font-bold tabular-nums ${light ? "text-slate-900" : "text-white"}`}>
+                        {money.format(distributionSegments.overdueAmount)}
+                      </p>
+                      <p className={`mt-0.5 text-[11px] ${light ? "text-slate-500" : "text-slate-500"}`}>
+                        {invoiceCountLabel(distributionSegments.overdueCount)}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <ul className={`w-full min-w-0 max-w-[220px] space-y-2 text-xs ${light ? "text-slate-700" : "text-slate-200"}`}>
-                <li className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-violet-500" />
-                  {t.paid} <span className={light ? "text-slate-500" : "text-slate-400"}>({paidPct}%)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-blue-500" />
-                  {t.pendingL} <span className={light ? "text-slate-500" : "text-slate-400"}>({pendPct}%)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-orange-400" />
-                  {t.overdueL} <span className={light ? "text-slate-500" : "text-slate-400"}>({overPct}%)</span>
-                </li>
-              </ul>
             </div>
+
+            {showTreasuryInGrid ? (
+              <div
+                className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-5 sm:p-6 ${
+                  treasuryInSidebar ? "xl:hidden" : ""
+                } ${
+                  light
+                    ? "border-slate-200 bg-white hover:border-sky-300/60"
+                    : "border-white/[0.08] bg-[#14141c] hover:border-sky-500/35"
+                }`}
+              >
+                <TreasuryForecastChart clients={clients} locale={locale} light={light} copy={t} />
+              </div>
+            ) : null}
           </div>
         </div>
       ) : (
@@ -406,11 +414,7 @@ export function DashboardAnalytics({ clients, locale, fullCharts, advancedStats,
             light ? "border-slate-200 bg-white hover:border-slate-300" : "border-white/[0.08] bg-[#14141c] hover:border-white/15"
           }`}
         >
-          <p className={`text-sm ${light ? "text-slate-600" : "text-slate-300"}`}>
-            {locale === "fr"
-              ? "Passez au plan Starter pour le graphique d’évolution complet, la jauge de répartition et les relances automatiques."
-              : "Upgrade to Starter for the full evolution chart, breakdown donut, and automatic reminders."}
-          </p>
+          <p className={`text-sm ${light ? "text-slate-600" : "text-slate-300"}`}>{t.upgradeStarterTeaser}</p>
         </div>
       )}
     </div>

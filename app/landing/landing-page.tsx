@@ -11,12 +11,16 @@ import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
 import { PwaInstallButton } from "@/app/pwa-install-button";
 import {
+  CARD_LIFT_HOVER_VARIANTS,
   HeroEntrance,
   Reveal,
+  cardLiftWhileHover,
 } from "@/app/landing/landing-motion";
 import { ScrollShiftSection } from "@/app/landing/scroll-shift-section";
 import { PaypulssScrollPin } from "@/app/landing/paypulss-scroll-pin";
 import { ProofStatsSection } from "@/app/landing/proof-stats-section";
+import { getLandingCopy, getLocalizedPlanCard, pricingAnnualPeriodLabel } from "@/lib/messages/landing-copy";
+import { pickQuad } from "@/lib/messages/pick";
 import { LandingGreyWaveBackdrop } from "@/app/landing/landing-wave-backdrop";
 
 import {
@@ -43,54 +47,6 @@ const ANNUAL_PRICING: Partial<Record<PlanId, AnnualPricing>> = {
   starter: { annual: "86.40€", oldAnnual: "108€" },
   pro: { annual: "182.40€", oldAnnual: "228€" },
   agency: { annual: "374.40€", oldAnnual: "468€" },
-};
-
-const PLAN_FR: Record<
-  PlanId,
-  { name: string; description: string; features: string[]; periodLabel: string; cta: string }
-> = {
-  free: {
-    name: "Gratuit",
-    description: "Pour tester : quelques clients, quelques factures, rappels simples.",
-    features: ["3 clients maximum", "5 factures maximum", "Rappels e-mail basiques"],
-    periodLabel: "gratuit",
-    cta: "Tester gratuitement",
-  },
-  starter: {
-    name: "Starter",
-    description: "L’offre la plus choisie quand l’argent doit vraiment rentrer.",
-    features: [
-      "Clients illimités",
-      "Tableau de bord : en attente, reçu, retard moyen",
-      "Graphiques d’évolution et répartition (encaissements, payé / en attente)",
-      "Relances automatiques + 1 modèle de relance personnalisable (sans lien de paiement)",
-    ],
-    periodLabel: "/mois",
-    cta: "Choisir Starter",
-  },
-  pro: {
-    name: "Pro",
-    description: "Quand vous voulez des relances plus travaillées sans tout réécrire.",
-    features: [
-      "Relances automatiques",
-      "Brouillons de relance assistés par IA (à venir)",
-      "Statistiques de paiement avancées",
-      "Modèles d’e-mails réutilisables",
-    ],
-    periodLabel: "/mois",
-    cta: "Choisir Pro",
-  },
-  agency: {
-    name: "Agence",
-    description: "Plusieurs marques, plusieurs personnes, un suivi qui reste lisible.",
-    features: [
-      "Jusqu’à 2 portefeuilles (workspaces) pour isoler des marques ou activités",
-      "Multi-clients / multi-marques",
-      "Rôles pour l’équipe",
-    ],
-    periodLabel: "/mois",
-    cta: "Parler à l’équipe",
-  },
 };
 
 export function ProductDemoMock({
@@ -316,500 +272,7 @@ export function LandingPage() {
   const reduceMotion = usePreferMinimalMotion();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
-  const t =
-    locale === "fr"
-      ? {
-          product: "Factures et relances pour freelances",
-          title: "PayPulss, relances et trésorerie pour freelances",
-          heroBadge: "Factures · relances · trésorerie",
-          heroSubline:
-            "Automatisez vos relances, gardez une image pro et gagnez du temps, sans tableur dispersé.",
-          heroLine1: "La machine de relances",
-          heroLine2: "que votre trésorerie attendait.",
-          body: "",
-          microNoCard: "Aucune carte requise",
-          heroTrustIntro: "Transparence & confiance",
-          heroTrustPills: [
-            "Chiffrement HTTPS",
-            "Supabase ou mode local",
-            "PWA installable",
-            "Relances calibrées sur l’échéance",
-          ],
-          socialProof: "Déjà utilisé par plus de 100 freelances",
-          statsTitle: "Une solution qui change le quotidien",
-          statsSub: "Synthèse des retours utilisateurs, ordres de grandeur indicatifs.",
-          stat1Val: "−35 %",
-          stat1Lab: "de relances oubliées",
-          stat2Val: "+18 %",
-          stat2Lab: "d’encaissement plus rapide",
-          stat3Val: "4 h",
-          stat3Lab: "gagnées en moyenne / sem.",
-          ctaTrial: "Commencer gratuitement",
-          ctaDashboard: "Aller au dashboard",
-          ctaPricing: "Voir comment ça marche",
-          demoAnchor: "demo",
-          pricingAnchor: "pricing",
-          featuresTitle: "Moins d’impayés. Plus de cash. Plus de temps pour vous.",
-          featuresSub: "Ce que PayPulss sécurise pour vous, sans jargon ni tableur dispersé.",
-          recurringTitle: "Même client, mois après mois, sans tout recréer",
-          recurringBody:
-            "Quand une facture est payée, une petite flèche demi-tour à côté du badge « Payé » crée une nouvelle ligne pour le mois suivant (nom « x2 », « x3 »…), impayée avec la nouvelle échéance, sans toucher à l’ancienne ligne qui reste « Payée » avec sa date. Le bilan et les graphiques gardent ainsi une ligne par période, lisible pour vous et pour le client.",
-          recurringImgAlt:
-            "Illustration : carte facture avec badge Payé ; la flèche demi-tour à côté est un aperçu interactif du produit.",
-          recurringArrowAria: "Aperçu : flèche demi-tour pour la facture du mois suivant (animation au survol).",
-          recurringStep1Label: "Étape 1",
-          recurringStep1Badge: "Payée",
-          recurringStep1Body: "La facture du mois en cours est réglée.",
-          recurringStep2Label: "Étape 2",
-          recurringStep2Badge: "Impayé retard",
-          recurringStep2Body: "La nouvelle ligne est créée pour le mois suivant, avec relance active.",
-          demoTitle: "Ce que fait le produit (MVP)",
-          demoSub:
-            "Un écran simple : clients, factures, statuts, relances, et des graphiques comme sur le dashboard (encaissements, répartition). L’IA pour rédiger les relances arrive plus tard.",
-          demoBullets: [
-            "Fiches client avec montant dû et date d’échéance",
-            "Statuts payé / impayé visibles en un coup d’œil",
-            "Relances : prévisualisation puis envoi via votre messagerie",
-            "Graphiques d’évolution et jauge payé / en attente / retard",
-          ],
-          demoModeHint: "Cliquez pour basculer entre mode clair et mode sombre",
-          demoModeDark: "Mode sombre",
-          demoModeLight: "Mode clair",
-          faqTitle: "Questions fréquentes",
-          faqSub: "Réponses courtes, contactez-nous pour un cas particulier.",
-          faqItems: [
-            {
-              q: "Où sont stockées mes données ?",
-              a: "Sans Supabase configuré, les données restent dans votre navigateur (mode local). Avec Supabase, elles sont sur votre projet cloud, protégées par les règles d’accès que vous déployez.",
-            },
-            {
-              q: "Puis-je essayer sans carte bancaire ?",
-              a: "Oui. L’offre gratuite suffit pour tester les flux et les quotas affichés sur le dashboard.",
-            },
-            {
-              q: "Les relances partent-elles toutes seules ?",
-              a: "Le MVP ouvre une prévisualisation (objet + corps) pour que vous validiez l’envoi depuis votre messagerie. Les relances automatiques complètes dépendent du plan et des réglages.",
-            },
-            {
-              q: "Pourquoi je ne vois pas les mêmes graphiques que sur la page d’accueil ?",
-              a: "L’image sur le site est une démo (données fictives) pour montrer le dashboard « complet ». Dans l’app, le plan Gratuit affiche les totaux principaux mais pas le graphique d’évolution ni la jauge de répartition : ces graphiques sont débloqués à partir de Starter (voir les offres).",
-            },
-            {
-              q: "C’est quoi la différence avec un tableur ?",
-              a: "Moins de copier-coller : une liste de dossiers, des statuts cohérents et des relances contextualisées au lieu de filtrer des lignes à la main.",
-            },
-          ],
-          personaTitle: "Lucas, designer freelance",
-          personaQuote: "« J’envoyais les factures, puis j’oubliais qui devait payer. Relancer me stressait. »",
-          beforeTitle: "Avant",
-          beforeBody:
-            "Pas de visibilité sur les impayés, relances au cas par cas, peur de passer pour insistant.",
-          beforeRows: [
-            { name: "Client A", amount: "? €", state: "21j de retard" },
-            { name: "Client B", amount: "—", state: "Relance oubliée" },
-            { name: "Client ?", amount: "???", state: "Statut inconnu" },
-          ] as const,
-          afterTitle: "Après",
-          afterBody:
-            "Une liste claire, des relances qui partent au bon moment, une idée nette de ce qui rentre.",
-          afterRows: [
-            { name: "Acme studio", amount: "1 240 €", state: "Relancée J+3", kind: "ok" },
-            { name: "Lefèvre & Co", amount: "860 €", state: "Payée", kind: "paid" },
-            { name: "Belair", amount: "2 100 €", state: "Planifiée J+7", kind: "scheduled" },
-          ] as const,
-          pricingTitle: "Offres",
-          pricingSub: "Tarifs indicatifs. Commencez gratuit, passez sur Starter quand ça roule.",
-          pricingBillingMonthly: "Mensuel",
-          pricingBillingAnnual: "Annuel",
-          pricingAnnualSavingsNote: "Économisez 20% avec la facturation annuelle",
-          pricingAnnualSavingsBadge: "20 %",
-          pricingAnnualOldLabel: "au lieu de",
-          popular: "Populaire",
-          footerProduct: "Produit",
-          footerCompany: "Société",
-          footerLegal: "Mentions",
-          footerLinks: {
-            features: "Fonctionnalités",
-            preview: "Aperçu",
-            pricing: "Tarifs",
-            faq: "FAQ",
-            about: "À propos",
-            founder: "Fondateur",
-            careers: "Carrières",
-            contact: "Contact",
-            contactEmail: "Écrire par e-mail",
-            privacy: "Confidentialité",
-            terms: "CGU",
-            legalHub: "Informations légales",
-            mentions: "Mentions légales",
-            security: "Sécurité des données",
-            footerProductTour: "Le produit en images",
-            footerHowLink: "Comment ça marche",
-          },
-          visualShowcaseTitle: "Le produit en images",
-          visualShowcaseSub:
-            "Schémas minimalistes des grands usages. L’interface détaillée est dans l’app.",
-          visualShowcaseScrollHint:
-            "Défilement automatique. Survolez le bandeau pour mettre en pause et lire une carte.",
-          visualMarqueeDueTitle: "Échéances visibles",
-          visualMarqueeDueBody:
-            "Dates et retards lisibles avant d’envoyer la moindre relance.",
-          visualMarqueeSecurityTitle: "Données maîtrisées",
-          visualMarqueeSecurityBody:
-            "Mode local ou cloud : vous gardez la main sur où vit l’information.",
-          visualMarqueeRhythmTitle: "Rythme posé",
-          visualMarqueeRhythmBody:
-            "Relances calées pour soigner votre image sans harceler.",
-          visualClientsTitle: "Clients & factures",
-          visualClientsBody: "Chaque dossier : montant, échéance, statut. Fini le tableur éclaté.",
-          visualClientsAlt: "Aperçu interface PayPulss : liste des dossiers avec montants et statuts",
-          visualRelancesTitle: "Relances structurées",
-          visualRelancesBody: "Messages prêts à partir, rythme posé, image pro préservée.",
-          visualRelancesAlt: "Aperçu interface PayPulss : prévisualisation d’un e-mail de relance",
-          visualTreasuryTitle: "Tableau de bord cash",
-          visualTreasuryBody: "Encours, encaissements, retards : votre santé financière d’un regard.",
-          visualTreasuryAlt: "Aperçu interface PayPulss : cartes KPI et graphiques de trésorerie",
-          howCtaSignup: "Créer un compte gratuit",
-          howCtaDemo: "Voir l’aperçu interactif",
-          howCtaContact: "Nous contacter",
-          planCtaEnFallback: "S'inscrire",
-          demo: {
-            panelTitle: "PayPulss · Aperçu",
-            tabIn: "Encaissements",
-            tabOut: "À relancer",
-            rowClient: "Studio Mirabelle",
-            rowAmount: "1 890 €",
-            rowStatus: "Échéance dépassée de 3 jours",
-            dueLabel: "Retard",
-            toggleLabel: "Relance auto",
-            receiptTitle: "Pièce jointe",
-            receiptLine: "Facture · mission logo",
-            receiptTotal: "640 €",
-            floatLabel: "Rappel J+7",
-          },
-          chartsMock: {
-            windowTitle: "PayPulss · Dashboard",
-            pending: "Montant en attente",
-            pendingVal: "8 420 €",
-            received: "Reçus ce mois",
-            receivedVal: "3 180 €",
-            receivedHint: "+12 % vs mois dernier",
-            overdue: "Factures en retard",
-            overdueVal: "2",
-            evolution: "Évolution des encaissements",
-            evolutionHint: "Somme des factures payées par mois (données d’exemple).",
-            distribution: "Répartition des factures",
-            paid: "Payées",
-            pendingL: "En attente",
-            overdueL: "En retard",
-            totalLabel: "Total",
-            monthLabels: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin"] as const,
-          },
-          founderKicker: "Une face derrière le produit",
-          founderRole: "Fondateur, PayPulss",
-          installLabels: {
-            defaultLabel: "Telecharger PayPulss",
-            mobileLabel: "Installer sur mobile",
-            macLabel: "Telecharger sur Mac",
-            windowsLabel: "Telecharger sur Windows",
-            secondaryLabel: "Installer l'application",
-          },
-          problemTitle: "Le probleme n'est pas vos clients. C'est le timing.",
-          problemBody:
-            "Les paiements en retard cassent la tresorerie, prennent du temps et ajoutent une charge mentale. PayPulss automatise le suivi sans casser votre relation client.",
-          solutionTitle: "Une machine de relance elegante, connectee a votre rythme.",
-          solutionBody:
-            "Chaque facture est suivie, chaque relance est cadree, chaque encaissement est visible dans un dashboard clair et premium.",
-          howTitle: "Comment ça marche",
-          howKicker: "Parcours type",
-          howSubtitle:
-            "Une séquence simple : votre action, puis ce que PayPulss fait pour vous derrière les écrans, à chaque fois on précise qui intervient.",
-          howConcernLabel: "Concerné",
-          howFlowSteps: [
-            {
-              headline: "Centraliser vos clients et vos factures",
-              whoLabel: "Vous",
-              whoHint: "Freelance, auto-entrepreneur, petite structure ou équipe minimale qui facture et doit suivre les paiements.",
-              body: "Ajoutez vos dossiers et échéances en quelques minutes : tout est lisible dans PayPulss plutôt qu’épars dans plusieurs fichiers.",
-            },
-            {
-              headline: "Surveillance des dates et préparation des relances",
-              whoLabel: "PayPulss",
-              whoHint: "Le produit automatise la veille et la préparation des messages, ce n’est pas un interlocuteur humain tiers.",
-              body: "L’outil repère les retards qui comptent pour vous et prépare des relances (objet, contenu, rythme) selon vos réglages et votre offre.",
-            },
-            {
-              headline: "Encaissement plus fluide avec un suivi clair",
-              whoLabel: "Vous & vos clients",
-              whoHint: "La relation commerciale reste la vôtre ; vos clients sont simplement mieux guidés jusqu’au paiement.",
-              body: "Vous gardez le contrôle (validation, tonalité). Le client voit des relances cohérentes et vous voyez tout de suite qui a payé et qui traîne.",
-            },
-          ],
-          aboutTitle: "Apprenez à nous connaître !",
-          aboutBody:
-            "Je suis El Fahmi Bilal, fondateur de PayPulss. Le produit vient d’un constat simple : trop d’indépendants perdent du temps, et de la trésorerie, sur le suivi des factures et des relances. PayPulss existe pour vous redonner de la clarté : une liste lisible, des statuts fiables, des relances alignées avec votre image, sans charge mentale inutile. Mes valeurs : transparence (données sous contrôle), exécution soignée, et un outil qui reste simple mois après mois.",
-          aboutExpertiseTitle: "Expertise :",
-          aboutBullets: [
-            "Conception produit & UX, factures, relances, tableau de bord",
-            "Ingénierie web moderne (Next.js) et intégrations (Supabase, e-mail)",
-            "Automatisation des suivis d’échéance et parcours d’envoi de relances",
-            "Qualité & itérations rapides, sans sacrifier la lisibilité pour l’utilisateur",
-            "Vision long terme : un SaaS utile au quotidien, pas un gadget",
-          ],
-          finalCtaTitle: "Arretez de courir apres votre argent",
-          finalCtaButton: "Commencer gratuitement",
-          features: [
-            { kind: "clients" as const, title: "Clients & factures", body: "Centralisez dossiers, montants et dates d’échéance sans tableur dispersé." },
-            { kind: "status" as const, title: "Payé / impayé", body: "Chaque ligne affiche un statut clair pour prioriser qui relancer." },
-            { kind: "remind" as const, title: "Relances e-mail", body: "Brouillons prêts à l’emploi, envoi manuel (MVP) ; relances automatiques côté produit dès l’offre Pro." },
-            { kind: "dash" as const, title: "Tableau de bord", body: "Encours, encaissé ce mois-ci, retard moyen : la santé cash d’un coup d’œil." },
-            { kind: "auto" as const, title: "Automatisation", body: "Relances côté produit selon l’échéance ; en Agence, un second portefeuille (workspace) pour une autre marque ou filiale." },
-            { kind: "data" as const, title: "Données sous contrôle", body: "Mode local ou Supabase : vous choisissez où vit la base, selon votre setup." },
-          ],
-        }
-      : {
-          product: "Invoices and nudges for freelancers",
-          title: "PayPulss, payment nudges and cashflow for freelancers",
-          heroBadge: "Invoices · nudges · cashflow",
-          heroSubline:
-            "Automate your follow-ups, stay on-brand and reclaim your time, without spreadsheet chaos.",
-          heroLine1: "The reminder engine",
-          heroLine2: "your cashflow deserves.",
-          body: "",
-          microNoCard: "No credit card required",
-          heroTrustIntro: "Trust & clarity",
-          heroTrustPills: [
-            "HTTPS encryption",
-            "Supabase or local mode",
-            "Installable PWA",
-            "Nudges aligned with due dates",
-          ],
-          socialProof: "Trusted by 100+ freelancers already",
-          statsTitle: "Outcomes you can feel",
-          statsSub: "Based on user feedback, illustrative ranges.",
-          stat1Val: "−35%",
-          stat1Lab: "fewer forgotten follow-ups",
-          stat2Val: "+18%",
-          stat2Lab: "faster cash-in (typical)",
-          stat3Val: "4h",
-          stat3Lab: "saved per week on average",
-          ctaTrial: "Start free",
-          ctaDashboard: "Go to dashboard",
-          ctaPricing: "See how it works",
-          demoAnchor: "demo",
-          pricingAnchor: "pricing",
-          featuresTitle: "Fewer late invoices. More cash. More time for you.",
-          featuresSub: "What PayPulss quietly handles, without spreadsheet chaos.",
-          recurringTitle: "Same client, month after month, without re-creating rows",
-          recurringBody:
-            "Once an invoice is paid, a small U-turn next to the Paid badge creates a new row for the next period (name suffix x2, x3…), unpaid with the new due date, while the previous row stays Paid with its paid-on date. Charts and the Summary report keep one line per period, clear for you and your client.",
-          recurringImgAlt:
-            "Illustration: invoice card with Paid badge; the U-turn control beside it is an interactive product preview.",
-          recurringArrowAria: "Preview: U-turn for the next billing cycle (hover to animate).",
-          recurringStep1Label: "Step 1",
-          recurringStep1Badge: "Paid",
-          recurringStep1Body: "The current month’s invoice is settled.",
-          recurringStep2Label: "Step 2",
-          recurringStep2Badge: "Unpaid overdue",
-          recurringStep2Body: "A new row is created for the next month, with follow-up active.",
-          demoTitle: "What the MVP covers",
-          demoSub:
-            "One calm screen: clients, invoices, statuses, nudges, and dashboard-style charts (cash-in trend, paid vs pending breakdown). AI-written reminders come later.",
-          demoBullets: [
-            "Client rows with amount due and due date",
-            "Paid vs unpaid status visible at a glance",
-            "Reminders: preview then send from your mail client",
-            "Evolution chart and paid / pending / overdue donut",
-          ],
-          demoModeHint: "Click to toggle between light and dark mode",
-          demoModeDark: "Dark mode",
-          demoModeLight: "Light mode",
-          faqTitle: "Frequently asked questions",
-          faqSub: "Short answers, reach out for edge cases.",
-          faqItems: [
-            {
-              q: "Where is my data stored?",
-              a: "Without Supabase configured, data stays in your browser (local mode). With Supabase, it lives in your cloud project, protected by the access rules you deploy.",
-            },
-            {
-              q: "Can I try without a credit card?",
-              a: "Yes. The free tier is enough to test flows and the limits shown on the dashboard.",
-            },
-            {
-              q: "Do reminders send automatically?",
-              a: "The MVP opens a preview (subject + body) so you confirm send from your mail app. Full auto reminders depend on plan and settings.",
-            },
-            {
-              q: "Why don’t I see the same charts as on your homepage?",
-              a: "The screenshot on the site is a demo (sample numbers) of the “full” dashboard. In the app, the Free plan shows the key totals but not the evolution chart or the paid/pending donut, those unlock from Starter upward (see plans).",
-            },
-            {
-              q: "How is this better than a spreadsheet?",
-              a: "Less copy/paste: a case list, consistent statuses, and contextual nudges instead of filtering rows by hand.",
-            },
-          ],
-          personaTitle: "Lucas, freelance designer",
-          personaQuote: "“I sent invoices, then forgot who still owed me. Following up felt awkward.”",
-          beforeTitle: "Before",
-          beforeBody: "No clear view of overdue work, one-off emails, worried about sounding pushy.",
-          beforeRows: [
-            { name: "Client A", amount: "? €", state: "21d overdue" },
-            { name: "Client B", amount: "—", state: "Reminder missed" },
-            { name: "Client ?", amount: "???", state: "Status unknown" },
-          ] as const,
-          afterTitle: "After",
-          afterBody: "A short list, reminders that fire on time, a clearer sense of what hits your account.",
-          afterRows: [
-            { name: "Acme studio", amount: "€1,240", state: "Reminded D+3", kind: "ok" },
-            { name: "Lefèvre & Co", amount: "€860", state: "Paid", kind: "paid" },
-            { name: "Belair", amount: "€2,100", state: "Scheduled D+7", kind: "scheduled" },
-          ] as const,
-          pricingTitle: "Plans",
-          pricingSub: "Indicative pricing. Start free; move to Starter when volume picks up.",
-          pricingBillingMonthly: "Monthly",
-          pricingBillingAnnual: "Yearly",
-          pricingAnnualSavingsNote: "Save 20% with yearly billing",
-          pricingAnnualSavingsBadge: "20%",
-          pricingAnnualOldLabel: "instead of",
-          popular: "Popular",
-          footerProduct: "Product",
-          footerCompany: "Company",
-          footerLegal: "Legal",
-          footerLinks: {
-            features: "Features",
-            preview: "Preview",
-            pricing: "Pricing",
-            faq: "FAQ",
-            about: "About",
-            founder: "Founder",
-            careers: "Careers",
-            contact: "Contact",
-            contactEmail: "Email us",
-            privacy: "Privacy",
-            terms: "Terms",
-            legalHub: "Legal overview",
-            mentions: "Legal notice",
-            security: "Data security",
-            footerProductTour: "Product visuals",
-            footerHowLink: "How it works",
-          },
-          visualShowcaseTitle: "See the product visually",
-          visualShowcaseSub: "Minimal schematics of core flows. The full UI lives in the app.",
-          visualShowcaseScrollHint:
-            "Auto-scrolling row. Hover the band to pause and read a card.",
-          visualMarqueeDueTitle: "Due dates in view",
-          visualMarqueeDueBody: "Deadlines and delays read clearly before any nudge goes out.",
-          visualMarqueeSecurityTitle: "Data under your control",
-          visualMarqueeSecurityBody: "Local or cloud: you choose where information lives.",
-          visualMarqueeRhythmTitle: "Steady cadence",
-          visualMarqueeRhythmBody: "Follow-ups paced to stay professional without nagging.",
-          visualClientsTitle: "Clients & invoices",
-          visualClientsBody: "Every case: amount, due date, status. No scattered spreadsheet.",
-          visualClientsAlt: "PayPulss UI preview: case list with amounts and status chips",
-          visualRelancesTitle: "Structured nudges",
-          visualRelancesBody: "Ready-to-send emails, steady timing, professional tone.",
-          visualRelancesAlt: "PayPulss UI preview: reminder email draft",
-          visualTreasuryTitle: "Cashflow dashboard",
-          visualTreasuryBody: "Outstanding, cash-in, overdue: your financial health at a glance.",
-          visualTreasuryAlt: "PayPulss UI preview: KPI cards and treasury charts",
-          howCtaSignup: "Start free",
-          howCtaDemo: "See the interactive preview",
-          howCtaContact: "Contact us",
-          planCtaEnFallback: "Get started",
-          demo: {
-            panelTitle: "PayPulss · Preview",
-            tabIn: "Paid / incoming",
-            tabOut: "Needs nudge",
-            rowClient: "Mirabelle Studio",
-            rowAmount: "$1,890",
-            rowStatus: "3 days past due",
-            dueLabel: "Overdue",
-            toggleLabel: "Auto nudge",
-            receiptTitle: "Attachment",
-            receiptLine: "Invoice · logo sprint",
-            receiptTotal: "$640",
-            floatLabel: "Day-7 nudge",
-          },
-          chartsMock: {
-            windowTitle: "PayPulss · Dashboard",
-            pending: "Amount pending",
-            pendingVal: "$8,420",
-            received: "Received this month",
-            receivedVal: "$3,180",
-            receivedHint: "+12% vs last month",
-            overdue: "Overdue invoices",
-            overdueVal: "2",
-            evolution: "Cash-in evolution",
-            evolutionHint: "Sum of paid invoices by month (sample data).",
-            distribution: "Invoice breakdown",
-            paid: "Paid",
-            pendingL: "Pending",
-            overdueL: "Overdue",
-            totalLabel: "Total",
-            monthLabels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] as const,
-          },
-          founderKicker: "A face behind the product",
-          founderRole: "Founder, PayPulss",
-          installLabels: {
-            defaultLabel: "Download PayPulss",
-            mobileLabel: "Install on mobile",
-            macLabel: "Download for Mac",
-            windowsLabel: "Download for Windows",
-            secondaryLabel: "Install the app",
-          },
-          problemTitle: "The problem is not your clients. It's timing.",
-          problemBody:
-            "Late payments hurt cash flow, waste time, and create friction. PayPulss automates follow-up without hurting client relationships.",
-          solutionTitle: "A polished reminder engine built for speed.",
-          solutionBody:
-            "Every invoice is tracked, every follow-up stays consistent, and every payment is visible in one clean dashboard.",
-          howTitle: "How it works",
-          howKicker: "Typical flow",
-          howSubtitle:
-            "Straightforward sequence: what you do, then what PayPulss handles for you, we name who owns each step.",
-          howConcernLabel: "Who’s involved",
-          howFlowSteps: [
-            {
-              headline: "Bring clients and invoices into one hub",
-              whoLabel: "You",
-              whoHint: "Freelancers, solopreneurs, small teams, anyone who invoices and tracks payments.",
-              body: "Add cases and due dates in minutes: PayPulss replaces scattered sheets with one readable list.",
-            },
-            {
-              headline: "Watch due dates & draft reminders",
-              whoLabel: "PayPulss",
-              whoHint: "The app runs the surveillance and drafts messages, it isn’t someone calling clients for you.",
-              body: "It flags what matters per your setup and drafts nudges (subject, tone, rhythm) aligned with your plan and settings.",
-            },
-            {
-              headline: "Get paid smoother with clearer follow-up",
-              whoLabel: "You & your clients",
-              whoHint: "Commercial relationship stays yours; clients are simply guided to pay without endless back-and-forth.",
-              body: "You stay in control when it matters and see paid vs late at a glance, no manual archaeology.",
-            },
-          ],
-          aboutTitle: "Get to know us",
-          aboutBody:
-            "I’m El Fahmi Bilal, founder of PayPulss. The product comes from a simple observation: too many independents lose time, and cash flow, chasing invoices and awkward follow-ups. PayPulss is built to give you clarity: a readable case list, trustworthy statuses, reminders that match your brand, with less mental overhead. My values: transparency (you control where data lives), polished execution, and a tool that stays simple month after month.",
-          aboutExpertiseTitle: "Expertise",
-          aboutBullets: [
-            "Product & UX, invoices, nudges, cashflow dashboard",
-            "Modern web engineering (Next.js) and integrations (Supabase, email)",
-            "Due-date follow-up automation and reminder workflows",
-            "Quality and fast iteration without sacrificing clarity",
-            "Long-term focus: a SaaS you rely on daily, not a gimmick",
-          ],
-          finalCtaTitle: "Stop chasing your money",
-          finalCtaButton: "Start free",
-          features: [
-            { kind: "clients" as const, title: "Clients & invoices", body: "Centralize cases, amounts, and due dates without scattered spreadsheets." },
-            { kind: "status" as const, title: "Paid / unpaid", body: "Each row shows a clear status so you know who to nudge first." },
-            { kind: "remind" as const, title: "Email nudges", body: "Ready-to-send drafts, manual send in the MVP; automatic nudges ship on Pro and up." },
-            { kind: "dash" as const, title: "Dashboard", body: "Outstanding, cash-in this month, average delay, cash health at a glance." },
-            { kind: "auto" as const, title: "Automation", body: "In-product nudges by due date; on Agency, a second workspace for another brand or business line." },
-            { kind: "data" as const, title: "Data you control", body: "Local mode or Supabase, you choose where the database lives." },
-          ],
-        };
+  const t = getLandingCopy(locale);
 
   const featureCards: FeatureItem[] = t.features.map((f) => ({
     title: f.title,
@@ -818,10 +281,10 @@ export function LandingPage() {
   }));
 
   const planCardClass = (highlight: boolean) =>
-    `pp-dashboard-card-interactive relative flex flex-col rounded-2xl border p-6 backdrop-blur-md ${
+    `pp-landing-plan-card relative flex h-full flex-col rounded-2xl border p-6 backdrop-blur-md transition-[box-shadow,border-color] duration-200 ease-out group-hover:border-[#34D399]/70 ${
       highlight
-        ? "border-[#34D399]/55 bg-[#0a1f35] shadow-[0_18px_44px_-14px_rgba(52,211,153,0.22),0_0_44px_-12px_rgba(139,92,246,0.18)] hover:border-[#34D399]/70 hover:shadow-[0_22px_52px_-12px_rgba(52,211,153,0.28),0_0_48px_-8px_rgba(139,92,246,0.18)]"
-        : "border-white/15 bg-[#0a1628] shadow-[0_12px_36px_-14px_rgba(0,0,0,0.4)] hover:border-white/25 hover:shadow-[0_18px_44px_-12px_rgba(0,0,0,0.5),0_0_36px_-10px_rgba(139,92,246,0.16)]"
+        ? "border-[#34D399]/55 bg-[#0a1f35] shadow-[0_18px_44px_-14px_rgba(52,211,153,0.22),0_0_44px_-12px_rgba(139,92,246,0.18)] group-hover:shadow-[0_22px_52px_-12px_rgba(52,211,153,0.28),0_0_48px_-8px_rgba(139,92,246,0.18)]"
+        : "border-white/15 bg-[#0a1628] shadow-[0_12px_36px_-14px_rgba(0,0,0,0.4)] group-hover:border-white/25 group-hover:shadow-[0_18px_44px_-12px_rgba(0,0,0,0.5),0_0_36px_-10px_rgba(139,92,246,0.16)]"
     }`;
 
   const resolvePlanCtaHref = (planId: PlanId): string => {
@@ -950,12 +413,16 @@ export function LandingPage() {
           </div>
         </section>
 
-        <div className="hidden md:block">
+        <div className="hidden scroll-mt-28 md:block md:pt-8 lg:pt-12">
           <PaypulssScrollPin trustIntro={t.heroTrustIntro} trustPills={t.heroTrustPills} />
         </div>
 
         {/* Section 2 & 3, Problème + Solution */}
-        <ScrollShiftSection id="story" shift={1} className="scroll-mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-100 to-slate-50 px-4 py-20 sm:px-6 sm:py-28">
+        <ScrollShiftSection
+          id="story"
+          shift={1}
+          className="relative z-10 scroll-mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-100 to-slate-50 px-4 py-20 sm:px-6 sm:py-28"
+        >
           <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 lg:gap-10">
             <motion.div whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 280, damping: 22 }}>
               <Reveal className="rounded-3xl border border-white/[0.08] bg-white/[0.02] p-8 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:p-10">
@@ -1225,7 +692,7 @@ export function LandingPage() {
 
         {/* Section 5, Preuve sociale + stats (comptage à l’entrée viewport) */}
         <ProofStatsSection
-          locale={locale === "fr" ? "fr" : "en"}
+          locale={locale}
           copy={{
             socialProof: t.socialProof,
             statsTitle: t.statsTitle,
@@ -1297,13 +764,13 @@ export function LandingPage() {
                     hidden: { opacity: 0, y: 18 },
                     show: { opacity: 1, y: 0, transition: { duration: 0.52, ease: [0.22, 1, 0.36, 1] } },
                   }}
-                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_14px_40px_-28px_rgba(15,23,42,0.12)]"
-                  whileHover={{
-                    y: -3,
-                    borderColor: "rgba(139,92,246,0.35)",
-                    boxShadow: "0 20px 44px -24px rgba(139,92,246,0.2)",
-                  }}
+                  className="group h-full"
+                  whileHover={cardLiftWhileHover(reduceMotion)}
                 >
+                  <motion.div
+                    className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_14px_40px_-28px_rgba(15,23,42,0.12)] transition-[box-shadow,border-color] duration-200 ease-out group-hover:border-violet-400/35 group-hover:shadow-[0_20px_44px_-24px_rgba(139,92,246,0.2)]"
+                    variants={CARD_LIFT_HOVER_VARIANTS}
+                  >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
                       {idx + 1}
@@ -1316,6 +783,7 @@ export function LandingPage() {
                   <h3 className="mt-4 text-lg font-semibold tracking-tight text-slate-900">{step.headline}</h3>
                   <p className="mt-2 text-xs font-medium leading-relaxed text-violet-700/90">{step.whoHint}</p>
                   <p className="mt-3 text-sm leading-relaxed text-slate-600">{step.body}</p>
+                  </motion.div>
                 </motion.div>
               ))}
             </motion.div>
@@ -1352,7 +820,12 @@ export function LandingPage() {
               <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-1">
                 <div
                   role="tablist"
-                  aria-label={locale === "fr" ? "Choix de facturation mensuelle ou annuelle" : "Choose monthly or yearly billing"}
+                  aria-label={pickQuad(locale, {
+                    fr: "Choix de facturation mensuelle ou annuelle",
+                    en: "Choose monthly or yearly billing",
+                    nl: "Kies maandelijkse of jaarlijkse facturatie",
+                    es: "Elige facturación mensual o anual",
+                  })}
                   className="relative flex h-[52px] w-[min(100%,20.5rem)] shrink-0 items-stretch rounded-full border border-slate-200/95 bg-slate-100/90 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_28px_-14px_rgba(15,23,42,0.18)] sm:h-14 sm:w-[21rem]"
                 >
                   <motion.div
@@ -1411,7 +884,7 @@ export function LandingPage() {
               </div>
             </Reveal>
             <motion.div
-              className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+              className="mt-16 grid gap-6 overflow-visible py-2 sm:grid-cols-2 lg:grid-cols-4"
               initial="hidden"
               whileInView="show"
               viewport={{ margin: "-48px", amount: 0.18, once: true }}
@@ -1421,7 +894,7 @@ export function LandingPage() {
               }}
             >
               {MARKETING_PLANS.map((plan) => {
-                const localized = locale === "fr" ? PLAN_FR[plan.id] : null;
+                const localized = getLocalizedPlanCard(locale, plan.id);
                 const name = localized?.name ?? plan.name;
                 const description = localized?.description ?? plan.description;
                 const features = localized?.features ?? plan.features;
@@ -1429,26 +902,34 @@ export function LandingPage() {
                 const showAnnual = billingCycle === "annual" && Boolean(annualPricing);
                 const shownPrice = showAnnual ? annualPricing!.annual : plan.price;
                 const period = showAnnual
-                  ? locale === "fr"
-                    ? "/an"
-                    : "/year"
-                  : localized?.periodLabel ?? (plan.period === "forever" ? (locale === "fr" ? "gratuit" : "free") : plan.period);
-                const cta = localized?.cta ?? (plan.id === "free" ? (locale === "fr" ? "Tester gratuitement" : "Start free") : t.planCtaEnFallback);
+                  ? pricingAnnualPeriodLabel(locale)
+                  : localized?.periodLabel ??
+                    (plan.period === "forever"
+                      ? pickQuad(locale, { fr: "gratuit", en: "free", nl: "gratis", es: "gratis" })
+                      : plan.period);
+                const cta =
+                  localized?.cta ??
+                  (plan.id === "free"
+                    ? pickQuad(locale, {
+                        fr: "Tester gratuitement",
+                        en: "Start free",
+                        nl: "Gratis proberen",
+                        es: "Probar gratis",
+                      })
+                    : t.planCtaEnFallback);
                 const highlight = Boolean(plan.highlighted);
 
                 return (
                   <motion.div
                     key={plan.id}
-                    className={planCardClass(highlight)}
+                    className="group h-full"
                     variants={{
                       hidden: { opacity: 0, y: 26 },
                       show: { opacity: 1, y: 0, transition: { duration: 1.05, ease: [0.22, 1, 0.36, 1] } },
                     }}
-                    whileHover={{
-                      y: -4,
-                      transition: { type: "spring", stiffness: 400, damping: 24 },
-                    }}
+                    whileHover={cardLiftWhileHover(reduceMotion)}
                   >
+                    <motion.div className={planCardClass(highlight)} variants={CARD_LIFT_HOVER_VARIANTS}>
                     {highlight ? (
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#34D399] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#041018]">
                         {t.popular}
@@ -1481,10 +962,10 @@ export function LandingPage() {
                         </li>
                       ))}
                     </ul>
-                    <motion.div className="mt-8" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <div className="mt-8">
                       <Link
                         href={resolvePlanCtaHref(plan.id)}
-                        className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition ${
+                        className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition active:scale-[0.98] ${
                           highlight
                             ? "bg-gradient-to-r from-[#34D399] to-[#6EE7B7] text-[#041018] shadow-[0_8px_28px_rgba(52,211,153,0.25)] hover:shadow-[0_12px_36px_rgba(52,211,153,0.32)]"
                             : "border border-white/15 bg-white/[0.06] text-white shadow-inner shadow-white/[0.02] backdrop-blur-sm hover:border-violet-400/30 hover:bg-white/10"
@@ -1492,6 +973,7 @@ export function LandingPage() {
                       >
                         {cta}
                       </Link>
+                    </div>
                     </motion.div>
                   </motion.div>
                 );
@@ -1556,7 +1038,7 @@ export function LandingPage() {
               </blockquote>
             </Reveal>
             <motion.div
-              className="mt-12 grid gap-6 sm:grid-cols-2"
+              className="mt-12 grid gap-6 overflow-visible py-2 sm:grid-cols-2"
               initial="hidden"
               whileInView="show"
               viewport={{ margin: "-40px", amount: 0.2 }}
@@ -1570,13 +1052,13 @@ export function LandingPage() {
                   hidden: { opacity: 0, y: 18 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
                 }}
-                className="relative overflow-hidden rounded-2xl border border-rose-500/20 bg-gradient-to-br from-[#1a0a14]/95 via-[#06101f]/90 to-[#0a0510]/95 p-6 shadow-lg shadow-black/30 backdrop-blur-md"
-                whileHover={{
-                  y: -4,
-                  borderColor: "rgba(244,63,94,0.32)",
-                  boxShadow: "0 20px 44px -12px rgba(0,0,0,0.5), 0 0 36px -10px rgba(244,63,94,0.18)",
-                }}
+                className="group h-full"
+                whileHover={cardLiftWhileHover(reduceMotion)}
               >
+                <motion.div
+                  className="relative h-full overflow-hidden rounded-2xl border border-rose-500/20 bg-gradient-to-br from-[#1a0a14]/95 via-[#06101f]/90 to-[#0a0510]/95 p-6 shadow-lg shadow-black/30 backdrop-blur-md transition-[box-shadow,border-color] duration-200 ease-out group-hover:border-rose-400/32 group-hover:shadow-[0_20px_44px_-12px_rgba(0,0,0,0.5),0_0_36px_-10px_rgba(244,63,94,0.18)]"
+                  variants={CARD_LIFT_HOVER_VARIANTS}
+                >
                 <div
                   aria-hidden
                   className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-rose-500/12 blur-3xl"
@@ -1614,19 +1096,20 @@ export function LandingPage() {
                   ))}
                 </ul>
                 <p className="mt-4 text-sm leading-relaxed text-slate-300">{t.beforeBody}</p>
+                </motion.div>
               </motion.div>
               <motion.div
                 variants={{
                   hidden: { opacity: 0, y: 18 },
                   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
                 }}
-                className="relative overflow-hidden rounded-2xl border border-[#34D399]/30 bg-gradient-to-br from-[#062018]/95 via-[#0a1f35]/90 to-[#06101f]/95 p-6 shadow-[0_16px_40px_-12px_rgba(52,211,153,0.18)] backdrop-blur-md"
-                whileHover={{
-                  y: -4,
-                  borderColor: "rgba(52,211,153,0.55)",
-                  boxShadow: "0 22px 48px -10px rgba(52,211,153,0.22), 0 0 40px -8px rgba(139,92,246,0.14)",
-                }}
+                className="group h-full"
+                whileHover={cardLiftWhileHover(reduceMotion)}
               >
+                <motion.div
+                  className="relative h-full overflow-hidden rounded-2xl border border-[#34D399]/30 bg-gradient-to-br from-[#062018]/95 via-[#0a1f35]/90 to-[#06101f]/95 p-6 shadow-[0_16px_40px_-12px_rgba(52,211,153,0.18)] backdrop-blur-md transition-[box-shadow,border-color] duration-200 ease-out group-hover:border-[#34D399]/55 group-hover:shadow-[0_22px_48px_-10px_rgba(52,211,153,0.22),0_0_40px_-8px_rgba(139,92,246,0.14)]"
+                  variants={CARD_LIFT_HOVER_VARIANTS}
+                >
                 <div
                   aria-hidden
                   className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#34D399]/14 blur-3xl"
@@ -1676,6 +1159,7 @@ export function LandingPage() {
                   ))}
                 </ul>
                 <p className="mt-4 text-sm leading-relaxed text-slate-200">{t.afterBody}</p>
+                </motion.div>
               </motion.div>
             </motion.div>
           </div>

@@ -44,7 +44,7 @@ export default function LegalPage() {
       <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-800">
         <p className="font-semibold text-slate-900">Éditeur</p>
         <p className="mt-2">
-          {e.denomination} — BCE/KBO {e.kbo}
+          {e.denomination}, BCE/KBO {e.kbo}
         </p>
         <p className="mt-1">{e.address}</p>
         <p className="mt-2">

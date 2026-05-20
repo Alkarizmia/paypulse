@@ -5,6 +5,8 @@ type ClientRow = {
   id: string;
   name: string;
   company_name: string | null;
+  domain: string | null;
+  phone: string | null;
   email: string;
   amount_due: number | string;
   due_date: string;
@@ -56,6 +58,8 @@ function mapRow(row: ClientRow): Client {
     id: row.id,
     name: row.name,
     companyName: row.company_name ?? undefined,
+    domain: row.domain ?? undefined,
+    phone: row.phone ?? undefined,
     email: row.email,
     amountDue: Number.isFinite(amount) ? amount : 0,
     dueDate: row.due_date,
@@ -68,7 +72,7 @@ function mapRow(row: ClientRow): Client {
 }
 
 const CLIENT_SELECT =
-  "id,name,company_name,email,amount_due,due_date,status,created_at,paid_at,deleted_at,paid_events";
+  "id,name,company_name,domain,phone,email,amount_due,due_date,status,created_at,paid_at,deleted_at,paid_events";
 
 /** Prochaine échéance (date calendaire YYYY-MM-DD, +1 mois, garde le jour si possible). */
 export function addOneMonthToIsoDate(due: string): string {
@@ -135,6 +139,8 @@ export async function insertClient(
     .insert({
       name: input.name,
       company_name: input.companyName ?? null,
+      domain: input.domain?.trim() || null,
+      phone: input.phone?.trim() || null,
       email: input.email,
       amount_due: input.amountDue,
       due_date: input.dueDate,
@@ -260,6 +266,8 @@ export async function advanceClientToNextInvoiceCycle(
   return insertClient(supabase, {
     name: nextName,
     companyName: r.company_name ?? undefined,
+    domain: r.domain ?? undefined,
+    phone: r.phone ?? undefined,
     email: r.email,
     amountDue,
     dueDate: nextDue,

@@ -1,10 +1,6 @@
 "use client";
 
-const money = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
+import { useMoney } from "@/app/display-currency-context";
 
 type DashboardStatsProps = {
   clientCount: number;
@@ -21,6 +17,7 @@ export function DashboardStats({
   unpaidCount,
   paymentRate,
 }: DashboardStatsProps) {
+  const money = useMoney();
   const items = [
     {
       label: "Clients totaux",

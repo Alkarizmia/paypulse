@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { useLocale } from "@/app/locale-context";
+import type { AppLocale } from "@/lib/app-locale";
+import { pickQuad } from "@/lib/messages/pick";
 import { AuthPremiumBackground } from "@/app/auth/auth-premium-background";
+import { GoogleAuthButton } from "@/app/auth/google-auth-button";
+import { AuthOrDivider } from "@/app/auth/auth-or-divider";
 
 type LoginErrorKey = "invalid_credentials";
 
@@ -20,20 +25,84 @@ function mapLoginErrorKey(rawMessage: string | null | undefined): LoginErrorKey 
   return null;
 }
 
-export default function LoginPage() {
+function loginCopy(locale: AppLocale) {
+  return pickQuad(locale, {
+    fr: {
+      title: "Connexion",
+      email: "Email",
+      password: "Mot de passe",
+      submit: "Se connecter",
+      google: "Continuer avec Google",
+      or: "ou",
+      alt: "Pas de compte ? Creer un compte",
+      missing: "Supabase n'est pas configure.",
+      invalid: "Connexion impossible.",
+      incorrectCreds: "Email ou mot de passe incorrect.",
+      googleFailed: "Connexion Google impossible. Reessayez ou utilisez email et mot de passe.",
+      oauthCallbackFailed: "La connexion Google a echoue. Reessayez.",
+    },
+    en: {
+      title: "Login",
+      email: "Email",
+      password: "Password",
+      submit: "Login",
+      google: "Continue with Google",
+      or: "or",
+      alt: "No account? Create one",
+      missing: "Supabase is not configured.",
+      invalid: "Login failed.",
+      incorrectCreds: "Incorrect email or password.",
+      googleFailed: "Google sign-in failed. Try again or use email and password.",
+      oauthCallbackFailed: "Google sign-in failed. Please try again.",
+    },
+    nl: {
+      title: "Inloggen",
+      email: "E-mail",
+      password: "Wachtwoord",
+      submit: "Inloggen",
+      google: "Doorgaan met Google",
+      or: "of",
+      alt: "Geen account? Account aanmaken",
+      missing: "Supabase is niet geconfigureerd.",
+      invalid: "Inloggen mislukt.",
+      incorrectCreds: "Onjuist e-mailadres of wachtwoord.",
+      googleFailed: "Google-aanmelding mislukt. Probeer opnieuw of gebruik e-mail en wachtwoord.",
+      oauthCallbackFailed: "Google-aanmelding mislukt. Probeer opnieuw.",
+    },
+    es: {
+      title: "Iniciar sesion",
+      email: "Correo",
+      password: "Contrasena",
+      submit: "Entrar",
+      google: "Continuar con Google",
+      or: "o",
+      alt: "Sin cuenta? Crear una cuenta",
+      missing: "Supabase no esta configurado.",
+      invalid: "No se pudo iniciar sesion.",
+      incorrectCreds: "Correo o contrasena incorrectos.",
+      googleFailed: "No se pudo iniciar sesion con Google. Prueba de nuevo o usa correo y contrasena.",
+      oauthCallbackFailed: "Fallo el inicio de sesion con Google. Intentalo de nuevo.",
+    },
+  });
+}
+
+function LoginPageInner() {
   const { locale } = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = getSupabaseBrowserClient();
+  const t = loginCopy(locale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const t =
-    locale === "fr"
-      ? { title: "Connexion", email: "Email", password: "Mot de passe", submit: "Se connecter", alt: "Pas de compte ? Creer un compte", missing: "Supabase n'est pas configure.", invalid: "Connexion impossible.", incorrectCreds: "Email ou mot de passe incorrect." }
-      : { title: "Login", email: "Email", password: "Password", submit: "Login", alt: "No account? Create one", missing: "Supabase is not configured.", invalid: "Login failed.", incorrectCreds: "Incorrect email or password." };
+  useEffect(() => {
+    if (searchParams.get("error") === "oauth") {
+      setError(t.oauthCallbackFailed);
+    }
+  }, [searchParams, t.oauthCallbackFailed]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -80,7 +149,21 @@ export default function LoginPage() {
       <AuthPremiumBackground />
       <section className="relative z-[1] mx-auto w-full max-w-md rounded-2xl border border-slate-200/90 bg-white/85 p-6 shadow-[0_28px_70px_-28px_rgba(15,23,42,0.18),0_0_0_1px_rgba(255,255,255,0.9)_inset] backdrop-blur-xl ring-1 ring-slate-200/60">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.title}</h1>
-        <form onSubmit={onSubmit} className="mt-5 space-y-4">
+
+        <div className="mt-5">
+          <GoogleAuthButton
+            supabase={supabase}
+            label={t.google}
+            missingConfigMessage={t.missing}
+            errorMessage={t.googleFailed}
+            disabled={loading}
+            onError={setError}
+          />
+        </div>
+
+        <AuthOrDivider label={t.or} />
+
+        <form onSubmit={onSubmit} className="space-y-4">
           <label className="block text-sm">
             <span className="font-medium text-slate-700">{t.email}</span>
             <input
@@ -135,5 +218,13 @@ export default function LoginPage() {
         </Link>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }

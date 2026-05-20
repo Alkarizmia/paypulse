@@ -69,8 +69,7 @@ export function ReminderTemplatesView() {
     systemDark,
   ]);
   const planId = plan?.planId ?? "free";
-  const memberReadOnly =
-    Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const memberReadOnly = ws.collaboratorNoClientMgmt || ws.collaboratorInvoiceReadOnly;
   const allowed = hasReminderTemplatesEditor(planId);
   const caps = useMemo(() => getPlanCapabilities(planId), [planId]);
   const showAiAndDraft = caps.aiReminderDrafts;

@@ -14,27 +14,31 @@ export type ProofStatsCopy = {
   stat3Lab: string;
 };
 
+import type { AppLocale } from "@/lib/app-locale";
+
 const MINUS = "\u2212";
 
-function formatNegPercent(locale: "fr" | "en", n: number): string {
+function formatNegPercent(locale: AppLocale, n: number): string {
   const v = Math.round(Math.abs(n));
   return locale === "fr" ? `${MINUS}${v} %` : `${MINUS}${v}%`;
 }
 
-function formatPosPercent(locale: "fr" | "en", n: number): string {
+function formatPosPercent(locale: AppLocale, n: number): string {
   const v = Math.round(Math.max(0, n));
   return locale === "fr" ? `+${v} %` : `+${v}%`;
 }
 
-function formatHours(locale: "fr" | "en", n: number): string {
+function formatHours(locale: AppLocale, n: number): string {
   const v = Math.round(Math.max(0, n));
-  return locale === "fr" ? `${v} h` : `${v}h`;
+  if (locale === "fr") return `${v} h`;
+  if (locale === "nl") return `${v} u`;
+  return `${v}h`;
 }
 
 const DURATION = 2.15;
 const STAGGER = 0.22;
 
-export function ProofStatsSection({ locale, copy }: { locale: "fr" | "en"; copy: ProofStatsCopy }) {
+export function ProofStatsSection({ locale, copy }: { locale: AppLocale; copy: ProofStatsCopy }) {
   const reduce = usePreferMinimalMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef, { amount: 0.28, margin: "-10% 0px -14% 0px" });

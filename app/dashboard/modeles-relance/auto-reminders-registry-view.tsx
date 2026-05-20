@@ -50,7 +50,7 @@ export function AutoRemindersRegistryView() {
   ]);
 
   const planId = (plan?.planId ?? "free") as PlanId;
-  const memberReadOnly = Boolean(supabase) && ws.isActingAsMember && ws.memberRoleOnEffectiveAccount === "member";
+  const memberReadOnly = ws.collaboratorNoClientMgmt || ws.collaboratorInvoiceReadOnly;
   const allowed = hasReminderTemplatesEditor(planId);
   const maxTpl = getMaxEmailTemplates(planId);
   const allowPayLink = canUseTemplatePaymentLink(planId);

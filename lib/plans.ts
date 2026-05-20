@@ -58,6 +58,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "AI-assisted reminder drafts (later)",
       "Advanced payment stats",
       "Email templates you can reuse",
+      "Up to 2 workspaces to separate brands or activities",
     ],
   },
   {
@@ -65,9 +66,9 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     name: "Agency",
     price: "39€",
     period: "/month",
-    description: "Several brands, several people — still one calm ledger.",
+    description: "Several brands, several people, still one calm ledger.",
     features: [
-      "Up to 2 workspaces to separate brands or business lines",
+      "Up to 3 workspaces to separate brands or business lines",
       "Multi-client / multi-brand setup",
       "Team-friendly roles",
     ],
@@ -125,6 +126,8 @@ export function getPlanCapabilities(planId: PlanId): PlanCapabilities {
       aiReminderDrafts: true,
       advancedStats: true,
       emailTemplates: true,
+      multiWorkspace: true,
+      teamManagement: true,
     };
   }
   return {
@@ -224,13 +227,31 @@ export function getMaxBulkMailRecipients(planId: PlanId): number {
   return BULK_MAIL_RECIPIENTS_MAX_PRO;
 }
 
-/** Nombre max de portefeuilles (workspaces) : 2 en Agency, 1 sinon. */
-export const AGENCY_MAX_WORKSPACES = 2;
+/** Nombre max de portefeuilles (workspaces) par plan. */
+export const PRO_MAX_WORKSPACES = 2;
+export const AGENCY_MAX_WORKSPACES = 3;
 
 export function getMaxWorkspaces(planId: PlanId): number {
-  return planId === "agency" ? AGENCY_MAX_WORKSPACES : 1;
+  if (planId === "agency") return AGENCY_MAX_WORKSPACES;
+  if (planId === "pro") return PRO_MAX_WORKSPACES;
+  return 1;
 }
 
+/** Plusieurs portefeuilles (sélecteur dashboard, formulaire client). */
 export function usesAgencyWorkspaceUi(planId: PlanId): boolean {
-  return planId === "agency";
+  return getMaxWorkspaces(planId) > 1;
+}
+
+/** Pro : 1 collaborateur ; Agency : 2. Free / Starter : pas d’accès page Équipe. */
+export const PRO_MAX_TEAM_MEMBERS = 1;
+export const AGENCY_MAX_TEAM_MEMBERS = 2;
+
+export function canAccessTeamPage(planId: PlanId): boolean {
+  return planId === "pro" || planId === "agency";
+}
+
+export function getMaxTeamMembers(planId: PlanId): number {
+  if (planId === "agency") return AGENCY_MAX_TEAM_MEMBERS;
+  if (planId === "pro") return PRO_MAX_TEAM_MEMBERS;
+  return 0;
 }

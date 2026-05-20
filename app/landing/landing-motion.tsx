@@ -6,6 +6,18 @@ import type { ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Soulèvement vers le haut au survol (sans zoom vers l’écran) ; le parent garde la zone de hit fixe. */
+export const CARD_LIFT_HOVER_VARIANTS = {
+  hover: {
+    y: -6,
+    transition: { type: "spring" as const, stiffness: 400, damping: 24 },
+  },
+};
+
+export function cardLiftWhileHover(reduceMotion: boolean): "hover" | undefined {
+  return reduceMotion ? undefined : "hover";
+}
+
 const STAR_PRESETS = [
   { x: 6, y: 12, s: 0.45, d: 4.2, o: 0.12 },
   { x: 14, y: 28, s: 0.35, d: 5.1, o: 0.18 },
@@ -149,10 +161,12 @@ export function Reveal({ children, className, delay = 0 }: RevealProps) {
           transition: { duration: 0.52, delay, ease: EASE },
         });
       }}
-      onViewportLeave={() => {
-        controls.set({ opacity: 0, y: 20 });
+      viewport={{
+        once: true,
+        amount: 0.08,
+        /* Marge basse positive : déclenche avant que le bloc soit entièrement visible (ex. sous le pin sticky). */
+        margin: "-32px 0px 220px 0px",
       }}
-      viewport={{ margin: "-56px 0px -24px 0px", amount: 0.2 }}
     >
       {children}
     </motion.div>

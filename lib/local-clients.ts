@@ -26,6 +26,8 @@ function parseClient(raw: unknown): Client | null {
   const id = typeof o.id === "string" ? o.id : null;
   const name = typeof o.name === "string" ? o.name : null;
   const companyName = typeof o.companyName === "string" ? o.companyName : undefined;
+  const domain = typeof o.domain === "string" ? o.domain : undefined;
+  const phone = typeof o.phone === "string" ? o.phone : undefined;
   const email = typeof o.email === "string" ? o.email : null;
   const amountDue = typeof o.amountDue === "number" ? o.amountDue : Number(o.amountDue);
   const dueDate = typeof o.dueDate === "string" ? o.dueDate : null;
@@ -43,6 +45,8 @@ function parseClient(raw: unknown): Client | null {
     id,
     name,
     companyName,
+    domain,
+    phone,
     email,
     amountDue,
     dueDate,

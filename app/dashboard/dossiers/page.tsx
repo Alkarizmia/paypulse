@@ -339,7 +339,7 @@ export default function DashboardFoldersPage() {
       navScrollMode={false}
       userEmail={user?.email ?? null}
       onLogout={handleLogout}
-      hideTrashNav={ws.memberRoleOnEffectiveAccount === "member"}
+      hideTrashNav={ws.collaboratorNoClientMgmt}
       appearance={appearance}
     >
       <section className="space-y-6">

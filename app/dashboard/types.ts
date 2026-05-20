@@ -10,6 +10,10 @@ export type Client = {
   id: string;
   name: string;
   companyName?: string;
+  /** Site web ou domaine (optionnel). */
+  domain?: string;
+  /** Numéro de téléphone (optionnel). */
+  phone?: string;
   email: string;
   amountDue: number;
   dueDate: string;

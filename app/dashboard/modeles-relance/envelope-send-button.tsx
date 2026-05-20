@@ -6,6 +6,8 @@ import { sortClientsForRelanceList } from "@/lib/dashboard-metrics";
 import type { PlanId } from "@/lib/plans";
 import { getMaxBulkMailRecipients } from "@/lib/plans";
 import { buildMailtoBccRecipients, buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
+import { intlLocaleFor, type AppLocale } from "@/lib/app-locale";
+import { useMoney } from "@/app/display-currency-context";
 
 type RecipientTab = "everyone" | "list" | "manual";
 
@@ -46,7 +48,7 @@ type Props = {
   body: string;
   labels: Labels;
   clients: Client[];
-  locale: "fr" | "en";
+  locale: AppLocale;
   planId: PlanId;
 };
 
@@ -140,12 +142,9 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
     tab,
   ]);
 
-  const moneyFmt = useMemo(
-    () => new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", { style: "currency", currency: "EUR" }),
-    [locale],
-  );
+  const money = useMoney();
   const dateFmt = useMemo(
-    () => new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", { dateStyle: "medium" }),
+    () => new Intl.DateTimeFormat(intlLocaleFor(locale), { dateStyle: "medium" }),
     [locale],
   );
 
@@ -304,7 +303,7 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
                             <p className="truncate text-[11px] text-slate-500">{c.email}</p>
                           </div>
                           <div className="shrink-0 text-right text-[10px] text-slate-500">
-                            <p className="tabular-nums text-slate-400">{moneyFmt.format(c.amountDue)}</p>
+                            <p className="tabular-nums text-slate-400">{money.format(c.amountDue)}</p>
                             <p>{dateFmt.format(new Date(c.dueDate + "T12:00:00"))}</p>
                             <p className={c.status === "paid" ? "text-emerald-400/90" : "text-amber-300/90"}>
                               {c.status === "paid" ? labels.statusPaid : labels.statusUnpaid}

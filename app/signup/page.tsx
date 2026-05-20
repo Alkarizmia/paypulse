@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { useLocale } from "@/app/locale-context";
+import type { AppLocale } from "@/lib/app-locale";
+import { pickQuad } from "@/lib/messages/pick";
 import { AuthPremiumBackground } from "@/app/auth/auth-premium-background";
+import { GoogleAuthButton } from "@/app/auth/google-auth-button";
+import { AuthOrDivider } from "@/app/auth/auth-or-divider";
 
 type SignupErrorKey = "email_already_used";
 
@@ -20,42 +24,79 @@ function mapSignupErrorKey(rawMessage: string | null | undefined): SignupErrorKe
   return null;
 }
 
+function signupCopy(locale: AppLocale) {
+  return pickQuad(locale, {
+    fr: {
+      title: "Inscription",
+      email: "Email",
+      password: "Mot de passe",
+      submit: "Creer le compte",
+      google: "Continuer avec Google",
+      or: "ou",
+      alt: "Deja un compte ? Se connecter",
+      missing: "Supabase n'est pas configure.",
+      invalid: "Inscription impossible.",
+      emailAlreadyUsed: "Cet email est deja utilise.",
+      checkEmail:
+        "Compte cree. Verifiez votre boite email pour confirmer votre adresse avant de vous connecter.",
+      googleFailed: "Inscription Google impossible. Reessayez ou utilisez email et mot de passe.",
+    },
+    en: {
+      title: "Signup",
+      email: "Email",
+      password: "Password",
+      submit: "Create account",
+      google: "Continue with Google",
+      or: "or",
+      alt: "Already have an account? Login",
+      missing: "Supabase is not configured.",
+      invalid: "Signup failed.",
+      emailAlreadyUsed: "This email is already in use.",
+      checkEmail: "Account created. Check your inbox to confirm your email before logging in.",
+      googleFailed: "Google sign-up failed. Try again or use email and password.",
+    },
+    nl: {
+      title: "Registreren",
+      email: "E-mail",
+      password: "Wachtwoord",
+      submit: "Account aanmaken",
+      google: "Doorgaan met Google",
+      or: "of",
+      alt: "Al een account? Inloggen",
+      missing: "Supabase is niet geconfigureerd.",
+      invalid: "Registratie mislukt.",
+      emailAlreadyUsed: "Dit e-mailadres is al in gebruik.",
+      checkEmail: "Account aangemaakt. Bevestig je e-mail via je inbox voordat je inlogt.",
+      googleFailed: "Google-registratie mislukt. Probeer opnieuw of gebruik e-mail en wachtwoord.",
+    },
+    es: {
+      title: "Registro",
+      email: "Correo",
+      password: "Contrasena",
+      submit: "Crear cuenta",
+      google: "Continuar con Google",
+      or: "o",
+      alt: "Ya tienes cuenta? Iniciar sesion",
+      missing: "Supabase no esta configurado.",
+      invalid: "No se pudo crear la cuenta.",
+      emailAlreadyUsed: "Este correo ya esta en uso.",
+      checkEmail: "Cuenta creada. Revisa tu correo para confirmar la direccion antes de entrar.",
+      googleFailed: "No se pudo registrar con Google. Prueba de nuevo o usa correo y contrasena.",
+    },
+  });
+}
+
 export default function SignupPage() {
   const { locale } = useLocale();
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+  const t = signupCopy(locale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const t =
-    locale === "fr"
-      ? {
-          title: "Inscription",
-          email: "Email",
-          password: "Mot de passe",
-          submit: "Creer le compte",
-          alt: "Deja un compte ? Se connecter",
-          missing: "Supabase n'est pas configure.",
-          invalid: "Inscription impossible.",
-          emailAlreadyUsed: "Cet email est deja utilise.",
-          checkEmail:
-            "Compte cree. Verifiez votre boite email pour confirmer votre adresse avant de vous connecter.",
-        }
-      : {
-          title: "Signup",
-          email: "Email",
-          password: "Password",
-          submit: "Create account",
-          alt: "Already have an account? Login",
-          missing: "Supabase is not configured.",
-          invalid: "Signup failed.",
-          emailAlreadyUsed: "This email is already in use.",
-          checkEmail: "Account created. Check your inbox to confirm your email before logging in.",
-        };
 
   useEffect(() => {
     if (!supabase) return;
@@ -107,7 +148,24 @@ export default function SignupPage() {
       <AuthPremiumBackground />
       <section className="relative z-[1] mx-auto w-full max-w-md rounded-2xl border border-slate-200/90 bg-white/85 p-6 shadow-[0_28px_70px_-28px_rgba(15,23,42,0.18),0_0_0_1px_rgba(255,255,255,0.9)_inset] backdrop-blur-xl ring-1 ring-slate-200/60">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.title}</h1>
-        <form onSubmit={onSubmit} className="mt-5 space-y-4">
+
+        <div className="mt-5">
+          <GoogleAuthButton
+            supabase={supabase}
+            label={t.google}
+            missingConfigMessage={t.missing}
+            errorMessage={t.googleFailed}
+            disabled={loading}
+            onError={(msg) => {
+              setInfo(null);
+              setError(msg);
+            }}
+          />
+        </div>
+
+        <AuthOrDivider label={t.or} />
+
+        <form onSubmit={onSubmit} className="space-y-4">
           <label className="block text-sm">
             <span className="font-medium text-slate-700">{t.email}</span>
             <input

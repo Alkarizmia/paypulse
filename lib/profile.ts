@@ -1,4 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AppLocale } from "@/lib/app-locale";
+import { isAppLocale } from "@/lib/app-locale";
+import { isDisplayCurrency, type DisplayCurrency } from "@/lib/display-currency";
 import type { UiThemePreference } from "@/lib/ui-theme";
 
 export type { UiThemePreference };
@@ -10,12 +13,18 @@ export type UserProfile = {
   phone: string;
   address: string;
   country: string;
-  language: "fr" | "en";
+  language: AppLocale;
   autoRemindersEnabled: boolean;
+  /** E-mails occasionnels (nouveautés produit, astuces). */
+  emailProductUpdates: boolean;
+  /** Cartes factures plus serrées sur le dashboard. */
+  invoiceListCompact: boolean;
   /** Thème interface dashboard (paramètres). */
   uiTheme: UiThemePreference;
   /** Dernier portefeuille (workspace) actif sur le dashboard. */
   activeWorkspaceId: string | null;
+  /** Devise d’affichage et de saisie (montants stockés en EUR). */
+  displayCurrency: DisplayCurrency;
 };
 
 type ProfileRow = {
@@ -25,10 +34,13 @@ type ProfileRow = {
   phone: string | null;
   address: string | null;
   country: string | null;
-  language: "fr" | "en" | null;
+  language: string | null;
   auto_reminders_enabled: boolean | null;
+  email_product_updates: boolean | null;
+  invoice_list_compact: boolean | null;
   ui_theme: string | null;
   active_workspace_id: string | null;
+  display_currency: string | null;
 };
 
 function coerceUiTheme(v: string | null | undefined): UiThemePreference {
@@ -37,6 +49,7 @@ function coerceUiTheme(v: string | null | undefined): UiThemePreference {
 }
 
 function mapProfile(row: ProfileRow): UserProfile {
+  const lang = isAppLocale(row.language) ? row.language : "fr";
   return {
     userId: row.user_id,
     fullName: row.full_name ?? "",
@@ -44,19 +57,23 @@ function mapProfile(row: ProfileRow): UserProfile {
     phone: row.phone ?? "",
     address: row.address ?? "",
     country: row.country ?? "",
-    language: row.language === "en" ? "en" : "fr",
+    language: lang,
     autoRemindersEnabled: row.auto_reminders_enabled !== false,
+    emailProductUpdates: row.email_product_updates !== false,
+    invoiceListCompact: row.invoice_list_compact === true,
     uiTheme: coerceUiTheme(row.ui_theme),
     activeWorkspaceId: row.active_workspace_id ?? null,
+    displayCurrency: isDisplayCurrency(row.display_currency) ? row.display_currency : "EUR",
   };
 }
+
+const PROFILE_SELECT =
+  "user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,email_product_updates,invoice_list_compact,ui_theme,active_workspace_id,display_currency";
 
 export async function getProfile(supabase: SupabaseClient, userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select(
-      "user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,ui_theme,active_workspace_id",
-    )
+    .select(PROFILE_SELECT)
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -177,14 +194,15 @@ export async function upsertProfile(
         country: input.country || null,
         language: input.language,
         auto_reminders_enabled: input.autoRemindersEnabled,
+        email_product_updates: input.emailProductUpdates,
+        invoice_list_compact: input.invoiceListCompact,
         ui_theme: input.uiTheme,
         active_workspace_id: input.activeWorkspaceId ?? null,
+        display_currency: input.displayCurrency,
       },
       { onConflict: "user_id" },
     )
-    .select(
-      "user_id,full_name,company_name,phone,address,country,language,auto_reminders_enabled,ui_theme,active_workspace_id",
-    )
+    .select(PROFILE_SELECT)
     .single();
   if (error) throw error;
   return mapProfile(data as ProfileRow);
@@ -205,6 +223,8 @@ export async function updateProfileAutoReminders(
     user_id: userId,
     language: "fr",
     auto_reminders_enabled: enabled,
+    email_product_updates: true,
+    invoice_list_compact: false,
     ui_theme: "dark",
     active_workspace_id: null,
   });
@@ -230,6 +250,8 @@ export async function setProfileActiveWorkspace(
     user_id: userId,
     language: "fr",
     auto_reminders_enabled: true,
+    email_product_updates: true,
+    invoice_list_compact: false,
     ui_theme: "dark",
     active_workspace_id: workspaceId,
   });

@@ -1,5 +1,7 @@
 /** Brouillon + modèles de relance — stockage navigateur (en attendant profil Supabase). */
 
+import type { AppLocale } from "@/lib/app-locale";
+
 export const SCHEDULE_DAY_OPTIONS = [1, 3, 7, 21] as const;
 export type ScheduleDays = (typeof SCHEDULE_DAY_OPTIONS)[number];
 
@@ -65,7 +67,7 @@ function coerceStatusScope(v: unknown, fallback: ReminderStatusScope): ReminderS
 
 /** Modèle vide pour le bouton « + ». */
 export function createEmptyTemplate(
-  locale: "fr" | "en",
+  locale: AppLocale,
   daysAfterDue: ScheduleDays = 7,
   statusScope: ReminderStatusScope = "unpaid",
 ): ReminderTemplateEntry {
@@ -143,7 +145,7 @@ function defaultsEn(): ReminderTemplatesData {
   };
 }
 
-export function getDefaultReminderTemplates(locale: "fr" | "en"): ReminderTemplatesData {
+export function getDefaultReminderTemplates(locale: AppLocale): ReminderTemplatesData {
   return locale === "fr" ? defaultsFr() : defaultsEn();
 }
 
@@ -174,7 +176,7 @@ function migrateTemplateRow(raw: unknown, index: number, fallback: ReminderTempl
   return { id, title, body, daysAfterDue, statusScope };
 }
 
-function migrateTemplatesArray(tpl: unknown, base: ReminderTemplatesData, locale: "fr" | "en"): ReminderTemplateEntry[] {
+function migrateTemplatesArray(tpl: unknown, base: ReminderTemplatesData, locale: AppLocale): ReminderTemplateEntry[] {
   if (!Array.isArray(tpl) || tpl.length === 0) {
     return base.templates;
   }
@@ -189,7 +191,7 @@ function migrateTemplatesArray(tpl: unknown, base: ReminderTemplatesData, locale
  * @param maxTemplates borne supérieure du nombre de modèles (ex. 4 Pro, 5 Agency). Défaut 15 = compat anciennes données.
  */
 export function loadReminderTemplates(
-  locale: "fr" | "en",
+  locale: AppLocale,
   maxTemplates = 15,
   workspaceId = "default",
 ): ReminderTemplatesData {

@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- PayPulss — schéma SQL complet (idempotent)
 -- Ordre : schema.sql puis migrations 002 → 008
 -- =============================================================================
@@ -18,6 +18,12 @@ create table if not exists public.clients (
 
 alter table public.clients
   add column if not exists company_name text;
+
+alter table public.clients
+  add column if not exists domain text;
+
+alter table public.clients
+  add column if not exists phone text;
 
 alter table public.clients
   add column if not exists paid_at timestamptz;
@@ -51,7 +57,7 @@ create table if not exists public.profiles (
   language text not null default 'fr',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint profiles_language_check check (language in ('fr', 'en'))
+  constraint profiles_language_check check (language in ('fr', 'en', 'nl', 'es'))
 );
 
 alter table public.profiles add column if not exists address text;
@@ -63,6 +69,10 @@ alter table public.profiles add column if not exists language text not null defa
 alter table public.profiles
   add column if not exists auto_reminders_enabled boolean not null default true;
 
+alter table public.profiles add column if not exists email_product_updates boolean not null default true;
+
+alter table public.profiles add column if not exists invoice_list_compact boolean not null default false;
+
 alter table public.profiles
   add column if not exists ui_theme text not null default 'dark';
 
@@ -71,6 +81,15 @@ alter table public.profiles
 
 alter table public.profiles
   add constraint profiles_ui_theme_check check (ui_theme in ('dark', 'light', 'system'));
+
+alter table public.profiles
+  add column if not exists display_currency text not null default 'EUR';
+
+alter table public.profiles
+  drop constraint if exists profiles_display_currency_check;
+
+alter table public.profiles
+  add constraint profiles_display_currency_check check (display_currency in ('EUR', 'USD'));
 
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
@@ -378,7 +397,7 @@ create table if not exists public.account_invites (
   id uuid primary key default gen_random_uuid(),
   owner_user_id uuid not null references auth.users (id) on delete cascade,
   email text not null,
-  role text not null check (role in ('admin', 'member')),
+  role text not null check (role in ('admin', 'member', 'spectator')),
   token uuid not null default gen_random_uuid(),
   status text not null default 'pending' check (status in ('pending', 'accepted', 'cancelled')),
   created_at timestamptz not null default now(),
@@ -395,7 +414,7 @@ create table if not exists public.account_members (
   id uuid primary key default gen_random_uuid(),
   owner_user_id uuid not null references auth.users (id) on delete cascade,
   member_user_id uuid not null references auth.users (id) on delete cascade,
-  role text not null check (role in ('admin', 'member')),
+  role text not null check (role in ('admin', 'member', 'spectator')),
   created_at timestamptz not null default now(),
   unique (owner_user_id, member_user_id)
 );

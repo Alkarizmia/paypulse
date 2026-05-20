@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
+import { useDisplayCurrency } from "@/app/display-currency-context";
+import { formatRateHint, isDisplayCurrency } from "@/lib/display-currency";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { getProfile, syncAuthUserFromProfile, upsertProfile, type UserProfile } from "@/lib/profile";
+import { isAppLocale, type AppLocale } from "@/lib/app-locale";
 import {
   billingRecordsWithSubscriptionSnapshot,
   getBillingRecords,
@@ -17,16 +20,13 @@ import {
   type UserSubscription,
 } from "@/lib/subscriptions";
 import { WorkspacesSettings } from "@/app/settings/workspaces-settings";
-import { AccountTeamSettings } from "@/app/settings/account-team-settings";
-import type { PlanId } from "@/lib/plans";
+import { canAccessTeamPage, type PlanId } from "@/lib/plans";
 import { useWorkspace } from "@/app/workspace-context";
 import { writeStoredUiThemePreference } from "@/lib/ui-theme";
 
-const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-
 type ProfileForm = Omit<UserProfile, "userId">;
 
-function emptyProfile(locale: "fr" | "en"): ProfileForm {
+function emptyProfile(locale: AppLocale): ProfileForm {
   return {
     fullName: "",
     companyName: "",
@@ -35,13 +35,17 @@ function emptyProfile(locale: "fr" | "en"): ProfileForm {
     country: "",
     language: locale,
     autoRemindersEnabled: true,
+    emailProductUpdates: true,
+    invoiceListCompact: false,
     uiTheme: "light",
     activeWorkspaceId: null,
+    displayCurrency: "EUR",
   };
 }
 
 export default function SettingsPage() {
   const { locale, setLocale } = useLocale();
+  const { setDisplayCurrency, money } = useDisplayCurrency();
   const { user, loading, isAuthenticated, signOut } = useAuth();
   const ws = useWorkspace();
   const router = useRouter();
@@ -149,9 +153,13 @@ export default function SettingsPage() {
             country: profileData.country,
             language: profileData.language,
             autoRemindersEnabled: profileData.autoRemindersEnabled,
+            emailProductUpdates: profileData.emailProductUpdates,
+            invoiceListCompact: profileData.invoiceListCompact,
             uiTheme: profileData.uiTheme,
             activeWorkspaceId: profileData.activeWorkspaceId,
+            displayCurrency: profileData.displayCurrency,
           });
+          setDisplayCurrency(profileData.displayCurrency);
         }
         setSubscription(subscriptionData);
         setBilling(billingData);
@@ -233,6 +241,7 @@ export default function SettingsPage() {
     setSavingProfile(true);
     try {
       await upsertProfile(supabase, { userId: user.id, ...profile });
+      setDisplayCurrency(profile.displayCurrency);
 
       let { data: sess } = await supabase.auth.getSession();
       let token = sess.session?.access_token;
@@ -272,8 +281,8 @@ export default function SettingsPage() {
           if (j.phoneSkipped) {
             message =
               locale === "fr"
-                ? "Profil mis à jour. Le téléphone « Auth » n’a pas pu être enregistré (fournisseur SMS / config GoTrue) — il reste dans les métadonnées (contact_phone)."
-                : "Profile updated. Auth phone could not be set (SMS provider / GoTrue) — it remains in metadata (contact_phone).";
+                ? "Profil mis à jour. Le téléphone « Auth » n’a pas pu être enregistré (fournisseur SMS / config GoTrue). Il reste dans les métadonnées (contact_phone)."
+                : "Profile updated. Auth phone could not be set (SMS provider / GoTrue). It remains in metadata (contact_phone).";
           } else {
             message = locale === "fr" ? "Profil mis à jour." : "Profile updated.";
           }
@@ -409,8 +418,29 @@ export default function SettingsPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-slate-900">{locale === "fr" ? "Profil et données personnelles" : "Profile and personal data"}</h2>
+        <section id="organization" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 lg:col-span-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                {locale === "fr" ? "Organisation et profil" : locale === "nl" ? "Organisatie en profiel" : locale === "es" ? "Organización y perfil" : "Organization and profile"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {locale === "fr"
+                  ? "Nom, société et pays : utilisés sur vos relances et votre espace PayPulss."
+                  : locale === "nl"
+                    ? "Naam, bedrijf en land voor herinneringen en uw PayPulss-ruimte."
+                    : locale === "es"
+                      ? "Nombre, empresa y país para sus recordatorios y su espacio PayPulss."
+                      : "Name, company and country for reminders and your PayPulss workspace."}
+              </p>
+            </div>
+            <Link
+              href="/dashboard/organisation"
+              className="shrink-0 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-100"
+            >
+              {locale === "fr" ? "Calendrier & vue org." : "Calendar & org. view"}
+            </Link>
+          </div>
           <form onSubmit={handleSaveProfile} className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="block sm:col-span-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{locale === "fr" ? "Nom" : "Name"}</span>
@@ -461,12 +491,87 @@ export default function SettingsPage() {
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{locale === "fr" ? "Langue" : "Language"}</span>
               <select
                 value={profile.language}
-                onChange={(e) => setProfile((p) => ({ ...p, language: e.target.value as "fr" | "en" }))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setProfile((p) => ({ ...p, language: isAppLocale(v) ? v : "fr" }));
+                }}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
               >
                 <option value="fr">Français</option>
                 <option value="en">English</option>
+                <option value="nl">Nederlands</option>
+                <option value="es">Español</option>
               </select>
+              <p className="mt-1 text-xs text-slate-500">
+                {locale === "fr"
+                  ? "Interface : le français est complet ; les autres langues utilisent l’anglais pour certaines pages tant que la traduction n’est pas finalisée."
+                  : "Interface: French is fully translated; other languages may fall back to English on some screens until translations ship."}
+              </p>
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {locale === "fr" ? "Devise d’affichage" : locale === "nl" ? "Weergavevaluta" : locale === "es" ? "Moneda de visualización" : "Display currency"}
+              </span>
+              <select
+                value={profile.displayCurrency}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setProfile((p) => ({
+                    ...p,
+                    displayCurrency: isDisplayCurrency(v) ? v : "EUR",
+                  }));
+                }}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+              >
+                <option value="EUR">{locale === "fr" ? "Euro (EUR)" : "Euro (EUR)"}</option>
+                <option value="USD">{locale === "fr" ? "Dollar américain (USD)" : "US dollar (USD)"}</option>
+              </select>
+              <p className="mt-1 text-xs text-slate-500">{formatRateHint(locale, money.eurUsdRate)}</p>
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {locale === "fr" ? "Préférences produit" : "Product preferences"}
+              </span>
+              <div className="mt-2 space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    id="email-product-updates"
+                    type="checkbox"
+                    checked={profile.emailProductUpdates}
+                    onChange={(e) => setProfile((p) => ({ ...p, emailProductUpdates: e.target.checked }))}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                  />
+                  <label htmlFor="email-product-updates" className="text-sm text-slate-700">
+                    <span className="font-medium text-slate-900">
+                      {locale === "fr" ? "E-mails nouveautés & astuces" : "Product tips & updates email"}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      {locale === "fr"
+                        ? "Recevoir occasionnellement des nouveautés PayPulss (fonctions, bonnes pratiques). Tu pourras te désinscrire depuis chaque message."
+                        : "Occasional PayPulss updates (features, best practices). You can unsubscribe from any email."}
+                    </span>
+                  </label>
+                </div>
+                <div className="flex items-start gap-3 border-t border-slate-200/80 pt-3">
+                  <input
+                    id="invoice-list-compact"
+                    type="checkbox"
+                    checked={profile.invoiceListCompact}
+                    onChange={(e) => setProfile((p) => ({ ...p, invoiceListCompact: e.target.checked }))}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                  />
+                  <label htmlFor="invoice-list-compact" className="text-sm text-slate-700">
+                    <span className="font-medium text-slate-900">
+                      {locale === "fr" ? "Liste factures compacte" : "Compact invoice cards"}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      {locale === "fr"
+                        ? "Affichage plus dense sur le tableau de bord : cartes plus petites, textes et boutons resserrés. Tu vois nettement plus de fiches à l’écran."
+                        : "Denser dashboard cards: tighter padding, smaller type and buttons. You’ll clearly see more invoices on screen."}
+                    </span>
+                  </label>
+                </div>
+              </div>
             </label>
             <label className="block sm:col-span-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -535,7 +640,7 @@ export default function SettingsPage() {
             <p className="mt-3 text-sm text-slate-600">{planMeta.name}</p>
             <p className="mt-1 text-sm text-slate-600">{subscription?.status ?? "trial"}</p>
             <p className="mt-1 text-sm text-slate-600">
-              {currency.format((subscription?.amountCents ?? 0) / 100)}
+              {money.format((subscription?.amountCents ?? 0) / 100)}
               {subscription?.billingInterval === "year"
                 ? locale === "fr"
                   ? " / an"
@@ -553,7 +658,7 @@ export default function SettingsPage() {
               {subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "-"}
             </p>
             <p className="mt-3 text-sm font-medium text-slate-900">
-              {locale === "fr" ? "Total dépensé" : "Total spent"}: {currency.format(totalSpent / 100)}
+              {locale === "fr" ? "Total dépensé" : "Total spent"}: {money.format(totalSpent / 100)}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               {locale === "fr"
@@ -607,13 +712,61 @@ export default function SettingsPage() {
 
       {supabase && user ? (
         <div className="mt-8 space-y-8">
+          <p className="text-sm text-slate-600">
+            {locale === "fr" ? (
+              <>
+                <a href="#workspaces" className="font-semibold text-violet-700 hover:underline">
+                  Portefeuilles
+                </a>
+                {" · "}
+                <a href="#organization" className="font-semibold text-violet-700 hover:underline">
+                  Profil
+                </a>
+                {canAccessTeamPage((subscription?.planId ?? "free") as PlanId) ? (
+                  <>
+                    {" · "}
+                    <Link href="/dashboard/equipe" className="font-semibold text-violet-700 hover:underline">
+                      Équipe
+                    </Link>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <a href="#workspaces" className="font-semibold text-violet-700 hover:underline">
+                  Wallets
+                </a>
+                {" · "}
+                <a href="#organization" className="font-semibold text-violet-700 hover:underline">
+                  Profile
+                </a>
+              </>
+            )}
+          </p>
           <WorkspacesSettings
             supabase={supabase}
             userId={user.id}
             planId={(subscription?.planId ?? "free") as PlanId}
             locale={locale}
           />
-          <AccountTeamSettings supabase={supabase} planId={(subscription?.planId ?? "free") as PlanId} />
+          {canAccessTeamPage((subscription?.planId ?? "free") as PlanId) ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {locale === "fr" ? "Équipe" : locale === "nl" ? "Team" : locale === "es" ? "Equipo" : "Team"}
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                {locale === "fr"
+                  ? "Invitations et rôles (admin, membre, spectateur) se gèrent depuis la page Équipe du dashboard."
+                  : "Invites and roles (admin, member, viewer) are managed on the dashboard Team page."}
+              </p>
+              <Link
+                href="/dashboard/equipe"
+                className="mt-4 inline-flex rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+              >
+                {locale === "fr" ? "Ouvrir la page Équipe" : "Open Team page"}
+              </Link>
+            </section>
+          ) : null}
         </div>
       ) : null}
 
@@ -643,7 +796,7 @@ export default function SettingsPage() {
                       : `Period end (est.) ${new Date(entry.paidAt).toLocaleDateString("en-US")}`
                     : new Date(entry.paidAt).toLocaleDateString()}
                 </span>
-                <span>{currency.format(entry.amountCents / 100)}</span>
+                <span>{money.format(entry.amountCents / 100)}</span>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{entry.status}</span>
                 <span className="text-xs text-slate-500">{entry.provider}</span>
               </li>

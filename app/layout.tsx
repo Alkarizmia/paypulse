@@ -3,10 +3,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalTopBar } from "./conditional-topbar";
 import { LocaleProvider } from "./locale-context";
+import { DisplayCurrencyProvider } from "./display-currency-context";
 import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
 import { PwaRegister } from "./pwa-register";
 import { LowPerformanceHtmlAttrs } from "@/lib/low-performance";
+import { PageVisibilityHtmlAttrs } from "./page-visibility-html-attrs";
 
 const font = Inter({
   subsets: ["latin"],
@@ -59,14 +61,17 @@ export default function RootLayout({
     <html lang="fr" className={font.variable}>
       <body className={`${font.className} min-h-screen antialiased`}>
         <LowPerformanceHtmlAttrs />
+        <PageVisibilityHtmlAttrs />
         <PwaRegister />
         <AuthProvider>
           <LocaleProvider>
+            <DisplayCurrencyProvider>
             <div className="flex min-h-screen flex-col">
               <ConditionalTopBar />
               <div className="flex-1">{children}</div>
               <ConditionalFooter />
             </div>
+            </DisplayCurrencyProvider>
           </LocaleProvider>
         </AuthProvider>
       </body>

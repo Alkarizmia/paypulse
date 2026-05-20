@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useMoney } from "@/app/display-currency-context";
+import { convertDisplayToEur, formatAmountForInput } from "@/lib/display-currency";
 
 export type AdvanceNextCycleModalLabels = {
   title: string;
@@ -39,16 +41,17 @@ export function AdvanceNextCycleModal({
   onClose,
   onConfirm,
 }: AdvanceNextCycleModalProps) {
+  const money = useMoney();
   const [amountStr, setAmountStr] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    setAmountStr(String(defaultAmount));
+    setAmountStr(formatAmountForInput(defaultAmount, money.displayCurrency));
     setDueDate(defaultDueDate);
     setFormError(null);
-  }, [open, defaultAmount, defaultDueDate]);
+  }, [open, defaultAmount, defaultDueDate, money.displayCurrency]);
 
   if (!open) return null;
 
@@ -64,7 +67,10 @@ export function AdvanceNextCycleModal({
       return;
     }
     setFormError(null);
-    onConfirm({ amountDue: amount, dueDate: d });
+    onConfirm({
+      amountDue: convertDisplayToEur(amount, money.displayCurrency),
+      dueDate: d,
+    });
   }
 
   return (
@@ -85,7 +91,7 @@ export function AdvanceNextCycleModal({
         <div className="mt-5 space-y-4">
           <div>
             <label htmlFor="advance-amount" className="block text-xs font-medium uppercase tracking-wide text-slate-500">
-              {labels.amount}
+              {money.amountFieldLabel(labels.amount)}
             </label>
             <input
               id="advance-amount"

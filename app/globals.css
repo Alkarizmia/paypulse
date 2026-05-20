@@ -15,6 +15,14 @@ body {
   color: var(--foreground);
 }
 
+/* Onglet en arrière-plan (voir `PageVisibilityHtmlAttrs`) : pause les animations CSS
+   (landing, marquee, etc.) pour limiter CPU/GPU quand une autre page est au premier plan. */
+html.pp-doc-hidden *,
+html.pp-doc-hidden *::before,
+html.pp-doc-hidden *::after {
+  animation-play-state: paused !important;
+}
+
 @keyframes pp-fade-up {
   from {
     opacity: 0;
@@ -563,7 +571,15 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   }
 }
 
-/* Dashboard / marketing cards: lift + slight zoom on hover */
+/* Landing pricing : ombre / bordure au survol (le lift est sur l’enfant motion, pas ici) */
+.pp-landing-plan-card {
+  transition:
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+  will-change: transform;
+}
+
+/* Dashboard cards: lift + slight zoom on hover */
 .pp-dashboard-card-interactive {
   transition:
     transform 200ms ease,

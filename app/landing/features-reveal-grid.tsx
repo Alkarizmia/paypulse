@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
+import { CARD_LIFT_HOVER_VARIANTS, cardLiftWhileHover } from "@/app/landing/landing-motion";
 import { useRef, useSyncExternalStore, type ReactNode } from "react";
 
 export type FeaturesRevealItem = {
@@ -48,7 +49,6 @@ function FeatureRevealCard({
 
   const { scrollYProgress } = useScroll({
     target: ref,
-    /* Zone plus haute dans le viewport = plus de pixels de scroll pour faire glisser la carte */
     offset: ["start 0.94", "start 0.32"],
   });
 
@@ -73,31 +73,27 @@ function FeatureRevealCard({
   });
 
   return (
-    <motion.div
-      ref={ref}
-      style={{ x, y, opacity }}
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm backdrop-blur-md will-change-transform"
-      whileHover={
-        reduceMotion
-          ? undefined
-          : {
-              y: -4,
-              borderColor: "rgba(167, 139, 250, 0.22)",
-              boxShadow:
-                "0 20px 40px -24px rgba(15,23,42,0.35), 0 0 0 1px rgba(139,92,246,0.2), 0 0 40px -18px rgba(139, 92, 246, 0.35)",
-            }
-      }
-      transition={{ type: "spring", stiffness: 380, damping: 26 }}
-    >
-      <div className="flex items-start gap-4">
-        <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-[0_0_24px_-12px_rgba(139,92,246,0.3)]">
-          {card.icon}
-        </div>
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">{card.title}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">{card.body}</p>
-        </div>
-      </div>
+    <motion.div ref={ref} style={{ x, y, opacity }} className="h-full will-change-transform">
+      <motion.div className="group flex h-full w-full" whileHover={cardLiftWhileHover(reduceMotion)}>
+        <motion.div
+          className={`flex h-full min-h-[10.75rem] w-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm backdrop-blur-md transition-[box-shadow,border-color] duration-200 ease-out sm:min-h-[10.25rem] lg:min-h-[9.75rem] ${
+            reduceMotion
+              ? ""
+              : "group-hover:border-violet-400/25 group-hover:shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35),0_0_0_1px_rgba(139,92,246,0.2),0_0_40px_-18px_rgba(139,92,246,0.35)]"
+          }`}
+          variants={CARD_LIFT_HOVER_VARIANTS}
+        >
+          <div className="flex flex-1 items-start gap-4">
+            <div className="relative shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-[0_0_24px_-12px_rgba(139,92,246,0.3)]">
+              {card.icon}
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col">
+              <h3 className="text-base font-semibold text-slate-900">{card.title}</h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{card.body}</p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -110,7 +106,7 @@ export function FeaturesRevealGrid({
   reduceMotion: boolean;
 }) {
   return (
-    <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="mt-14 grid grid-cols-1 items-stretch gap-5 overflow-visible py-2 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((card, index) => (
         <FeatureRevealCard key={card.title} card={card} index={index} reduceMotion={reduceMotion} />
       ))}
