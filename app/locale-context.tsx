@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { type AppLocale, isAppLocale } from "@/lib/app-locale";
 
 export type Locale = AppLocale;
@@ -13,15 +13,19 @@ type LocaleContextValue = {
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window === "undefined") return "fr";
+  /** Toujours « fr » au premier rendu (serveur + hydratation), puis locale stockée après montage. */
+  const [locale, setLocale] = useState<Locale>("fr");
+
+  useEffect(() => {
     try {
       const stored = window.localStorage.getItem("paypulse_locale");
-      return isAppLocale(stored) ? stored : "fr";
+      if (isAppLocale(stored) && stored !== "fr") {
+        setLocale(stored);
+      }
     } catch {
-      return "fr";
+      // ignore
     }
-  });
+  }, []);
 
   function setAndPersist(next: Locale) {
     setLocale(next);

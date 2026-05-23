@@ -21,6 +21,8 @@ import {
 import type { PlanId } from "@/lib/plans";
 import { AUTO_REMINDER_FROM_DISPLAY } from "@/lib/auto-reminder-copy";
 import { REMINDER_TEMPLATE_VARIABLES_DOC } from "@/lib/reminder-template-substitution";
+import type { ReminderTemplateAttachmentMeta } from "@/lib/reminder-template-attachment";
+import { TemplateAttachmentField } from "@/app/dashboard/modeles-relance/template-attachment-field";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const SCHEDULE_CHIPS = [1, 3, 7, 21] as const;
@@ -39,9 +41,19 @@ type EditableTemplate = {
   bodyTemplate: string;
   paymentLink: string;
   sortOrder: number;
+  attachment: ReminderTemplateAttachmentMeta | null;
 };
 
 function rowFromDb(t: ReminderEmailTemplate): EditableTemplate {
+  const attachment =
+    t.attachmentStoragePath && t.attachmentFileName
+      ? {
+          storagePath: t.attachmentStoragePath,
+          fileName: t.attachmentFileName,
+          contentType: t.attachmentContentType ?? "application/octet-stream",
+          sizeBytes: t.attachmentSizeBytes ?? 0,
+        }
+      : null;
   return {
     clientId: t.id,
     daysAfterDue: t.daysAfterDue,
@@ -49,6 +61,7 @@ function rowFromDb(t: ReminderEmailTemplate): EditableTemplate {
     bodyTemplate: t.bodyTemplate,
     paymentLink: t.paymentLink ?? "",
     sortOrder: t.sortOrder,
+    attachment,
   };
 }
 
@@ -165,6 +178,13 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           subject: "Objet (sujet)",
           body: "Corps du message",
           link: "Lien de paiement (optionnel)",
+          attachmentTitle: "Pièce jointe (optionnelle)",
+          attachmentChoose: "Parcourir les fichiers",
+          attachmentReplace: "Changer de fichier",
+          attachmentRemove: "Retirer",
+          attachmentUploading: "Envoi…",
+          attachmentNone: "Aucune pièce jointe pour ce modèle.",
+          attachmentAttached: (name: string, size: string) => `Fichier : ${name} (${size})`,
           linkLockedHint:
             "Plans Pro et Agence : champ séparé « lien de paiement » avec mise en avant cliquable en bas du mail. Sur Starter, ce champ est absent ; vous pouvez quand même saisir une URL https dans le corps. PayPulss envoie la relance en texte brut (sans HTML). Le destinataire copie-collera le lien s’il y en a.",
           starterBodyUrlsHint:
@@ -214,6 +234,13 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           subject: "Subject",
           body: "Message body",
           link: "Payment link (optional)",
+          attachmentTitle: "Attachment (optional)",
+          attachmentChoose: "Browse files",
+          attachmentReplace: "Change file",
+          attachmentRemove: "Remove",
+          attachmentUploading: "Uploading…",
+          attachmentNone: "No attachment for this template.",
+          attachmentAttached: (name: string, size: string) => `File: ${name} (${size})`,
           linkLockedHint:
             "Pro / Agency unlock a dedicated payment-link field rendered as an obvious clickable block. Starter hides that field—you can paste an https URL in the body instead. Starter uses plain-text email (no HTML) so recipients usually copy links manually.",
           starterBodyUrlsHint:
@@ -247,6 +274,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         bodyTemplate: locale === "fr" ? defaultTemplateBodyFr(d) : defaultTemplateBodyEn(d),
         paymentLink: "",
         sortOrder: order++,
+        attachment: null,
       });
     }
     setRows(next);
@@ -272,12 +300,30 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         bodyTemplate: locale === "fr" ? defaultTemplateBodyFr(free) : defaultTemplateBodyEn(free),
         paymentLink: "",
         sortOrder: prev.length,
+        attachment: null,
       },
     ]);
   }
 
+  async function deleteAttachmentQuiet(path: string) {
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) return;
+      await fetch("/api/reminder-template-attachment", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ storagePath: path }),
+      });
+    } catch {
+      /* best effort */
+    }
+  }
+
   function removeRow(clientId: string) {
     if (memberReadOnly) return;
+    const row = rows.find((r) => r.clientId === clientId);
+    if (row?.attachment?.storagePath) void deleteAttachmentQuiet(row.attachment.storagePath);
     setRows((prev) => prev.filter((r) => r.clientId !== clientId).map((r, i) => ({ ...r, sortOrder: i })));
   }
 
@@ -320,6 +366,10 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         bodyTemplate: r.bodyTemplate,
         paymentLink: allowPaymentLink ? r.paymentLink.trim() || null : null,
         sortOrder: i,
+        attachmentStoragePath: r.attachment?.storagePath ?? null,
+        attachmentFileName: r.attachment?.fileName ?? null,
+        attachmentContentType: r.attachment?.contentType ?? null,
+        attachmentSizeBytes: r.attachment?.sizeBytes ?? null,
       }));
 
       const saved = await replaceReminderEmailTemplatesForWorkspace(supabase, workspaceId, userId, inputs);
@@ -446,7 +496,11 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                           key={day}
                           type="button"
                           disabled={memberReadOnly || taken}
-                          onClick={() => updateRow(r.clientId, { daysAfterDue: day })}
+                          onClick={() => {
+                            if (r.daysAfterDue === day) return;
+                            if (r.attachment?.storagePath) void deleteAttachmentQuiet(r.attachment.storagePath);
+                            updateRow(r.clientId, { daysAfterDue: day, attachment: null });
+                          }}
                           className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
                             r.daysAfterDue === day
                               ? "border-blue-500 bg-blue-600 text-white"
@@ -494,6 +548,26 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                   ) : (
                     <p className="mt-2 text-[11px] italic text-slate-500">{t.linkLockedHint}</p>
                   )}
+                  <TemplateAttachmentField
+                    supabase={supabase}
+                    workspaceId={workspaceId}
+                    daysAfterDue={r.daysAfterDue}
+                    planId={planId}
+                    locale={locale}
+                    disabled={memberReadOnly}
+                    value={r.attachment}
+                    onChange={(attachment) => updateRow(r.clientId, { attachment })}
+                    onError={(msg) => setMessage(msg)}
+                    labels={{
+                      title: t.attachmentTitle,
+                      choose: t.attachmentChoose,
+                      replace: t.attachmentReplace,
+                      remove: t.attachmentRemove,
+                      uploading: t.attachmentUploading,
+                      none: t.attachmentNone,
+                      attached: t.attachmentAttached,
+                    }}
+                  />
                 </div>
               ))}
             </div>

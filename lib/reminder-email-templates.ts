@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeDaysAfterDue, upsertReminderRule, type ReminderRule } from "@/lib/reminder-rules";
+import { REMINDER_ATTACHMENT_BUCKET } from "@/lib/reminder-template-attachment";
 
 export type ReminderEmailTemplateRow = {
   id: string;
@@ -10,6 +11,10 @@ export type ReminderEmailTemplateRow = {
   body_template: string;
   payment_link: string | null;
   sort_order: number;
+  attachment_storage_path: string | null;
+  attachment_file_name: string | null;
+  attachment_content_type: string | null;
+  attachment_size_bytes: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -23,6 +28,10 @@ export type ReminderEmailTemplate = {
   bodyTemplate: string;
   paymentLink: string | null;
   sortOrder: number;
+  attachmentStoragePath: string | null;
+  attachmentFileName: string | null;
+  attachmentContentType: string | null;
+  attachmentSizeBytes: number | null;
 };
 
 function mapRow(row: ReminderEmailTemplateRow): ReminderEmailTemplate {
@@ -35,14 +44,18 @@ function mapRow(row: ReminderEmailTemplateRow): ReminderEmailTemplate {
     bodyTemplate: row.body_template,
     paymentLink: row.payment_link,
     sortOrder: Number(row.sort_order),
+    attachmentStoragePath: row.attachment_storage_path,
+    attachmentFileName: row.attachment_file_name,
+    attachmentContentType: row.attachment_content_type,
+    attachmentSizeBytes:
+      row.attachment_size_bytes === null || row.attachment_size_bytes === undefined
+        ? null
+        : Number(row.attachment_size_bytes),
   };
 }
 
-// Projection mise à dispo pour les autres modules qui chargent les modèles (cf. reminder-automation).
-// On exclut volontairement `created_at` / `updated_at` : ces colonnes ne sont lues par aucun mapping
-// et chaque modèle contient un corps HTML lourd → on évite de payer l'egress sur des champs morts.
 export const REMINDER_EMAIL_TEMPLATE_SELECT =
-  "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order";
+  "id,workspace_id,owner_user_id,days_after_due,subject_template,body_template,payment_link,sort_order,attachment_storage_path,attachment_file_name,attachment_content_type,attachment_size_bytes";
 
 export async function listReminderEmailTemplates(
   supabase: SupabaseClient,
@@ -64,7 +77,22 @@ export type ReminderEmailTemplateInput = {
   bodyTemplate: string;
   paymentLink: string | null;
   sortOrder: number;
+  attachmentStoragePath?: string | null;
+  attachmentFileName?: string | null;
+  attachmentContentType?: string | null;
+  attachmentSizeBytes?: number | null;
 };
+
+/** Supprime des fichiers Storage orphelins (best effort). */
+export async function removeReminderAttachmentFiles(
+  supabase: SupabaseClient,
+  paths: string[],
+): Promise<void> {
+  const unique = [...new Set(paths.filter(Boolean))];
+  if (unique.length === 0) return;
+  const { error } = await supabase.storage.from(REMINDER_ATTACHMENT_BUCKET).remove(unique);
+  if (error) throw error;
+}
 
 /** Remplace tous les modèles du portefeuille (transaction logique : delete puis insert batch). */
 export async function replaceReminderEmailTemplatesForWorkspace(
@@ -72,26 +100,46 @@ export async function replaceReminderEmailTemplatesForWorkspace(
   workspaceId: string,
   ownerUserId: string,
   templates: ReminderEmailTemplateInput[],
+  options?: { orphanPathsToDelete?: string[] },
 ): Promise<ReminderEmailTemplate[]> {
+  const previous = await listReminderEmailTemplates(supabase, workspaceId);
+  const previousPaths = previous.map((t) => t.attachmentStoragePath).filter((p): p is string => Boolean(p));
+
   const { error: delErr } = await supabase.from("reminder_email_templates").delete().eq("workspace_id", workspaceId);
   if (delErr) throw delErr;
-  if (templates.length === 0) return [];
-  const rows = templates.map((t) => ({
-    workspace_id: workspaceId,
-    owner_user_id: ownerUserId,
-    days_after_due: t.daysAfterDue,
-    subject_template: t.subjectTemplate,
-    body_template: t.bodyTemplate,
-    payment_link: t.paymentLink?.trim() || null,
-    sort_order: t.sortOrder,
-    updated_at: new Date().toISOString(),
-  }));
-  const { data, error } = await supabase
-    .from("reminder_email_templates")
-    .insert(rows)
-    .select(REMINDER_EMAIL_TEMPLATE_SELECT);
-  if (error) throw error;
-  return (data ?? []).map((r) => mapRow(r as ReminderEmailTemplateRow));
+
+  let saved: ReminderEmailTemplate[] = [];
+  if (templates.length > 0) {
+    const rows = templates.map((t) => ({
+      workspace_id: workspaceId,
+      owner_user_id: ownerUserId,
+      days_after_due: t.daysAfterDue,
+      subject_template: t.subjectTemplate,
+      body_template: t.bodyTemplate,
+      payment_link: t.paymentLink?.trim() || null,
+      sort_order: t.sortOrder,
+      attachment_storage_path: t.attachmentStoragePath?.trim() || null,
+      attachment_file_name: t.attachmentFileName?.trim() || null,
+      attachment_content_type: t.attachmentContentType?.trim() || null,
+      attachment_size_bytes: t.attachmentSizeBytes ?? null,
+      updated_at: new Date().toISOString(),
+    }));
+    const { data, error } = await supabase
+      .from("reminder_email_templates")
+      .insert(rows)
+      .select(REMINDER_EMAIL_TEMPLATE_SELECT);
+    if (error) throw error;
+    saved = (data ?? []).map((r) => mapRow(r as ReminderEmailTemplateRow));
+  }
+
+  const kept = new Set(saved.map((t) => t.attachmentStoragePath).filter((p): p is string => Boolean(p)));
+  const toDelete = new Set<string>([...previousPaths, ...(options?.orphanPathsToDelete ?? [])]);
+  for (const p of kept) toDelete.delete(p);
+  if (toDelete.size > 0) {
+    await removeReminderAttachmentFiles(supabase, [...toDelete]);
+  }
+
+  return saved;
 }
 
 /** Jours J+n distincts issus des modèles (triés). */
@@ -106,10 +154,6 @@ export function scheduleDaysFromTemplates(templates: ReminderEmailTemplate[]): n
   return [...set].sort((a, b) => a - b);
 }
 
-/**
- * Synchronise `reminder_rules.days_after_due` avec les jours des modèles (pour compat / lecture).
- * Ne modifie pas enabled ni max_jobs_per_run.
- */
 export async function syncReminderRuleDaysFromTemplates(
   supabase: SupabaseClient,
   rule: ReminderRule,
@@ -123,10 +167,6 @@ export async function syncReminderRuleDaysFromTemplates(
   });
 }
 
-/**
- * Premier modèle (tri sort_order, days_after_due).
- * Réservé aux fiches impayées pour la relance manuelle ; sinon utiliser le brouillon.
- */
 export function pickFirstReminderTemplate(templates: ReminderEmailTemplate[]): ReminderEmailTemplate | null {
   if (templates.length === 0) return null;
   const sorted = [...templates].sort((a, b) => a.sortOrder - b.sortOrder || a.daysAfterDue - b.daysAfterDue);

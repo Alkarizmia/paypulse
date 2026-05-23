@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlanId } from "@/lib/plans";
 import { autoReminderSendHtmlAllowed, getMaxReminderJobsPerRun, REMINDER_JOBS_PER_RUN_DEFAULT } from "@/lib/plans";
 import { getCurrentSubscription } from "@/lib/subscriptions";
-import { sendResendReminderEmail } from "@/lib/resend-reminder-send";
+import { sendResendReminderEmail, type ResendEmailAttachment } from "@/lib/resend-reminder-send";
+import { REMINDER_ATTACHMENT_BUCKET } from "@/lib/reminder-template-attachment";
 import {
   listReminderEmailTemplates,
   REMINDER_EMAIL_TEMPLATE_SELECT,
@@ -177,6 +178,13 @@ function mapTemplateRow(r: ReminderEmailTemplateRow): ReminderEmailTemplate {
     bodyTemplate: r.body_template,
     paymentLink: r.payment_link,
     sortOrder: Number(r.sort_order),
+    attachmentStoragePath: r.attachment_storage_path,
+    attachmentFileName: r.attachment_file_name,
+    attachmentContentType: r.attachment_content_type,
+    attachmentSizeBytes:
+      r.attachment_size_bytes === null || r.attachment_size_bytes === undefined
+        ? null
+        : Number(r.attachment_size_bytes),
   };
 }
 
@@ -624,11 +632,28 @@ export async function processDueReminderJobs(supabase: SupabaseClient): Promise<
     const ownerPlan = await planIdForOwner(job.owner_user_id);
     const allowHtml = autoReminderSendHtmlAllowed(ownerPlan);
 
+    let attachments: ResendEmailAttachment[] | undefined;
+    if (tpl?.attachmentStoragePath && tpl.attachmentFileName) {
+      const { data: blob, error: dlErr } = await supabase.storage
+        .from(REMINDER_ATTACHMENT_BUCKET)
+        .download(tpl.attachmentStoragePath);
+      if (!dlErr && blob) {
+        const buf = Buffer.from(await blob.arrayBuffer());
+        attachments = [
+          {
+            filename: tpl.attachmentFileName,
+            content: buf.toString("base64"),
+          },
+        ];
+      }
+    }
+
     const sendResult = await sendResendReminderEmail({
       to: client.email,
       subject,
       text,
       ...(allowHtml ? { html } : {}),
+      ...(attachments ? { attachments } : {}),
       fromContext: "automation",
     });
 

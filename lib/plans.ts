@@ -199,6 +199,14 @@ export function getMaxReminderJobsPerRun(planId: PlanId): number {
   return 60;
 }
 
+/** Pièce jointe par modèle de relance (PDF / image). Starter 1 Mo, Pro 10 Mo, Agency 50 Mo. */
+export function getReminderAttachmentMaxBytes(planId: PlanId): number {
+  if (planId === "agency") return 50 * 1024 * 1024;
+  if (planId === "pro") return 10 * 1024 * 1024;
+  if (planId === "starter") return 1024 * 1024;
+  return 0;
+}
+
 /** Nombre max de modèles d’e-mail enregistrés. Starter : 1, Pro : 4, Agency : 8. */
 export function getMaxEmailTemplates(planId: PlanId): number {
   if (planId === "starter") return 1;

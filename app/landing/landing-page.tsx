@@ -9,27 +9,23 @@ import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
 import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
 import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
-import { PwaInstallButton } from "@/app/pwa-install-button";
 import {
   CARD_LIFT_HOVER_VARIANTS,
-  HeroEntrance,
   Reveal,
   cardLiftWhileHover,
 } from "@/app/landing/landing-motion";
 import { ScrollShiftSection } from "@/app/landing/scroll-shift-section";
-import { PaypulssScrollPin } from "@/app/landing/paypulss-scroll-pin";
 import { ProofStatsSection } from "@/app/landing/proof-stats-section";
 import { getLandingCopy, getLocalizedPlanCard, pricingAnnualPeriodLabel } from "@/lib/messages/landing-copy";
 import { pickQuad } from "@/lib/messages/pick";
+import { useHydrated } from "@/lib/use-hydrated";
 import { LandingGreyWaveBackdrop } from "@/app/landing/landing-wave-backdrop";
 
-import {
-  DashboardChartsMock,
-  type ChartsMockCopy,
-  type DashboardMockTheme,
-} from "@/app/landing/dashboard-charts-mock";
 import { ProductTourMarquee } from "@/app/landing/product-tour-marquee";
 import { FeaturesRevealGrid } from "@/app/landing/features-reveal-grid";
+import { LandingBonsaiHero } from "@/app/landing/landing-bonsai-hero";
+import { LandingDemoSection } from "@/app/landing/landing-demo-section";
+import { LandingHowSection } from "@/app/landing/landing-how-section";
 
 const ACCENT = "#34D399";
 const BG = "#f8fafc";
@@ -48,176 +44,6 @@ const ANNUAL_PRICING: Partial<Record<PlanId, AnnualPricing>> = {
   pro: { annual: "182.40€", oldAnnual: "228€" },
   agency: { annual: "374.40€", oldAnnual: "468€" },
 };
-
-export function ProductDemoMock({
-  demo,
-  className,
-}: {
-  demo: {
-    panelTitle: string;
-    tabIn: string;
-    tabOut: string;
-    rowClient: string;
-    rowAmount: string;
-    rowStatus: string;
-    dueLabel: string;
-    toggleLabel: string;
-    receiptTitle: string;
-    receiptLine: string;
-    receiptTotal: string;
-    floatLabel: string;
-  };
-  className?: string;
-}) {
-  return (
-    <div className={`relative mx-auto max-w-xl lg:mx-0 ${className ?? ""}`}>
-      <div className="absolute -right-6 -top-4 z-10 hidden max-w-[200px] rounded-xl border border-white/10 bg-[#0a1f35] p-3 shadow-xl sm:block">
-        <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: ACCENT }}>
-          {demo.floatLabel}
-        </p>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="text-xs text-slate-400">{demo.toggleLabel}</span>
-          <button
-            type="button"
-            className="relative h-5 w-9 rounded-full bg-[#34D399]/30 transition"
-            aria-label="Toggle"
-          >
-            <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-[#34D399] shadow" />
-          </button>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl shadow-black/50">
-        <div className="flex items-center justify-between border-b border-slate-200/80 bg-slate-50 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-red-400" />
-            <span className="h-2 w-2 rounded-full bg-amber-400" />
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-          </div>
-          <span className="text-xs font-medium text-slate-500">{demo.panelTitle}</span>
-          <span className="w-10" />
-        </div>
-        <div className="grid gap-0 sm:grid-cols-[1fr_140px]">
-          <div className="border-b border-slate-100 p-4 sm:border-b-0 sm:border-r">
-            <div className="flex gap-2 text-xs font-semibold">
-              <span className="rounded-full bg-slate-900 px-3 py-1 text-white">{demo.tabIn}</span>
-              <span className="rounded-full px-3 py-1 text-slate-500">{demo.tabOut}</span>
-            </div>
-            <ul className="mt-4 space-y-2">
-              <li className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-sm">
-                <span className="font-medium text-slate-800">{demo.rowClient}</span>
-                <span className="font-semibold text-slate-900">{demo.rowAmount}</span>
-              </li>
-              <li className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 px-3 py-2.5 text-xs text-slate-500">
-                <span>{demo.rowStatus}</span>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">
-                  {demo.dueLabel}
-                </span>
-              </li>
-            </ul>
-          </div>
-          <div className="bg-slate-50/50 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{demo.receiptTitle}</p>
-            <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex items-start gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500">
-                  PDF
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-slate-800">{demo.receiptLine}</p>
-                  <p className="mt-1 text-lg font-bold text-slate-900">{demo.receiptTotal}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Aperçu double thème (sombre + clair) du dashboard. Pile les deux mocks dans
- * un grid 1×1, l'inactif dépasse en coin haut-droit pour montrer qu'il existe.
- * Click ou touche Entrée pour basculer.
- */
-function DualThemeDashboardPreview({
-  charts,
-  hint,
-  ariaLabelDark,
-  ariaLabelLight,
-}: {
-  charts: ChartsMockCopy;
-  hint: string;
-  ariaLabelDark: string;
-  ariaLabelLight: string;
-}) {
-  const [active, setActive] = useState<DashboardMockTheme>("dark");
-  const swap = () => setActive((a) => (a === "dark" ? "light" : "dark"));
-
-  const baseLayer =
-    "col-start-1 row-start-1 will-change-transform transition-[transform,opacity,filter] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]";
-  const front = "z-20 translate-x-0 translate-y-0 scale-100 opacity-100 [filter:drop-shadow(0_18px_38px_rgba(15,23,42,0.18))]";
-  const back =
-    "z-10 translate-x-3 -translate-y-3 sm:translate-x-5 sm:-translate-y-5 lg:translate-x-6 lg:-translate-y-6 scale-[0.965] opacity-85 [filter:drop-shadow(0_10px_24px_rgba(15,23,42,0.12))]";
-
-  return (
-    <div className="relative w-full">
-      <button
-        type="button"
-        onClick={swap}
-        aria-label={active === "dark" ? ariaLabelLight : ariaLabelDark}
-        className="group relative block w-full cursor-pointer rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-[#34D399]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-      >
-        <div className="grid">
-          <div className={`${baseLayer} ${active === "dark" ? front : back}`}>
-            <DashboardChartsMock theme="dark" charts={charts} className="lg:max-w-none" />
-          </div>
-          <div className={`${baseLayer} ${active === "light" ? front : back}`}>
-            <DashboardChartsMock theme="light" charts={charts} className="lg:max-w-none" />
-          </div>
-        </div>
-      </button>
-      <div className="mt-6 flex flex-col items-center gap-3 sm:mt-8">
-        <div role="tablist" aria-label={hint} className="inline-flex items-stretch rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={active === "dark"}
-            onClick={() => setActive("dark")}
-            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition sm:text-sm ${
-              active === "dark" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-              </svg>
-              {ariaLabelDark}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={active === "light"}
-            onClick={() => setActive("light")}
-            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition sm:text-sm ${
-              active === "light" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5M12 19.5V21M4.22 4.22l1.06 1.06M18.72 18.72l1.06 1.06M3 12h1.5M19.5 12H21M4.22 19.78l1.06-1.06M18.72 5.28l1.06-1.06M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-              </svg>
-              {ariaLabelLight}
-            </span>
-          </button>
-        </div>
-        <p className="text-xs text-slate-500 sm:text-sm">{hint}</p>
-      </div>
-    </div>
-  );
-}
 
 type FeatureItem = { title: string; body: string; icon: ReactNode };
 
@@ -269,6 +95,7 @@ function featureIcon(kind: "clients" | "status" | "remind" | "dash" | "auto" | "
 export function LandingPage() {
   const { locale } = useLocale();
   const { isAuthenticated } = useAuth();
+  const hydrated = useHydrated();
   const reduceMotion = usePreferMinimalMotion();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
@@ -316,106 +143,15 @@ export function LandingPage() {
       </div>
 
       <main className="relative z-[1]">
-        {/* Section 1 : Hero plein viewport, image de fond statique (révolution tech) */}
-        <section className="relative isolate flex min-h-[100svh] flex-col justify-center overflow-hidden bg-slate-50 px-5 pb-24 pt-12 sm:px-10 sm:pb-32 sm:pt-16 lg:pb-40">
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
-            <div className="pp-hero-warp-layer pp-hero-warp-layer--a absolute inset-0">
-              <Image
-                src="/images/landing/hero-tech-revolution.png"
-                alt=""
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover object-center"
-              />
-            </div>
-            <div className="pp-hero-warp-layer pp-hero-warp-layer--b absolute inset-0">
-              <Image
-                src="/images/landing/hero-tech-revolution.png"
-                alt=""
-                fill
-                sizes="100vw"
-                className="object-cover object-center"
-              />
-            </div>
-          </div>
-          <div
-            className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-white/55 via-white/30 to-slate-50/65"
-            aria-hidden
-          />
-          <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center px-2 text-center sm:px-4">
-            <HeroEntrance>
-              <div className="mb-6 flex flex-col items-center gap-5 drop-shadow-[0_8px_30px_rgba(59,130,246,0.12)]">
-                <div className="flex items-center justify-center gap-2.5">
-                  <PayPulseLogo className="h-9 w-9 shrink-0 opacity-95 sm:h-10 sm:w-10" />
-                  <span className="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">PayPulss</span>
-                </div>
-                <span className="inline-flex items-center rounded-full border border-slate-300 bg-white/85 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-700 shadow-[0_0_0_1px_rgba(148,163,184,0.2)_inset] backdrop-blur-md sm:text-xs">
-                  {t.heroBadge}
-                </span>
-              </div>
-            </HeroEntrance>
-
-            <HeroEntrance delay={0.55} className="relative mt-2 w-full">
-              <h1 className="relative z-10 mx-auto max-w-[min(100%,52rem)] font-semibold tracking-tight text-slate-900 drop-shadow-[0_6px_20px_rgba(148,163,184,0.2)] [font-size:clamp(1.35rem,5.4vw,3.5rem)] [line-height:1.12]">
-                <span className="pp-chromatic-hero-line block whitespace-nowrap text-slate-900">{t.heroLine1}</span>
-                <span className="mt-1 block whitespace-nowrap bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-500 bg-clip-text text-transparent [text-shadow:0_0_30px_rgba(59,130,246,0.2)] sm:mt-2">
-                  {t.heroLine2}
-                </span>
-              </h1>
-            </HeroEntrance>
-
-            <HeroEntrance delay={0.9} className="mt-8 max-w-2xl px-1">
-              <p className="text-[15px] font-light leading-relaxed text-slate-700 sm:text-lg sm:leading-relaxed">
-                {t.heroSubline}
-              </p>
-            </HeroEntrance>
-
-            <HeroEntrance delay={1.15} className="mt-12 flex w-full max-w-2xl flex-col items-stretch gap-4 sm:flex-row sm:justify-center sm:gap-5">
-              <motion.div
-                className="inline-flex w-full sm:w-auto sm:min-w-[220px]"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 380, damping: 24 }}
-              >
-                <Link
-                  href={isAuthenticated ? "/dashboard" : "/signup"}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-8 py-4 text-sm font-semibold text-white shadow-[0_20px_50px_-12px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition hover:bg-[#1d4ed8] hover:shadow-[0_24px_56px_-10px_rgba(29,78,216,0.5)] sm:w-auto"
-                >
-                  {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
-                  <svg className="h-4 w-4 shrink-0 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H9M17 7v8" />
-                  </svg>
-                </Link>
-              </motion.div>
-              <motion.div
-                className="inline-flex w-full sm:w-auto sm:min-w-[200px]"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 380, damping: 24 }}
-              >
-                <a
-                  href={`#${t.demoAnchor}`}
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-8 py-4 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-md transition hover:border-slate-400 hover:bg-slate-50 sm:w-auto"
-                >
-                  {t.ctaPricing}
-                </a>
-              </motion.div>
-            </HeroEntrance>
-
-            <HeroEntrance delay={1.28} className="mt-4">
-              <p className="text-xs font-medium text-slate-600 sm:text-sm">{t.microNoCard}</p>
-            </HeroEntrance>
-
-            <div className="mt-10 flex w-full justify-center">
-              <PwaInstallButton labels={t.installLabels} />
-            </div>
-          </div>
-        </section>
-
-        <div className="hidden scroll-mt-28 md:block md:pt-8 lg:pt-12">
-          <PaypulssScrollPin trustIntro={t.heroTrustIntro} trustPills={t.heroTrustPills} />
-        </div>
+        <LandingBonsaiHero
+          t={t}
+          locale={locale}
+          isAuthenticated={isAuthenticated}
+          primaryHref={isAuthenticated ? "/dashboard" : "/signup"}
+          secondaryHref={`#${t.demoAnchor}`}
+          trustIntro={t.heroTrustIntro}
+          trustPills={t.heroTrustPills}
+        />
 
         {/* Section 2 & 3, Problème + Solution */}
         <ScrollShiftSection
@@ -477,7 +213,7 @@ export function LandingPage() {
 
         <section
           id="product-tour"
-          className="scroll-mt-28 border-t border-slate-200 bg-slate-50 px-4 py-16 sm:px-6"
+          className="pp-product-tour-section scroll-mt-28 border-t border-slate-200/80 px-4 py-16 sm:px-6 sm:py-20"
         >
           <div className="mx-auto max-w-6xl">
             <Reveal className="text-center">
@@ -487,7 +223,7 @@ export function LandingPage() {
               <p>{t.visualShowcaseSub}</p>
             </Reveal>
             <ProductTourMarquee
-              scrollHint={t.visualShowcaseScrollHint}
+              ariaLabel={t.visualShowcaseTitle}
               panels={[
                 {
                   kind: "clients",
@@ -524,120 +260,12 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="recurring-cycle" className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
-          <div className="mx-auto flex max-w-2xl flex-col items-stretch gap-10">
-            <Reveal className="flex min-w-0 flex-col justify-center">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.recurringTitle}</h2>
-              <p className="mt-5 text-sm leading-relaxed text-slate-600 sm:text-base">{t.recurringBody}</p>
-            </Reveal>
-            <Reveal className="relative flex w-full justify-center" delay={0.08}>
-              {/* Même empilement vertical partout (mobile / tablette / desktop), largeur type « carte » */}
-              <div
-                className="relative w-full max-w-md overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_15%_10%,rgba(139,92,246,0.2),transparent_45%),linear-gradient(160deg,#030712,#0b1025)] p-5 shadow-[0_24px_56px_-12px_rgba(0,0,0,0.45),0_0_40px_-8px_rgba(139,92,246,0.1)] ring-1 ring-white/10 sm:p-6"
-                role="img"
-                aria-label={t.recurringImgAlt}
-              >
-                <motion.div
-                  className="pointer-events-none absolute inset-0"
-                  initial={false}
-                  animate={{ opacity: [0.85, 1, 0.86] }}
-                  transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <div className="relative flex flex-col gap-4">
-                  <div className="rounded-xl border border-emerald-400/35 bg-emerald-500/12 p-4 backdrop-blur-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/90">
-                        {t.recurringStep1Label}
-                      </p>
-                      <span className="shrink-0 rounded-full bg-emerald-400/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
-                        {t.recurringStep1Badge}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-100/90">{t.recurringStep1Body}</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <motion.div
-                      className="rounded-full border border-sky-400/40 bg-sky-500/10 p-2 text-sky-200 shadow-lg"
-                      animate={{ rotate: [0, -12, 0, 12, 0], scale: [1, 1.08, 1] }}
-                      transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-                      aria-label={t.recurringArrowAria}
-                    >
-                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-                      </svg>
-                    </motion.div>
-                  </div>
-                  <div className="rounded-xl border border-orange-300/35 bg-orange-500/12 p-4 backdrop-blur-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-100/90">
-                        {t.recurringStep2Label}
-                      </p>
-                      <span className="max-w-[min(100%,11rem)] shrink-0 rounded-full bg-orange-400/25 px-2.5 py-1 text-center text-[10px] font-semibold uppercase leading-tight tracking-wide text-orange-100">
-                        {t.recurringStep2Badge}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-100/90">{t.recurringStep2Body}</p>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <ScrollShiftSection id={t.demoAnchor} shift={1} className="scroll-mt-28 border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <Reveal className="text-center">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.demoTitle}</h2>
-            </Reveal>
-            <Reveal className="mx-auto mt-3 max-w-2xl text-center text-slate-600" delay={0.05}>
-              <p>{t.demoSub}</p>
-            </Reveal>
-            <div className="mt-14 grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
-              <motion.ul
-                className="space-y-4 text-left"
-                initial="hidden"
-                whileInView="show"
-                viewport={{ margin: "-40px", amount: 0.2 }}
-                variants={{
-                  hidden: {},
-                  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
-                }}
-              >
-                {t.demoBullets.map((line) => (
-                  <motion.li
-                    key={line}
-                    variants={{
-                      hidden: { opacity: 0, y: 14 },
-                      show: { opacity: 1, y: 0, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } },
-                    }}
-                    className="flex gap-3 text-sm leading-relaxed text-slate-700"
-                  >
-                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#34D399]/15 text-xs font-bold text-[#34D399] shadow-[0_0_16px_rgba(52,211,153,0.12)]" aria-hidden>
-                      ✓
-                    </span>
-                    <span>{line}</span>
-                  </motion.li>
-                ))}
-              </motion.ul>
-              <div className="flex min-w-0 justify-center lg:justify-end">
-                <motion.div
-                  className="w-full max-w-xl lg:max-w-[min(100%,520px)] pr-3 pt-3 sm:pr-5 sm:pt-5 lg:pr-6 lg:pt-6"
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px", amount: 0.2 }}
-                  transition={{ duration: 0.62, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <DualThemeDashboardPreview
-                    charts={t.chartsMock}
-                    hint={t.demoModeHint}
-                    ariaLabelDark={t.demoModeDark}
-                    ariaLabelLight={t.demoModeLight}
-                  />
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        </ScrollShiftSection>
+        <LandingDemoSection
+          t={t}
+          locale={locale}
+          ctaHref={isAuthenticated ? "/dashboard" : "/signup"}
+          ctaLabel={isAuthenticated ? t.ctaDashboard : t.ctaTrial}
+        />
 
         {/* Fondateur + valeurs (après l’explication produit) */}
         <section id="about" className="scroll-mt-28 border-t border-slate-200 bg-slate-50 px-4 py-20 sm:px-6 sm:py-24">
@@ -703,114 +331,7 @@ export function LandingPage() {
           }}
         />
 
-        <section id="how" className="scroll-mt-28 border-t border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-4 py-16 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <Reveal className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600/90">{t.howKicker}</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.howTitle}</h2>
-            </Reveal>
-            <Reveal className="mx-auto mt-4 max-w-3xl text-center text-sm leading-relaxed text-slate-600 sm:text-base" delay={0.05}>
-              <p>{t.howSubtitle}</p>
-            </Reveal>
-
-            {/* Aperçu rapide (desktop), parcours 1 · 2 · 3 lisible */}
-            <div className="mt-10 hidden md:flex md:items-stretch md:justify-between md:gap-3 lg:gap-5">
-              {t.howFlowSteps.flatMap((step, idx) => {
-                const last = idx === t.howFlowSteps.length - 1;
-                const mini = (
-                  <div
-                    key={step.headline}
-                    className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{t.howConcernLabel}</p>
-                        <p className="text-sm font-semibold text-slate-900">{step.whoLabel}</p>
-                      </div>
-                    </div>
-                    <p className="mt-3 text-xs leading-snug text-slate-600">{step.headline}</p>
-                  </div>
-                );
-                if (last) return [mini];
-                return [
-                  mini,
-                  <div
-                    key={`how-arrow-${idx}`}
-                    className="flex shrink-0 items-center self-center px-1 text-slate-300 lg:px-2"
-                    aria-hidden
-                  >
-                    <svg className="h-7 w-7 lg:h-8 lg:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  </div>,
-                ];
-              })}
-            </div>
-
-            <motion.div
-              className="mt-10 grid gap-5 sm:gap-6 lg:grid-cols-3"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ margin: "-40px", amount: 0.15 }}
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
-            >
-              {t.howFlowSteps.map((step, idx) => (
-                <motion.div
-                  key={step.headline}
-                  variants={{
-                    hidden: { opacity: 0, y: 18 },
-                    show: { opacity: 1, y: 0, transition: { duration: 0.52, ease: [0.22, 1, 0.36, 1] } },
-                  }}
-                  className="group h-full"
-                  whileHover={cardLiftWhileHover(reduceMotion)}
-                >
-                  <motion.div
-                    className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_14px_40px_-28px_rgba(15,23,42,0.12)] transition-[box-shadow,border-color] duration-200 ease-out group-hover:border-violet-400/35 group-hover:shadow-[0_20px_44px_-24px_rgba(139,92,246,0.2)]"
-                    variants={CARD_LIFT_HOVER_VARIANTS}
-                  >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
-                      {idx + 1}
-                    </span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{t.howConcernLabel}</span>
-                    <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-800">
-                      {step.whoLabel}
-                    </span>
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold tracking-tight text-slate-900">{step.headline}</h3>
-                  <p className="mt-2 text-xs font-medium leading-relaxed text-violet-700/90">{step.whoHint}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{step.body}</p>
-                  </motion.div>
-                </motion.div>
-              ))}
-            </motion.div>
-            <Reveal className="mt-12 flex flex-wrap justify-center gap-4" delay={0.06}>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Link
-                  href={isAuthenticated ? "/dashboard" : "/signup"}
-                  className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
-                >
-                  {t.howCtaSignup}
-                </Link>
-              </motion.div>
-              <a
-                href={`#${t.demoAnchor}`}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-8 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
-              >
-                {t.howCtaDemo}
-              </a>
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-8 py-3.5 text-sm font-semibold text-violet-900 transition hover:border-violet-300 hover:bg-violet-100"
-              >
-                {t.howCtaContact}
-              </Link>
-            </Reveal>
-          </div>
-        </section>
+        <LandingHowSection t={t} isAuthenticated={isAuthenticated} />
 
         <ScrollShiftSection id={t.pricingAnchor} shift={-1} className="scroll-mt-28 px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-6xl">
@@ -832,10 +353,14 @@ export function LandingPage() {
                     aria-hidden
                     className="pointer-events-none absolute inset-y-2 left-2 z-0 w-[calc(50%-0.5rem)] rounded-full bg-white shadow-[0_4px_16px_rgba(15,23,42,0.1),0_1px_2px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.06]"
                     initial={false}
-                    animate={{
-                      /* 100% = exactement une demi-piste (même largeur que le thumb), aligné sur le padding p-2 */
-                      x: billingCycle === "annual" ? "100%" : 0,
-                    }}
+                    animate={
+                      hydrated
+                        ? {
+                            /* 100% = exactement une demi-piste (même largeur que le thumb), aligné sur le padding p-2 */
+                            x: billingCycle === "annual" ? "100%" : 0,
+                          }
+                        : false
+                    }
                     transition={
                       reduceMotion
                         ? { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
@@ -885,7 +410,7 @@ export function LandingPage() {
             </Reveal>
             <motion.div
               className="mt-16 grid gap-6 overflow-visible py-2 sm:grid-cols-2 lg:grid-cols-4"
-              initial="hidden"
+              initial={false}
               whileInView="show"
               viewport={{ margin: "-48px", amount: 0.18, once: true }}
               variants={{
@@ -992,7 +517,7 @@ export function LandingPage() {
             </Reveal>
             <motion.div
               className="mt-12 space-y-3"
-              initial="hidden"
+              initial={false}
               whileInView="show"
               viewport={{ margin: "-24px", amount: 0.2 }}
               variants={{
@@ -1039,7 +564,7 @@ export function LandingPage() {
             </Reveal>
             <motion.div
               className="mt-12 grid gap-6 overflow-visible py-2 sm:grid-cols-2"
-              initial="hidden"
+              initial={false}
               whileInView="show"
               viewport={{ margin: "-40px", amount: 0.2 }}
               variants={{

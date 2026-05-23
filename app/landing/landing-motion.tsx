@@ -2,6 +2,7 @@
 
 import { motion, useAnimationControls } from "framer-motion";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
+import { useHydrated } from "@/lib/use-hydrated";
 import type { ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -147,14 +148,16 @@ type RevealProps = {
 /** Scroll-in: fade + slight rise */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const reduce = usePreferMinimalMotion();
+  const hydrated = useHydrated();
   const controls = useAnimationControls();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 20 }}
+      initial={false}
       animate={controls}
       onViewportEnter={() => {
+        if (!hydrated) return;
         void controls.start({
           opacity: 1,
           y: 0,
@@ -308,13 +311,14 @@ export function HeroEntrance({
   delay?: number;
 }) {
   const reduce = usePreferMinimalMotion();
+  const hydrated = useHydrated();
   if (reduce) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 40, filter: "blur(14px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 1.42, delay, ease: EASE }}
+      initial={hydrated ? { opacity: 0, y: 28, filter: "blur(16px)" } : false}
+      animate={hydrated ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      transition={hydrated ? { duration: 1.15, delay, ease: EASE } : undefined}
     >
       {children}
     </motion.div>

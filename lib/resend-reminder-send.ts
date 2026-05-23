@@ -43,11 +43,17 @@ export function hasResendReminderFrom(context: ReminderSendFromContext): boolean
 /**
  * Envoi Resend pour relances (/api/send-reminder manuel ou runner automatique).
  */
+export type ResendEmailAttachment = {
+  filename: string;
+  content: string;
+};
+
 export async function sendResendReminderEmail(params: {
   to: string;
   subject: string;
   text: string;
   html?: string;
+  attachments?: ResendEmailAttachment[];
   /** Manuel : MAIL_FROM uniquement. Automatisation : MAIL_FROM_AUTO_REMINDERS puis repli sur MAIL_FROM. */
   fromContext?: ReminderSendFromContext;
 }): Promise<ResendReminderSendResult> {
@@ -71,12 +77,19 @@ export async function sendResendReminderEmail(params: {
   const html = typeof params.html === "string" ? params.html.trim() : "";
 
   const resend = new Resend(apiKey);
+  const attachments =
+    params.attachments?.filter((a) => a.filename && a.content).map((a) => ({
+      filename: a.filename,
+      content: a.content,
+    })) ?? [];
+
   const message = {
     from,
     to,
     subject,
     text,
     ...(html ? { html } : {}),
+    ...(attachments.length > 0 ? { attachments } : {}),
   } as const;
 
   const { data, error } = await resend.emails.send(message);

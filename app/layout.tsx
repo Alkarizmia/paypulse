@@ -58,8 +58,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={font.variable}>
-      <body className={`${font.className} min-h-screen antialiased`}>
+    <html lang="fr" className={font.variable} suppressHydrationWarning>
+      <body className={`${font.className} min-h-screen antialiased`} suppressHydrationWarning>
         <LowPerformanceHtmlAttrs />
         <PageVisibilityHtmlAttrs />
         <PwaRegister />

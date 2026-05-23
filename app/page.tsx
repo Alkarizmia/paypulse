@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LandingPage } from "./landing/landing-page";
+import { LandingPageDynamic } from "@/app/landing/landing-page-dynamic";
 
 export const metadata: Metadata = {
   title: "PayPulss · Encaissez plus vite, relances incluses",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <LandingPage />;
+  return <LandingPageDynamic />;
 }

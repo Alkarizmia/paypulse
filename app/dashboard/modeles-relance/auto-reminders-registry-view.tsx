@@ -369,6 +369,11 @@ export function AutoRemindersRegistryView() {
                     {locale === "fr" ? "Lien de paiement enregistré :" : "Saved payment link:"} {tpl.paymentLink.trim()}
                   </p>
                 ) : null}
+                {tpl.attachmentFileName ? (
+                  <p className={`mt-3 text-xs ${muted}`}>
+                    {locale === "fr" ? "Pièce jointe :" : "Attachment:"} {tpl.attachmentFileName}
+                  </p>
+                ) : null}
               </article>
             ))}
           </div>

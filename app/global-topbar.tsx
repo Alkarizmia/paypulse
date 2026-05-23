@@ -10,6 +10,7 @@ import { getGlobalTopBarCopy } from "@/lib/messages/global-topbar-copy";
 import { APP_LOCALES } from "@/lib/app-locale";
 import { useAuth } from "./auth-context";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
+import { useHydrated } from "@/lib/use-hydrated";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -21,6 +22,7 @@ export function GlobalTopBar() {
   const isHome = pathname === "/";
   const isDashboard = pathname === "/dashboard" || pathname?.startsWith("/dashboard/") || false;
   const reduce = usePreferMinimalMotion();
+  const hydrated = useHydrated();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
 
@@ -117,8 +119,8 @@ export function GlobalTopBar() {
                       href="#features"
                       className={navLinkClass}
                       custom={0}
-                      initial="hidden"
-                      animate="show"
+                      initial={false}
+                      animate={hydrated ? "show" : undefined}
                       variants={desktopNavItem}
                     >
                       {t.features}
@@ -127,8 +129,8 @@ export function GlobalTopBar() {
                       href="#demo"
                       className={navLinkClass}
                       custom={1}
-                      initial="hidden"
-                      animate="show"
+                      initial={false}
+                      animate={hydrated ? "show" : undefined}
                       variants={desktopNavItem}
                     >
                       {t.preview}
@@ -137,8 +139,8 @@ export function GlobalTopBar() {
                       href="#pricing"
                       className={navLinkClass}
                       custom={2}
-                      initial="hidden"
-                      animate="show"
+                      initial={false}
+                      animate={hydrated ? "show" : undefined}
                       variants={desktopNavItem}
                     >
                       {t.pricing}
@@ -147,8 +149,8 @@ export function GlobalTopBar() {
                       href="#faq"
                       className={navLinkClass}
                       custom={3}
-                      initial="hidden"
-                      animate="show"
+                      initial={false}
+                      animate={hydrated ? "show" : undefined}
                       variants={desktopNavItem}
                     >
                       {t.faq}

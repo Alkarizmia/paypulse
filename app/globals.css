@@ -464,6 +464,206 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   z-index: 0;
 }
 
+/* Halo hero scroll : fusion douce vers le blanc de la page, sans bord dur */
+/* Landing hero : petite boule colorée au curseur (même principe que auth) */
+.pp-landing-cursor-host {
+  isolation: isolate;
+}
+
+.pp-landing-cursor-bg {
+  contain: layout paint style;
+}
+
+.pp-landing-cursor-bg__glow {
+  position: absolute;
+  left: var(--pp-landing-x, 50%);
+  top: var(--pp-landing-y, 50%);
+  width: min(16rem, 34vw);
+  height: min(16rem, 34vw);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+  background: radial-gradient(
+    circle,
+    rgba(167, 139, 250, 0.42) 0%,
+    rgba(124, 58, 237, 0.28) 28%,
+    rgba(52, 211, 153, 0.18) 48%,
+    transparent 72%
+  );
+  filter: blur(22px);
+  opacity: 0.85;
+}
+
+.pp-landing-cursor-bg__ball {
+  position: absolute;
+  left: var(--pp-landing-x, 50%);
+  top: var(--pp-landing-y, 50%);
+  width: min(7.5rem, 16vw);
+  height: min(7.5rem, 16vw);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(167, 139, 250, 0.7) 22%,
+    rgba(124, 58, 237, 0.5) 42%,
+    rgba(52, 211, 153, 0.4) 58%,
+    transparent 72%
+  );
+  box-shadow:
+    0 0 48px rgba(124, 58, 237, 0.45),
+    0 0 80px rgba(52, 211, 153, 0.28),
+    0 0 120px rgba(167, 139, 250, 0.2);
+  filter: blur(1px);
+}
+
+/* CTA hero : hover/tap en CSS (clics fiables, pas bloqués par un wrapper motion) */
+.pp-hero-cta {
+  position: relative;
+  z-index: 30;
+  cursor: pointer;
+  transform: translateZ(0);
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.22s ease;
+}
+
+.pp-hero-cta:hover {
+  transform: scale(1.045) translateZ(0);
+}
+
+.pp-hero-cta:active {
+  transform: scale(0.98) translateZ(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-hero-cta {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .pp-hero-cta:hover,
+  .pp-hero-cta:active {
+    transform: none;
+  }
+}
+
+/* Section « Comment ça marche » : défilement horizontal au scroll vertical */
+.pp-how-scroll-pin {
+  isolation: isolate;
+}
+
+.pp-how-step-card {
+  width: min(86vw, 20.5rem);
+}
+
+.pp-how-step-card__panel {
+  min-height: 0;
+}
+
+@media (min-width: 640px) {
+  .pp-how-step-card {
+    width: min(36rem, 90vw);
+  }
+
+  .pp-how-step-card__panel {
+    min-height: 22rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pp-how-step-card {
+    width: min(44rem, 74vw);
+  }
+
+  .pp-how-step-card__panel {
+    min-height: 24rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .pp-how-step-card {
+    width: min(50rem, 64vw);
+  }
+}
+
+.pp-how-fallback-wrap {
+  position: relative;
+}
+
+.pp-how-fallback-wrap::before,
+.pp-how-fallback-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1.25rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pp-how-fallback-wrap::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), transparent);
+}
+
+.pp-how-fallback-wrap::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(248, 250, 252, 0.95), transparent);
+}
+
+.pp-how-fallback-track {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124, 58, 237, 0.35) transparent;
+  touch-action: pan-x;
+}
+
+.pp-how-fallback-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pp-how-fallback-track::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(124, 58, 237, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-landing-cursor-bg {
+    display: none !important;
+  }
+}
+
+html[data-low-performance="true"] .pp-landing-cursor-bg {
+  display: none !important;
+}
+
+.pp-hero-device-aura {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  z-index: 2;
+  width: 100vw;
+  height: min(78vh, 680px);
+  transform: translate(-50%, -48%);
+  background:
+    radial-gradient(ellipse 48% 42% at 18% 44%, rgba(124, 58, 237, 0.19) 0%, transparent 100%),
+    radial-gradient(ellipse 48% 42% at 82% 50%, rgba(52, 211, 153, 0.15) 0%, transparent 100%),
+    radial-gradient(ellipse 70% 58% at 50% 40%, rgba(99, 102, 241, 0.09) 0%, transparent 100%);
+  filter: blur(56px);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 46%, #000 0%, #000 28%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 46%, #000 0%, #000 28%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-hero-device-aura {
+    filter: blur(40px);
+  }
+}
+
 .pp-landing-ambient__blob {
   position: absolute;
   border-radius: 50%;
@@ -476,6 +676,10 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   animation-name: pp-orb-2;
   animation-duration: 28s;
   animation-delay: -6s;
+}
+
+.pp-bonsai-tab-grid button {
+  min-width: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -602,33 +806,55 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   }
 }
 
-/* Landing — cartes « produit en images » : couleurs + mini-zoom sur l’illustration (pas la carte entière) */
+/* Landing — section « produit en images » : blanc en haut → foncé en bas (enchaînement #demo) */
+.pp-product-tour-section {
+  --ppt-edge: #06060a;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f8fafc 14%,
+    #e2e8f0 32%,
+    #64748b 58%,
+    #1e293b 78%,
+    #0c0c12 92%,
+    var(--ppt-edge) 100%
+  );
+}
+
+/* Landing — cartes « produit en images » : zoom doux + halo au survol (sans animations infinies) */
 .pp-product-tour-card {
   transition:
-    border-color 0.45s ease,
-    box-shadow 0.45s ease;
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
 .pp-product-tour-card:hover {
   border-color: rgba(139, 92, 246, 0.38);
   box-shadow:
-    0 22px 50px -22px rgba(15, 23, 42, 0.18),
+    0 22px 50px -22px rgba(15, 23, 42, 0.22),
     0 0 0 1px rgba(139, 92, 246, 0.14),
-    0 0 52px -14px rgba(139, 92, 246, 0.2);
+    0 0 52px -14px rgba(139, 92, 246, 0.22);
 }
 
 .pp-product-tour-visual {
   position: relative;
   overflow: hidden;
-  background: #f1f5f9;
+  background: #f8fafc;
   isolation: isolate;
+}
+
+.pp-product-tour-blur-halo {
+  opacity: 0;
+  background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(139, 92, 246, 0.28), transparent 70%);
+  filter: blur(14px);
+  transition: opacity 0.45s ease;
 }
 
 .pp-product-tour-visual .pp-product-tour-img {
   transform-origin: center center;
   transition:
-    transform 1.4s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pp-product-tour-glow {
@@ -719,6 +945,32 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
 
 .pp-product-tour-marquee-viewport {
   overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 5%,
+    rgba(0, 0, 0, 0.55) 11%,
+    #000 18%,
+    #000 82%,
+    rgba(0, 0, 0, 0.55) 89%,
+    rgba(0, 0, 0, 0.12) 95%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.12) 5%,
+    rgba(0, 0, 0, 0.55) 11%,
+    #000 18%,
+    #000 82%,
+    rgba(0, 0, 0, 0.55) 89%,
+    rgba(0, 0, 0, 0.12) 95%,
+    transparent 100%
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .pp-product-tour-marquee-track {
@@ -727,13 +979,10 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   gap: 1.5rem;
   padding-right: 1.5rem;
   animation: pp-product-tour-marquee-scroll 52s linear infinite;
-  will-change: transform;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .pp-product-tour-marquee-wrap:hover .pp-product-tour-marquee-track {
-    animation-play-state: paused;
-  }
+.pp-product-tour-marquee-wrap.is-paused .pp-product-tour-marquee-track {
+  animation-play-state: paused;
 }
 
 @keyframes pp-product-tour-marquee-scroll {
@@ -753,54 +1002,21 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .pp-product-tour-card:hover .pp-product-tour-blur-halo {
+    opacity: 1;
+  }
+
   .pp-product-tour-card:hover .pp-product-tour-visual .pp-product-tour-img {
-    transform: scale(1.045) translateY(-2px);
-    filter: saturate(1.22) brightness(1.04) contrast(1.03);
-    animation: pp-product-tour-img-drift 7s ease-in-out infinite;
+    transform: scale(1.09);
+    filter: saturate(1.14) brightness(1.04);
   }
 
   .pp-product-tour-card:hover .pp-product-tour-glow {
-    opacity: 1;
-    animation: pp-product-tour-glow-pulse 6s ease-in-out infinite;
+    opacity: 0.9;
   }
 
   .pp-product-tour-card:hover .pp-product-tour-shine {
-    opacity: 1;
-    animation: pp-product-tour-shine-move 8s ease-in-out infinite;
-  }
-}
-
-@keyframes pp-product-tour-img-drift {
-  0%,
-  100% {
-    transform: scale(1.045) translateY(-2px) translateX(0);
-  }
-  50% {
-    transform: scale(1.05) translateY(-3px) translateX(1px);
-  }
-}
-
-@keyframes pp-product-tour-glow-pulse {
-  0%,
-  100% {
-    opacity: 0.85;
-    filter: hue-rotate(0deg);
-  }
-  50% {
-    opacity: 1;
-    filter: hue-rotate(8deg) saturate(1.1);
-  }
-}
-
-@keyframes pp-product-tour-shine-move {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: translate3d(-2%, 0, 0) rotate(-1deg);
-  }
-  50% {
-    opacity: 0.75;
-    transform: translate3d(5%, -3%, 0) rotate(1deg);
+    opacity: 0.55;
   }
 }
 

@@ -4,6 +4,7 @@ import { animate, motion, useInView } from "framer-motion";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
 import { useEffect, useRef, useState } from "react";
 import { Reveal } from "@/app/landing/landing-motion";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export type ProofStatsCopy = {
   socialProof: string;
@@ -40,6 +41,7 @@ const STAGGER = 0.22;
 
 export function ProofStatsSection({ locale, copy }: { locale: AppLocale; copy: ProofStatsCopy }) {
   const reduce = usePreferMinimalMotion();
+  const hydrated = useHydrated();
   const rootRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef, { amount: 0.28, margin: "-10% 0px -14% 0px" });
   const [v1, setV1] = useState(-35);
@@ -48,6 +50,8 @@ export function ProofStatsSection({ locale, copy }: { locale: AppLocale; copy: P
   const runIdRef = useRef(0);
 
   useEffect(() => {
+    if (!hydrated) return;
+
     if (reduce) {
       setV1(-35);
       setV2(18);
@@ -97,7 +101,7 @@ export function ProofStatsSection({ locale, copy }: { locale: AppLocale; copy: P
       c2.stop();
       c3.stop();
     };
-  }, [inView, reduce]);
+  }, [hydrated, inView, reduce]);
 
   const s1 = formatNegPercent(locale, v1);
   const s2 = formatPosPercent(locale, v2);
@@ -115,9 +119,9 @@ export function ProofStatsSection({ locale, copy }: { locale: AppLocale; copy: P
         </Reveal>
         <motion.div
           className="mt-14 grid gap-4 sm:grid-cols-3"
-          initial="hidden"
+          initial={false}
           whileInView="show"
-          viewport={{ margin: "-40px", amount: 0.2 }}
+          viewport={{ once: true, margin: "-40px", amount: 0.2 }}
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.04 } } }}
         >
           {[
