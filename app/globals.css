@@ -618,7 +618,15 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(124, 58, 237, 0.35) transparent;
-  touch-action: pan-x;
+  /* pan-x + pan-y : swipe horizontal dans le rail, scroll vertical de la page possible */
+  touch-action: pan-x pan-y;
+}
+
+/* Dernière (ou première) carte : laisser la page défiler verticalement */
+.pp-how-fallback-track.pp-how-fallback-track--edge-end,
+.pp-how-fallback-track.pp-how-fallback-track--edge-start {
+  touch-action: auto;
+  overscroll-behavior-x: none;
 }
 
 .pp-how-fallback-track::-webkit-scrollbar {

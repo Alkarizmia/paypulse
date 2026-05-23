@@ -312,11 +312,54 @@ function HowStepsTrack({
   return <div className={trackClass}>{items}</div>;
 }
 
+function useHowTrackScrollEdge(trackRef: RefObject<HTMLDivElement | null>) {
+  const [edge, setEdge] = useState<"start" | "middle" | "end">("start");
+
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const max = Math.max(0, el.scrollWidth - el.clientWidth);
+      if (max <= 2) {
+        setEdge("end");
+        return;
+      }
+      const left = el.scrollLeft;
+      if (left <= 2) setEdge("start");
+      else if (left >= max - 2) setEdge("end");
+      else setEdge("middle");
+    };
+
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(() => requestAnimationFrame(update));
+    ro.observe(el);
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [trackRef]);
+
+  return edge;
+}
+
 function HowSectionMobile({ t, isAuthenticated }: { t: LandingCopy; isAuthenticated: boolean }) {
   const reduce = usePreferMinimalMotion();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const edge = useHowTrackScrollEdge(trackRef);
   const onDemoClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (scrollToPageHash(`#${t.demoAnchor}`)) e.preventDefault();
   };
+
+  const trackEdgeClass =
+    edge === "end"
+      ? "pp-how-fallback-track--edge-end"
+      : edge === "start"
+        ? "pp-how-fallback-track--edge-start"
+        : "";
 
   return (
     <section
@@ -326,7 +369,8 @@ function HowSectionMobile({ t, isAuthenticated }: { t: LandingCopy; isAuthentica
       <HowSectionHeader t={t} hintText={t.howSwipeHint} compact />
       <div className="pp-how-fallback-wrap mx-auto max-w-[100vw]">
         <div
-          className="pp-how-fallback-track flex overflow-x-auto overscroll-x-contain px-0 pb-6 pt-1 snap-x snap-mandatory scroll-smooth"
+          ref={trackRef}
+          className={`pp-how-fallback-track flex overflow-x-auto overscroll-x-contain px-0 pb-6 pt-1 snap-x snap-proximity scroll-smooth ${trackEdgeClass}`.trim()}
           role="region"
           aria-label={t.howTitle}
         >
