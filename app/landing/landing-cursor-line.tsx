@@ -112,7 +112,7 @@ export function LandingCursorLine({ hostRef }: { hostRef: RefObject<HTMLElement 
   if (!interactive) return null;
 
   return (
-    <div className="pp-landing-cursor-bg pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
+    <div className="pp-landing-cursor-bg pointer-events-none absolute inset-0 z-[2] overflow-hidden" aria-hidden>
       <div className="pp-landing-cursor-bg__glow" />
       <div className="pp-landing-cursor-bg__ball" />
     </div>

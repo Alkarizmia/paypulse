@@ -464,13 +464,103 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   z-index: 0;
 }
 
-/* Halo hero scroll : fusion douce vers le blanc de la page, sans bord dur */
+/* Hero landing : fond blanc premium (mesh + grille, reste majoritairement clair) */
+.pp-landing-hero-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 32%, #f8fafc 68%, #f1f5f9 100%);
+}
+
+.pp-landing-hero-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 92% 58% at 50% -8%, rgba(255, 255, 255, 0.98), transparent 56%),
+    radial-gradient(ellipse 72% 52% at 6% 22%, rgba(196, 181, 253, 0.32), transparent 62%),
+    radial-gradient(ellipse 68% 48% at 94% 18%, rgba(110, 231, 183, 0.26), transparent 58%),
+    radial-gradient(ellipse 58% 44% at 50% 88%, rgba(191, 219, 254, 0.2), transparent 55%),
+    radial-gradient(ellipse 42% 36% at 72% 62%, rgba(167, 139, 250, 0.14), transparent 52%);
+  pointer-events: none;
+}
+
+.pp-landing-hero-surface__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.42;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.09) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 88% 78% at 50% 40%, black 18%, transparent 76%);
+  pointer-events: none;
+}
+
+.pp-landing-hero-surface__sheen {
+  position: absolute;
+  inset: -25% -15%;
+  opacity: 0.5;
+  background: linear-gradient(
+    118deg,
+    transparent 36%,
+    rgba(255, 255, 255, 0.82) 47%,
+    rgba(255, 255, 255, 0.38) 53%,
+    transparent 64%
+  );
+  transform: rotate(-7deg);
+  pointer-events: none;
+}
+
+.pp-landing-hero-surface__fade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 28%;
+  background: linear-gradient(to bottom, transparent, rgba(248, 250, 252, 0.92));
+  pointer-events: none;
+}
+
+@keyframes pp-landing-hero-mesh-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.5%, -1%, 0) scale(1.03);
+  }
+}
+
+.pp-landing-hero-surface__mesh-drift {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(ellipse 55% 42% at 28% 38%, rgba(139, 92, 246, 0.16), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 74% 44%, rgba(52, 211, 153, 0.14), transparent 56%);
+  filter: blur(28px);
+  animation: pp-landing-hero-mesh-drift 26s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-landing-hero-surface__mesh-drift {
+    animation: none;
+  }
+}
+
+html[data-low-performance="true"] .pp-landing-hero-surface__mesh-drift {
+  display: none;
+}
+
 /* Landing hero : petite boule colorée au curseur (même principe que auth) */
 .pp-landing-cursor-host {
   isolation: isolate;
 }
 
 .pp-landing-cursor-bg {
+  z-index: 2;
   contain: layout paint style;
 }
 
@@ -563,29 +653,24 @@ html[data-low-performance="true"] .pp-chromatic-hero-line {
   min-height: 0;
 }
 
-@media (min-width: 640px) {
-  .pp-how-step-card {
-    width: min(36rem, 90vw);
-  }
-
-  .pp-how-step-card__panel {
-    min-height: 22rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .pp-how-step-card {
-    width: min(44rem, 74vw);
-  }
-
-  .pp-how-step-card__panel {
-    min-height: 24rem;
-  }
-}
-
+/* Scroll pin desktop : une carte visible à la fois, pas de chevauchement portable */
 @media (min-width: 1280px) {
   .pp-how-step-card {
-    width: min(50rem, 64vw);
+    width: min(26rem, 40vw);
+  }
+
+  .pp-how-step-card__panel {
+    min-height: 18rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .pp-how-step-card {
+    width: min(30rem, 34vw);
+  }
+
+  .pp-how-step-card__panel {
+    min-height: 20rem;
   }
 }
 
@@ -648,6 +733,40 @@ html[data-low-performance="true"] .pp-landing-cursor-bg {
   display: none !important;
 }
 
+.pp-hero-device-stage {
+  transform-origin: center center;
+}
+
+.pp-hero-device-card__head {
+  flex-shrink: 0;
+}
+
+@media (max-height: 860px) {
+  .pp-hero-device-stage {
+    top: 22%;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .pp-hero-device-card {
+    max-width: min(22rem, 88vw) !important;
+    transform: scale(0.9);
+    transform-origin: center center;
+  }
+
+  .pp-hero-device-card__shell {
+    padding: 1rem !important;
+  }
+
+  .pp-hero-device-card__head {
+    margin-bottom: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .pp-hero-device-card__shell .min-h-\[5\.25rem\] {
+    min-height: 4.25rem;
+  }
+}
+
 .pp-hero-device-aura {
   pointer-events: none;
   position: absolute;
@@ -666,6 +785,10 @@ html[data-low-performance="true"] .pp-landing-cursor-bg {
   mask-image: radial-gradient(ellipse 80% 70% at 50% 46%, #000 0%, #000 28%, transparent 100%);
 }
 
+html[data-low-performance="true"] .pp-hero-device-aura {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pp-hero-device-aura {
     filter: blur(40px);
@@ -676,7 +799,7 @@ html[data-low-performance="true"] .pp-landing-cursor-bg {
   position: absolute;
   border-radius: 50%;
   filter: blur(72px);
-  opacity: 0.32;
+  opacity: 0.48;
   animation: pp-orb-1 24s ease-in-out infinite;
 }
 

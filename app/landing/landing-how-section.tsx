@@ -7,11 +7,11 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type MouseEvent,
   type RefObject,
 } from "react";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
+import { useLandingScrollEffects } from "@/lib/use-landing-viewport";
 import { useHydrated } from "@/lib/use-hydrated";
 import type { LandingCopy } from "@/lib/messages/landing-copy";
 import { CARD_LIFT_HOVER_VARIANTS, cardLiftWhileHover } from "@/app/landing/landing-motion";
@@ -26,20 +26,6 @@ function scrollToPageHash(href: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
   window.history.pushState(null, "", href);
   return true;
-}
-
-function subscribeCompactHow(onStoreChange: () => void) {
-  const mq = window.matchMedia("(max-width: 767px)");
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getCompactHow() {
-  return window.matchMedia("(max-width: 767px)").matches;
-}
-
-function useCompactHow() {
-  return useSyncExternalStore(subscribeCompactHow, getCompactHow, () => true);
 }
 
 function HowArrow({ className = "", compact = false }: { className?: string; compact?: boolean }) {
@@ -191,8 +177,10 @@ function HowSectionCtas({
 }) {
   return (
     <div
-      className={`flex shrink-0 justify-center border-t border-slate-200/80 bg-gradient-to-t from-slate-50/95 to-white/80 backdrop-blur-sm ${
-        compact ? "flex-col gap-2.5 px-4 py-5 sm:px-6" : "flex-wrap gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5"
+      className={`flex shrink-0 justify-center border-t border-slate-200/80 bg-gradient-to-t from-slate-50 to-white ${
+        compact
+          ? "flex-col gap-2.5 px-4 py-5 sm:px-6"
+          : "flex-col gap-2.5 px-4 py-4 sm:px-6 sm:py-5 xl:flex-row xl:flex-wrap xl:justify-center xl:gap-3"
       }`}
     >
       <Link
@@ -298,8 +286,8 @@ function HowStepsTrack({
   });
 
   const trackClass = compact
-    ? "flex items-start gap-3 pl-4 pr-4 will-change-transform"
-    : "flex items-stretch gap-4 pl-4 pr-[max(1rem,6vw)] will-change-transform sm:gap-6 sm:pl-6 sm:pr-[max(1.5rem,8vw)] lg:gap-10 lg:pl-8";
+    ? "flex items-start gap-3 pl-4 pr-4"
+    : "flex items-stretch gap-6 pl-6 pr-[max(1.5rem,6vw)] xl:gap-8 xl:pl-8 xl:pr-[max(2rem,5vw)]";
 
   if (x !== undefined && trackRef) {
     return (
@@ -394,7 +382,7 @@ function HowSectionScrollPin({ t, isAuthenticated }: { t: LandingCopy; isAuthent
     if (!track) return;
     const viewportW = window.innerWidth;
     const trackW = track.scrollWidth;
-    const shift = Math.max(0, trackW - viewportW + 64);
+    const shift = Math.max(0, trackW - viewportW + 96);
     const vh = window.innerHeight || 800;
     setMaxShift(shift);
     setRailHeight(Math.round(vh + shift * 1.08 + vh * 0.32));
@@ -437,8 +425,8 @@ function HowSectionScrollPin({ t, isAuthenticated }: { t: LandingCopy; isAuthent
         <HowSectionHeader t={t} hintText={t.howScrollHint} hintOpacity={hintOpacity} />
         <HowProgressDots progress={scrollYProgress} count={t.howFlowSteps.length} />
 
-        <div className="relative min-h-0 flex-1">
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-start">
             <HowStepsTrack t={t} reduce={reduce} trackRef={trackRef} x={x} />
           </div>
         </div>
@@ -451,14 +439,9 @@ function HowSectionScrollPin({ t, isAuthenticated }: { t: LandingCopy; isAuthent
 
 export function LandingHowSection({ t, isAuthenticated }: { t: LandingCopy; isAuthenticated: boolean }) {
   const hydrated = useHydrated();
-  const reduce = usePreferMinimalMotion();
-  const compact = useCompactHow();
+  const scrollEffects = useLandingScrollEffects();
 
-  if (!hydrated) {
-    return <HowSectionMobile t={t} isAuthenticated={isAuthenticated} />;
-  }
-
-  if (compact || reduce) {
+  if (!hydrated || !scrollEffects) {
     return <HowSectionMobile t={t} isAuthenticated={isAuthenticated} />;
   }
 

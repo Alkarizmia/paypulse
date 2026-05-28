@@ -10,7 +10,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type MouseEvent,
   type ReactNode,
 } from "react";
@@ -20,6 +19,7 @@ import type { AppLocale } from "@/lib/app-locale";
 import { getScrollPinCopy, HERO_FACE_SRCS, type ScrollPinCopy } from "@/lib/messages/scroll-pin-copy";
 import { PwaInstallButton } from "@/app/pwa-install-button";
 import { usePreferMinimalMotion } from "@/lib/use-prefer-minimal-motion";
+import { useLandingLiteMotion, useLandingScrollEffects } from "@/lib/use-landing-viewport";
 import { useHydrated } from "@/lib/use-hydrated";
 import { LandingCursorLine } from "@/app/landing/landing-cursor-line";
 
@@ -95,20 +95,6 @@ function useHeroRailHeightPx() {
   return px;
 }
 
-function subscribeCompactHero(onStoreChange: () => void) {
-  const mq = window.matchMedia("(max-width: 767px)");
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getCompactHero() {
-  return window.matchMedia("(max-width: 767px)").matches;
-}
-
-function useCompactHero() {
-  return useSyncExternalStore(subscribeCompactHero, getCompactHero, () => true);
-}
-
 function StarRow() {
   return (
     <span className="inline-flex items-center gap-0.5 text-amber-400" aria-hidden>
@@ -121,19 +107,33 @@ function StarRow() {
   );
 }
 
-/**
- * Toute la 1re section hero : descente depuis le haut + blur qui se dissipe lentement.
- */
-function HeroSectionBlurEntrance({ children, className = "" }: { children: ReactNode; className?: string }) {
+/** Décalage entre chaque vague d’apparition du hero (s). */
+const HERO_REVEAL_STAGGER_S = 0.34;
+const HERO_REVEAL_DURATION_S = 1.45;
+
+function HeroRevealStep({
+  step,
+  children,
+  className = "",
+}: {
+  step: 0 | 1 | 2 | 3;
+  children: ReactNode;
+  className?: string;
+}) {
   const reduce = usePreferMinimalMotion();
+  const lite = useLandingLiteMotion();
   const hydrated = useHydrated();
   if (reduce || !hydrated) return <div className={className}>{children}</div>;
   return (
     <motion.div
-      className={`will-change-[transform,filter,opacity] ${className}`.trim()}
-      initial={{ opacity: 0, y: -72, filter: "blur(26px)" }}
+      className={`${lite ? "" : "will-change-[transform,filter,opacity]"} ${className}`.trim()}
+      initial={{ opacity: 0, y: lite ? 22 : 36, filter: lite ? "blur(0px)" : "blur(24px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 2.25, delay: 0.15, ease: EASE }}
+      transition={{
+        duration: HERO_REVEAL_DURATION_S,
+        delay: step * HERO_REVEAL_STAGGER_S,
+        ease: EASE,
+      }}
     >
       {children}
     </motion.div>
@@ -159,43 +159,54 @@ function HeroCopyBlock({
 
   return (
     <div className={`relative z-20 text-center ${className}`}>
-      <p className="text-sm font-medium text-slate-600">{t.heroWelcome}</p>
-      <div className="mt-4 flex items-center justify-center gap-2">
-        <PayPulseLogo className="h-8 w-8 sm:h-9 sm:w-9" />
-        <span className="text-sm font-semibold tracking-tight text-slate-900">PayPulss</span>
-      </div>
-      <h1 className="mx-auto mt-4 max-w-3xl font-semibold tracking-tight text-slate-900 [font-size:clamp(2.1rem,5.2vw,3.5rem)] [line-height:1.06]">
-        <span className="pp-chromatic-hero-line block">{t.heroLine1}</span>
-        <span className="mt-1 block bg-gradient-to-r from-violet-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent">
-          {t.heroLine2}
-        </span>
-      </h1>
-      <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">{t.heroSubline}</p>
-      <div className="relative z-30 mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-        <HeroCtaLink
-          href={primaryHref}
-          className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:w-auto sm:min-w-[200px]"
-        >
-          {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
-        </HeroCtaLink>
-        <HeroCtaLink
-          href={secondaryHref}
-          onNavigate={onSecondaryClick}
-          className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3.5 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 sm:w-auto sm:min-w-[180px]"
-        >
-          {t.ctaPricing}
-        </HeroCtaLink>
-      </div>
-      <div className="mt-4 flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2">
-          <StarRow />
-          <span className="text-sm font-medium text-slate-700">{t.heroReviewsLabel}</span>
+      <HeroRevealStep step={0}>
+        <p className="text-sm font-medium text-slate-600">{t.heroWelcome}</p>
+        <div className="mt-4 flex items-center justify-center gap-2">
+          <PayPulseLogo className="h-8 w-8 sm:h-9 sm:w-9" />
+          <span className="text-sm font-semibold tracking-tight text-slate-900">PayPulss</span>
         </div>
-        <p className="text-xs text-slate-500">{t.microNoCard}</p>
-      </div>
-      <div className="mt-5 flex justify-center">
-        <PwaInstallButton labels={t.installLabels} />
-      </div>
+      </HeroRevealStep>
+
+      <HeroRevealStep step={1}>
+        <h1 className="mx-auto mt-4 max-w-3xl font-semibold tracking-tight text-slate-900 [font-size:clamp(2.1rem,5.2vw,3.5rem)] [line-height:1.06]">
+          <span className="pp-chromatic-hero-line block">{t.heroLine1}</span>
+          <span className="mt-1 block bg-gradient-to-r from-violet-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent">
+            {t.heroLine2}
+          </span>
+        </h1>
+      </HeroRevealStep>
+
+      <HeroRevealStep step={2}>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">{t.heroSubline}</p>
+      </HeroRevealStep>
+
+      <HeroRevealStep step={3}>
+        <div className="relative z-30 mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          <HeroCtaLink
+            href={primaryHref}
+            className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:w-auto sm:min-w-[200px]"
+          >
+            {isAuthenticated ? t.ctaDashboard : t.ctaTrial}
+          </HeroCtaLink>
+          <HeroCtaLink
+            href={secondaryHref}
+            onNavigate={onSecondaryClick}
+            className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3.5 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 sm:w-auto sm:min-w-[180px]"
+          >
+            {t.ctaPricing}
+          </HeroCtaLink>
+        </div>
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            <StarRow />
+            <span className="text-sm font-medium text-slate-700">{t.heroReviewsLabel}</span>
+          </div>
+          <p className="text-xs text-slate-500">{t.microNoCard}</p>
+        </div>
+        <div className="mt-5 flex justify-center">
+          <PwaInstallButton labels={t.installLabels} />
+        </div>
+      </HeroRevealStep>
     </div>
   );
 }
@@ -267,13 +278,14 @@ function HeroDeviceDecompose({
   const devicePointer = useTransform(deviceOpacity, (v) => (v > 0.12 ? "auto" : "none"));
   const deviceScale = useTransform(scrollYProgress, [P.zoomStart, P.zoomEnd, 1], [1.62, 1, 1]);
   const deviceY = useTransform(scrollYProgress, [P.zoomStart, P.zoomEnd, 1], [72, 0, 0]);
-  const deviceBlurPx = useTransform(scrollYProgress, [P.zoomStart, P.zoomStart + 0.1, 1], [14, 0, 0]);
-  const deviceBlurFilter = useTransform(deviceBlurPx, (b) => `blur(${b}px)`);
+  const lite = useLandingLiteMotion();
+  const deviceBlurPx = useTransform(scrollYProgress, [P.zoomStart, P.zoomStart + 0.1, 1], [lite ? 0 : 14, 0, 0]);
+  const deviceBlurFilter = useTransform(deviceBlurPx, (b) => (b > 0 ? `blur(${b}px)` : "none"));
 
   const balanceScale = useTransform(scrollYProgress, [P.zoomStart, P.zoomEnd, 1], [1.12, 1, 1]);
 
-  const scene2Opacity = holdOpacity(scrollYProgress, [P.decomposeStart, P.decomposeStart + 0.08]);
-  const scene2Y = useTransform(scrollYProgress, [P.decomposeStart, P.decomposeEnd, 1], [14, 0, 0]);
+  const scene2Opacity = useTransform(scrollYProgress, [P.zoomStart + 0.02, P.zoomEnd + 0.04, 1], [0, 1, 1]);
+  const scene2Y = useTransform(scrollYProgress, [P.zoomStart, P.zoomEnd, 1], [16, 0, 0]);
 
   const sideLeftX = useTransform(scrollYProgress, [P.decomposeStart, P.decomposeEnd, 1], [0, -84, -84]);
   const sideRightX = useTransform(scrollYProgress, [P.decomposeStart, P.decomposeEnd, 1], [0, 84, 84]);
@@ -288,7 +300,7 @@ function HeroDeviceDecompose({
 
   return (
     <motion.div
-      className="absolute inset-0 z-10 flex items-center justify-center overflow-visible px-2 sm:px-4"
+      className="pp-hero-device-stage absolute inset-x-0 bottom-0 top-[28%] z-10 flex items-center justify-center overflow-visible px-2 pb-6 sm:top-[26%] sm:px-4 sm:pb-8"
       style={{
         opacity: deviceOpacity,
         scale: deviceScale,
@@ -297,13 +309,16 @@ function HeroDeviceDecompose({
         pointerEvents: devicePointer,
       }}
     >
-      <div className="relative w-full max-w-[min(26rem,96vw)] overflow-visible">
-        <motion.div className="relative mb-3 text-center" style={{ opacity: scene2Opacity, y: scene2Y }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600">{pinCopy.scene2Title}</p>
-          <p className="mx-auto mt-2 max-w-md px-1 text-sm leading-relaxed text-slate-700">{pinCopy.scene2Sub}</p>
-        </motion.div>
+      <div className="pp-hero-device-card relative w-full max-w-[min(24rem,92vw)] sm:max-w-[min(26rem,96vw)]">
+        <div className="pp-hero-device-card__shell relative overflow-visible rounded-[1.85rem] border border-slate-200 bg-white p-5 shadow-[0_32px_90px_-24px_rgba(15,23,42,0.4)] ring-1 ring-slate-900/10 sm:p-6">
+          <motion.header
+            className="pp-hero-device-card__head -mx-1 mb-4 border-b border-slate-100 pb-4 text-center sm:-mx-0"
+            style={{ opacity: scene2Opacity, y: scene2Y }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600">{pinCopy.scene2Title}</p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-700">{pinCopy.scene2Sub}</p>
+          </motion.header>
 
-        <div className="relative overflow-visible rounded-[1.85rem] border border-slate-200 bg-white p-5 shadow-[0_32px_90px_-24px_rgba(15,23,42,0.4)] ring-1 ring-slate-900/10 sm:p-6">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200" aria-hidden />
 
           <motion.div className="text-center" style={{ scale: balanceScale }}>
@@ -383,6 +398,51 @@ type LandingBonsaiHeroProps = {
   trustPills: readonly string[];
 };
 
+function LandingHeroAmbientLayers({
+  blob1Motion,
+}: {
+  blob1Motion?: { x?: MotionValue<string>; y?: MotionValue<string> };
+}) {
+  return (
+    <>
+      <div className="pp-landing-hero-surface" aria-hidden>
+        <div className="pp-landing-hero-surface__mesh-drift" />
+        <div className="pp-landing-hero-surface__grid" />
+        <div className="pp-landing-hero-surface__sheen" />
+        <div className="pp-landing-hero-surface__fade" />
+      </div>
+      <div className="pp-landing-ambient pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+        <motion.div
+          className={`pp-landing-ambient__blob ${blob1Motion ? "left-[-18%] top-[-8%] h-[min(520px,70vw)] w-[min(520px,70vw)]" : "left-[-12%] top-[4%] h-[min(380px,68vw)] w-[min(380px,68vw)]"}`}
+          style={{
+            background: blob1Motion
+              ? "radial-gradient(circle, rgba(124,58,237,0.34) 0%, rgba(99,102,241,0.16) 48%, transparent 72%)"
+              : "radial-gradient(circle, rgba(124,58,237,0.38) 0%, rgba(99,102,241,0.18) 42%, transparent 72%)",
+            x: blob1Motion?.x,
+            y: blob1Motion?.y,
+          }}
+        />
+        <div
+          className={`pp-landing-ambient__blob pp-landing-ambient__blob--2 ${blob1Motion ? "right-[-18%] top-[12%] h-[min(480px,65vw)] w-[min(480px,65vw)]" : "right-[-10%] top-[18%] h-[min(340px,62vw)] w-[min(340px,62vw)]"}`}
+          style={{
+            background:
+              "radial-gradient(circle, rgba(52,211,153,0.34) 0%, rgba(16,185,129,0.14) 48%, transparent 74%)",
+          }}
+        />
+        <motion.div
+          className="pp-landing-ambient__blob left-[38%] top-[52%] h-[min(280px,50vw)] w-[min(280px,50vw)] opacity-35"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(59,130,246,0.22) 0%, rgba(167,139,250,0.1) 50%, transparent 72%)",
+            animationDuration: "32s",
+            animationDelay: "-12s",
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
 function LandingBonsaiHeroSimple({
   t,
   isAuthenticated,
@@ -394,29 +454,12 @@ function LandingBonsaiHeroSimple({
   return (
     <section
       ref={sectionRef}
-      className="pp-landing-cursor-host relative isolate overflow-hidden bg-[#f8fafc] px-4 pb-14 pt-12 sm:px-6 sm:pb-16 sm:pt-16"
+      className="pp-landing-cursor-host relative isolate overflow-hidden px-4 pb-14 pt-12 sm:px-6 sm:pb-16 sm:pt-16"
     >
+      <LandingHeroAmbientLayers />
       <LandingCursorLine hostRef={sectionRef} />
-      <div className="pp-landing-ambient pointer-events-none absolute inset-0" aria-hidden>
-        <div
-          className="pp-landing-ambient__blob left-[-12%] top-[4%] h-[min(360px,65vw)] w-[min(360px,65vw)]"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(124,58,237,0.35) 0%, rgba(99,102,241,0.15) 45%, transparent 72%)",
-          }}
-        />
-        <div
-          className="pp-landing-ambient__blob pp-landing-ambient__blob--2 right-[-10%] top-[20%] h-[min(320px,60vw)] w-[min(320px,60vw)]"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(52,211,153,0.3) 0%, rgba(16,185,129,0.12) 50%, transparent 74%)",
-          }}
-        />
-      </div>
-      <div className="relative z-[2] mx-auto max-w-4xl">
-        <HeroSectionBlurEntrance className="relative z-[2]">
-          <HeroCopyBlock t={t} isAuthenticated={isAuthenticated} primaryHref={primaryHref} secondaryHref={secondaryHref} />
-        </HeroSectionBlurEntrance>
+      <div className="relative z-[3] mx-auto max-w-4xl">
+        <HeroCopyBlock className="relative z-[2]" t={t} isAuthenticated={isAuthenticated} primaryHref={primaryHref} secondaryHref={secondaryHref} />
       </div>
     </section>
   );
@@ -456,46 +499,20 @@ function LandingBonsaiHeroScrollPin({
   return (
     <motion.section
       ref={railRef}
-      className="relative isolate hidden touch-pan-y overflow-x-clip text-slate-900 md:block"
+      className="relative isolate hidden touch-pan-y overflow-x-clip text-slate-900 xl:block"
       style={{ minHeight: railHeightPx, background: PIN_SURFACE }}
       aria-label={pinCopy.sectionAria}
     >
       <div
         ref={stickyRef}
         className="pp-landing-cursor-host sticky top-0 z-20 h-[100dvh] min-h-[100svh] w-full overflow-x-clip overflow-y-hidden"
-        style={{ background: PIN_SURFACE }}
       >
+        <LandingHeroAmbientLayers blob1Motion={hydrated ? { x: blob1X, y: blob1Y } : undefined} />
         <LandingCursorLine hostRef={stickyRef} />
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-visible" aria-hidden>
-          <motion.div
-            className="pp-landing-ambient__blob left-[-18%] top-[-8%] h-[min(520px,70vw)] w-[min(520px,70vw)]"
-            style={
-              hydrated
-                ? {
-                    x: blob1X,
-                    y: blob1Y,
-                    background:
-                      "radial-gradient(circle, rgba(124,58,237,0.28) 0%, rgba(99,102,241,0.1) 55%, transparent 100%)",
-                  }
-                : undefined
-            }
-          />
-          <motion.div
-            className="pp-landing-ambient__blob pp-landing-ambient__blob--2 right-[-18%] top-[12%] h-[min(480px,65vw)] w-[min(480px,65vw)]"
-            style={
-              hydrated
-                ? {
-                    background:
-                      "radial-gradient(circle, rgba(52,211,153,0.24) 0%, rgba(16,185,129,0.08) 55%, transparent 100%)",
-                  }
-                : undefined
-            }
-          />
-        </div>
 
         <motion.div
-          className="absolute inset-0 z-[1]"
-          style={{ opacity: scrimOpacity, backgroundColor: PIN_SURFACE }}
+          className="absolute inset-0 z-[4]"
+          style={{ opacity: scrimOpacity, backgroundColor: "rgba(248, 250, 252, 0.92)" }}
           aria-hidden
         />
 
@@ -518,9 +535,7 @@ function LandingBonsaiHeroScrollPin({
           }
         >
           <div className="relative z-30 mx-auto w-full max-w-4xl">
-            <HeroSectionBlurEntrance>
-              <HeroCopyBlock t={t} isAuthenticated={isAuthenticated} primaryHref={primaryHref} secondaryHref={secondaryHref} />
-            </HeroSectionBlurEntrance>
+            <HeroCopyBlock t={t} isAuthenticated={isAuthenticated} primaryHref={primaryHref} secondaryHref={secondaryHref} />
           </div>
         </motion.div>
 
@@ -539,10 +554,9 @@ function LandingBonsaiHeroScrollPin({
 
 export function LandingBonsaiHero(props: LandingBonsaiHeroProps) {
   const hydrated = useHydrated();
-  const reduce = usePreferMinimalMotion();
-  const compact = useCompactHero();
+  const scrollEffects = useLandingScrollEffects();
 
-  if (reduce || compact || !hydrated) {
+  if (!scrollEffects || !hydrated) {
     return (
       <LandingBonsaiHeroSimple
         t={props.t}

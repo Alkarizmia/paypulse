@@ -6,6 +6,7 @@ import { LocaleProvider } from "./locale-context";
 import { DisplayCurrencyProvider } from "./display-currency-context";
 import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
+import { PwaInstallProvider } from "./pwa-install-provider";
 import { PwaRegister } from "./pwa-register";
 import { LowPerformanceHtmlAttrs } from "@/lib/low-performance";
 import { PageVisibilityHtmlAttrs } from "./page-visibility-html-attrs";
@@ -62,8 +63,9 @@ export default function RootLayout({
       <body className={`${font.className} min-h-screen antialiased`} suppressHydrationWarning>
         <LowPerformanceHtmlAttrs />
         <PageVisibilityHtmlAttrs />
-        <PwaRegister />
-        <AuthProvider>
+        <PwaInstallProvider>
+          <PwaRegister />
+          <AuthProvider>
           <LocaleProvider>
             <DisplayCurrencyProvider>
             <div className="flex min-h-screen flex-col">
@@ -74,6 +76,7 @@ export default function RootLayout({
             </DisplayCurrencyProvider>
           </LocaleProvider>
         </AuthProvider>
+        </PwaInstallProvider>
       </body>
     </html>
   );

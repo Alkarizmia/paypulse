@@ -232,6 +232,9 @@ const fr = {
             macLabel: "Telecharger sur Mac",
             windowsLabel: "Telecharger sur Windows",
             secondaryLabel: "Installer l'application",
+            guideTitle: "Installer PayPulss sur cet appareil",
+            guideClose: "Fermer",
+            guideNativeReady: "Installation disponible : cliquez pour lancer l'assistant du navigateur.",
           },
           problemTitle: "Le probleme n'est pas vos clients. C'est le timing.",
           problemBody:
@@ -532,6 +535,9 @@ const en = {
             macLabel: "Download for Mac",
             windowsLabel: "Download for Windows",
             secondaryLabel: "Install the app",
+            guideTitle: "Install PayPulss on this device",
+            guideClose: "Close",
+            guideNativeReady: "Install available: click to open your browser install prompt.",
           },
           problemTitle: "The problem is not your clients. It's timing.",
           problemBody:
@@ -832,6 +838,9 @@ const nl = {
             macLabel: "Downloaden voor Mac",
             windowsLabel: "Downloaden voor Windows",
             secondaryLabel: "App installeren",
+            guideTitle: "PayPulss op dit apparaat installeren",
+            guideClose: "Sluiten",
+            guideNativeReady: "Installatie beschikbaar: klik om de browser-assistent te openen.",
           },
           problemTitle: "Het probleem zijn niet je klanten. Het is timing.",
           problemBody:
@@ -1132,6 +1141,9 @@ const es = {
             macLabel: "Descargar para Mac",
             windowsLabel: "Descargar para Windows",
             secondaryLabel: "Instalar la app",
+            guideTitle: "Instalar PayPulss en este dispositivo",
+            guideClose: "Cerrar",
+            guideNativeReady: "Instalacion disponible: haga clic para abrir el asistente del navegador.",
           },
           problemTitle: "El problema no son tus clientes. Es el calendario de cobros.",
           problemBody:
