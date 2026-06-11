@@ -937,6 +937,23 @@ html[data-low-performance="true"] .pp-hero-device-aura {
   }
 }
 
+/* Dashboard : barre latérale scrollable sur écrans courts */
+.pp-dashboard-sidebar-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.45) transparent;
+  scrollbar-gutter: stable;
+}
+
+.pp-dashboard-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pp-dashboard-sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(100, 116, 139, 0.4);
+}
+
 /* Landing — section « produit en images » : blanc en haut → foncé en bas (enchaînement #demo) */
 .pp-product-tour-section {
   --ppt-edge: #06060a;

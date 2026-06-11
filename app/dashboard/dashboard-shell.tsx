@@ -515,26 +515,29 @@ export function DashboardShell({
       <aside
         className={
           light
-            ? "fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-slate-200 bg-white px-3 py-6 lg:flex"
-            : "fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-white/[0.06] bg-[#0c0c12] px-3 py-6 lg:flex"
+            ? "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-slate-200 bg-white px-3 py-4 lg:flex"
+            : "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-white/[0.06] bg-[#0c0c12] px-3 py-4 lg:flex"
         }
       >
-        <div className="flex flex-col gap-1 px-2">
-          <div className="flex items-center gap-2">
-            <PayPulseLogo className="h-8 w-8 shrink-0 text-emerald-500" />
-            <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
+        <div className="shrink-0">
+          <div className="flex flex-col gap-1 px-2">
+            <div className="flex items-center gap-2">
+              <PayPulseLogo className="h-8 w-8 shrink-0 text-emerald-500" />
+              <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
+            </div>
+            {workspaceLabel ? (
+              <p className={`truncate pl-10 text-xs font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{workspaceLabel}</p>
+            ) : null}
           </div>
-          {workspaceLabel ? (
-            <p className={`truncate pl-10 text-xs font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{workspaceLabel}</p>
-          ) : null}
+          <p
+            className={`mx-2 mt-4 rounded-lg border px-3 py-2 text-xs ${light ? "border-slate-200 bg-slate-50 text-slate-400" : "border-white/[0.06] bg-white/[0.03] text-slate-500"}`}
+            aria-hidden
+          >
+            {homeCopy.searchPlaceholder}
+          </p>
         </div>
-        <p
-          className={`mx-2 mt-6 rounded-lg border px-3 py-2 text-xs ${light ? "border-slate-200 bg-slate-50 text-slate-400" : "border-white/[0.06] bg-white/[0.03] text-slate-500"}`}
-          aria-hidden
-        >
-          {homeCopy.searchPlaceholder}
-        </p>
-        <nav className="mt-4 flex flex-1 flex-col gap-0.5">
+        <div className="pp-dashboard-sidebar-scroll mt-2 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
+        <nav className="flex flex-col gap-0.5">
           {items.slice(0, 2).map((item) => renderScrollableItem(item))}
           <Link href="/dashboard/pipeline" className={shellNavLink(onPipeline, light)}>
             <span className={onPipeline ? navIconActive : navIconIdle}>{pipelineIcon}</span>
@@ -680,12 +683,13 @@ export function DashboardShell({
         <div
           className={
             light
-              ? "mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-              : "mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
+              ? "mb-1 mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+              : "mb-1 mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
           }
         >
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t.plan}</p>
           <p className={`text-xs font-bold ${light ? "text-violet-700" : "text-violet-300"}`}>{planId.toUpperCase()}</p>
+        </div>
         </div>
       </aside>
 
@@ -915,14 +919,14 @@ export function DashboardShell({
         ) : null}
         <aside
           id="dashboard-mobile-drawer"
-          className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[86vw] px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
+          className={`fixed inset-y-0 left-0 z-40 flex h-dvh min-h-0 w-72 max-w-[86vw] flex-col overflow-hidden px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
             light
               ? "border-r border-slate-200 bg-white"
               : "border-r border-white/[0.08] bg-[#0c0c12]"
           } ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
           aria-hidden={!mobileMenuOpen}
         >
-          <div className="flex items-center justify-between px-1">
+          <div className="flex shrink-0 items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <PayPulseLogo className="h-7 w-7 text-emerald-500" />
               <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
@@ -942,7 +946,8 @@ export function DashboardShell({
               </svg>
             </button>
           </div>
-          <nav className="mt-6 flex flex-col gap-1">
+          <div className="pp-dashboard-sidebar-scroll mt-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
+          <nav className="flex flex-col gap-1">
             {items.slice(0, 2).map((item) => {
               const active = isDashHome && activeNav === item.id;
               return (
@@ -1104,6 +1109,7 @@ export function DashboardShell({
               </Link>
             </div>
           </nav>
+          </div>
         </aside>
 
         <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</main>
