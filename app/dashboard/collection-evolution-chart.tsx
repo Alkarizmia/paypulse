@@ -206,10 +206,8 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
               setPeriod(e.target.value as EvolutionChartPeriod);
               setHoverIndex(null);
             }}
-            className={`cursor-pointer rounded-lg border py-1.5 pl-2.5 pr-8 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
-              light
-                ? "border-slate-200 bg-white text-slate-800"
-                : "border-white/10 bg-bg-dark text-slate-100"
+            className={`cursor-pointer rounded-lg border py-1.5 pl-2.5 pr-8 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+              light ? "border-border bg-bg text-slate-800" : "border-white/10 bg-bg-dark text-slate-100"
             }`}
             aria-label={copy.periodSelectLabel}
           >
@@ -234,18 +232,25 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
           ))}
         </div>
 
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-border/80 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-accent)_6%,transparent)_0%,transparent_42%)] px-1 pt-1">
           <div className="h-40 sm:h-52">
             <svg viewBox={`0 0 ${chartW} ${chartH}`} className="h-full w-full" preserveAspectRatio="none" aria-hidden>
               <defs>
                 <linearGradient id={fillPaid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-success)" stopOpacity={light ? "0.32" : "0.24"} />
-                  <stop offset="100%" stopColor="var(--color-success)" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={light ? "0.38" : "0.32"} />
+                  <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id={fillPending} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-warning)" stopOpacity={light ? "0.24" : "0.18"} />
-                  <stop offset="100%" stopColor="var(--color-warning)" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={light ? "0.12" : "0.18"} />
+                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
                 </linearGradient>
+                <filter id={`${fillPaid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="1.6" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
               {gridYs.map((gy, i) => (
                 <line
@@ -254,9 +259,20 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
                   y1={gy}
                   x2={chartW}
                   y2={gy}
-                  stroke={i === gridYs.length - 1 ? (light ? "var(--color-border)" : "rgba(148,163,184,0.25)") : chartGridSoft}
-                  strokeWidth="1"
-                  strokeDasharray={i === gridYs.length - 1 ? "4 6" : undefined}
+                  stroke={chartGridSoft}
+                  strokeWidth="0.5"
+                />
+              ))}
+              {paidPts.map((p, i) => (
+                <line
+                  key={`vx-${i}`}
+                  x1={p.x}
+                  y1={0}
+                  x2={p.x}
+                  y2={chartH}
+                  stroke={chartGridSoft}
+                  strokeWidth="0.4"
+                  strokeDasharray="2 6"
                 />
               ))}
               {guideX !== null ? (
@@ -265,49 +281,54 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
                   y1={0}
                   x2={guideX}
                   y2={chartH}
-                  stroke={light ? "rgba(148,163,184,0.55)" : "rgba(148,163,184,0.35)"}
-                  strokeWidth="1"
-                  strokeDasharray="3 4"
+                  stroke="var(--color-accent)"
+                  strokeOpacity="0.35"
+                  strokeWidth="1.25"
                 />
               ) : null}
               <polygon fill={`url(#${fillPending})`} points={area(pendingPts)} />
               <polygon fill={`url(#${fillPaid})`} points={area(paidPts)} />
               <polyline
                 fill="none"
-                stroke="var(--color-warning)"
-                strokeWidth="2"
+                stroke="var(--color-primary)"
+                strokeWidth="1.5"
                 strokeLinejoin="round"
                 strokeLinecap="round"
+                strokeDasharray="5 4"
                 points={poly(pendingPts)}
               />
               <polyline
                 fill="none"
-                stroke="var(--color-success)"
-                strokeWidth="2"
+                stroke="var(--color-accent)"
+                strokeWidth="2.5"
                 strokeLinejoin="round"
                 strokeLinecap="round"
+                filter={`url(#${fillPaid}-glow)`}
                 points={poly(paidPts)}
               />
               {pendingPts.map((p, i) => (
-                <circle
+                <rect
                   key={`p-${i}`}
-                  cx={p.x}
-                  cy={p.y}
-                  r={activeIndex === i ? 3 : 2}
-                  fill="var(--color-warning)"
-                  stroke="var(--color-warning)"
-                  strokeWidth="1"
+                  x={p.x - (activeIndex === i ? 2.5 : 1.75)}
+                  y={p.y - (activeIndex === i ? 2.5 : 1.75)}
+                  width={activeIndex === i ? 5 : 3.5}
+                  height={activeIndex === i ? 5 : 3.5}
+                  fill={light ? "#fff" : "var(--color-bg-dark)"}
+                  stroke="var(--color-primary)"
+                  strokeWidth="1.25"
                 />
               ))}
               {paidPts.map((p, i) => (
-                <circle
+                <rect
                   key={`c-${i}`}
-                  cx={p.x}
-                  cy={p.y}
-                  r={activeIndex === i ? 3 : 2}
-                  fill="var(--color-success)"
-                  stroke="var(--color-success)"
-                  strokeWidth="1"
+                  x={p.x - (activeIndex === i ? 3 : 2)}
+                  y={p.y - (activeIndex === i ? 3 : 2)}
+                  width={activeIndex === i ? 6 : 4}
+                  height={activeIndex === i ? 6 : 4}
+                  rx="0.6"
+                  fill="var(--color-accent)"
+                  stroke={light ? "#fff" : "var(--color-bg-dark)"}
+                  strokeWidth="1.25"
                 />
               ))}
             </svg>
@@ -347,14 +368,14 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
+                    <span className="inline-flex h-1.5 w-4 rounded-sm bg-accent" aria-hidden />
                     {copy.evolutionPaid}
                   </span>
                   <span className="tabular-nums font-medium">{formatTooltip(activePoint.paid)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-400" aria-hidden />
+                    <span className="inline-flex h-1.5 w-4 rounded-sm bg-primary" aria-hidden />
                     {copy.evolutionPending}
                   </span>
                   <span className="tabular-nums font-medium">{formatTooltip(activePoint.pending)}</span>
@@ -377,14 +398,14 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
       </div>
 
       <div
-        className={`mt-4 flex flex-wrap items-center justify-center gap-5 text-xs font-medium ${light ? "text-slate-600" : "text-slate-300"}`}
+        className={`mt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-medium ${light ? "text-slate-600" : "text-slate-300"}`}
       >
-        <span className="inline-flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden />
+        <span className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 ${light ? "border-border bg-bg" : "border-white/10 bg-white/[0.04]"}`}>
+          <span className="h-1.5 w-4 rounded-sm bg-accent" aria-hidden />
           {copy.evolutionPaid}
         </span>
-        <span className="inline-flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-orange-400" aria-hidden />
+        <span className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 ${light ? "border-border bg-bg" : "border-white/10 bg-white/[0.04]"}`}>
+          <span className="h-1.5 w-4 rounded-sm bg-primary" aria-hidden />
           {copy.evolutionPending}
         </span>
       </div>

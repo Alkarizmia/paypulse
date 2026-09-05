@@ -71,6 +71,7 @@ export function OnboardingTasks({
   const [dismissed, setDismissed] = useState(false);
   const [expandedId, setExpandedId] = useState<TaskId | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [floatingOpen, setFloatingOpen] = useState(false);
 
   const ctx = { profile, clientCount, hasSentReminder, autoRemindersEnabled, googleClientIdConfigured };
 
@@ -124,7 +125,7 @@ export function OnboardingTasks({
               ? "border-slate-200 bg-white text-slate-800 hover:border-emerald-300 hover:bg-emerald-50"
               : "border-white/10 bg-[#14141c] text-slate-200 hover:border-emerald-500/40 hover:bg-emerald-500/10"
           }`
-        : `fixed bottom-6 right-4 z-40 flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold shadow-lg transition lg:right-8 ${
+        : `fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold shadow-lg transition lg:bottom-6 lg:right-6 ${
             light
               ? "border-slate-200 bg-white text-slate-800 hover:border-emerald-300 hover:bg-emerald-50"
               : "border-white/10 bg-[#14141c] text-slate-200 hover:border-emerald-500/40 hover:bg-emerald-500/10"
@@ -162,7 +163,30 @@ export function OnboardingTasks({
   const asideCls =
     layout === "column"
       ? "w-full"
-      : "fixed bottom-4 right-4 z-40 w-[min(100vw-2rem,280px)] lg:bottom-8 lg:right-8";
+      : "fixed bottom-4 right-4 z-40 max-h-[min(70vh,28rem)] w-[min(100vw-2rem,280px)] overflow-y-auto lg:bottom-6 lg:right-6";
+
+  if (layout === "floating" && !floatingOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setFloatingOpen(true)}
+        className={`fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold shadow-lg lg:bottom-6 lg:right-6 ${
+          light
+            ? "border-border bg-bg text-text hover:bg-bg-alt"
+            : "border-white/10 bg-bg-dark text-text-dark hover:bg-white/10"
+        }`}
+      >
+        {t.onboardingTitle}
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
+            light ? "bg-slate-100 text-slate-600" : "bg-white/10 text-slate-400"
+          }`}
+        >
+          {tasks.length - doneCount}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <aside className={asideCls} aria-label={t.onboardingTitle}>
@@ -182,7 +206,10 @@ export function OnboardingTasks({
             </div>
             <button
               type="button"
-              onClick={dismiss}
+              onClick={() => {
+                if (layout === "floating") setFloatingOpen(false);
+                else dismiss();
+              }}
               className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${
                 light ? "text-slate-500 hover:bg-slate-100 hover:text-slate-800" : "text-slate-400 hover:bg-white/10 hover:text-white"
               }`}
@@ -253,9 +280,7 @@ export function OnboardingTasks({
                     <div className={`px-3 pb-2.5 pt-0.5 ${light ? "text-slate-600" : "text-slate-400"}`}>
                       <Link
                         href={task.href}
-                        className={`inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition ${
-                          light ? "bg-emerald-600 hover:bg-emerald-700" : "bg-emerald-600/90 hover:bg-emerald-600"
-                        }`}
+                        className="pp-btn-primary px-3 py-1.5 text-xs"
                       >
                         {task.cta}
                       </Link>

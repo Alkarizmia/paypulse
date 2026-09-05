@@ -15,12 +15,10 @@ type IntegrationsBannerProps = {
 function pillClass(light: boolean, connected: boolean) {
   if (connected) {
     return light
-      ? "rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800"
-      : "rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200";
+      ? "inline-flex rounded-full border border-success/30 bg-success/10 px-3 py-1 text-xs font-semibold text-success"
+      : "inline-flex rounded-full border border-success/30 bg-success/10 px-3 py-1 text-xs font-semibold text-success";
   }
-  return light
-    ? "rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600"
-    : "rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400";
+  return "pp-btn-secondary px-3 py-1 text-xs";
 }
 
 export function IntegrationsBanner({ locale, appearance }: IntegrationsBannerProps) {
@@ -54,7 +52,7 @@ export function IntegrationsBanner({ locale, appearance }: IntegrationsBannerPro
         <p className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.integrationsTitle}</p>
         <Link
           href="/dashboard/integrations"
-          className={`text-xs font-semibold ${light ? "text-emerald-700 hover:text-emerald-800" : "text-emerald-300 hover:text-emerald-200"}`}
+          className={`text-xs font-semibold ${light ? "text-accent hover:underline" : "text-accent hover:underline"}`}
         >
           {t.navIntegrations}
         </Link>

@@ -127,6 +127,7 @@ export function DashboardView() {
   const overviewRef = useRef<HTMLDivElement>(null);
   const invoicesRef = useRef<HTMLDivElement>(null);
   const [addClientModalOpen, setAddClientModalOpen] = useState(false);
+  const [showFoldersHint, setShowFoldersHint] = useState(false);
   const relancesRef = useRef<HTMLDivElement>(null);
   const paiementsRef = useRef<HTMLDivElement>(null);
   const [profileCompany, setProfileCompany] = useState("");
@@ -198,6 +199,13 @@ export function DashboardView() {
     if (!ws.activeWorkspaceId) return;
     queueMicrotask(() => setAddTargetWorkspaceId(ws.activeWorkspaceId));
   }, [ws.activeWorkspaceId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.localStorage.getItem("paypulss_folders_hint_seen_v1")) {
+      setShowFoldersHint(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!reminderToast && !reminderMailHardError) return;
@@ -1051,18 +1059,14 @@ export function DashboardView() {
                 type="button"
                 onClick={openAddClientModal}
                 disabled={memberReadOnly}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 ${
-                  shellAppearance === "light" ? "bg-violet-600 hover:bg-violet-700" : "bg-violet-600/90 hover:bg-violet-600"
-                }`}
+                className="pp-btn-primary px-4 py-2 text-sm disabled:opacity-50"
               >
                 {homeCopy.newClient}
               </button>
               <button
                 type="button"
                 onClick={() => handleNav("relances")}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
-                  shellAppearance === "light" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-emerald-600/90 hover:bg-emerald-600"
-                }`}
+                className="pp-btn-secondary px-4 py-2 text-sm"
               >
                 {homeCopy.sendReminder}
               </button>
@@ -1076,7 +1080,43 @@ export function DashboardView() {
             locale={locale}
             appearance={shellAppearance}
             remindersSentCount={remindersSentCount}
+            onAddClient={openAddClientModal}
+            onReminders={() => handleNav("relances")}
           />
+
+          {showFoldersHint ? (
+            <div
+              className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
+                shellAppearance === "light" ? "border-border bg-bg" : "border-white/10 bg-bg-dark"
+              }`}
+            >
+              <p className={`text-xs font-medium ${shellAppearance === "light" ? "text-text" : "text-text-dark"}`}>
+                {homeCopy.foldersHintTitle}
+              </p>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard/dossiers"
+                  className="pp-btn-secondary px-3 py-1 text-xs"
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
+                    setShowFoldersHint(false);
+                  }}
+                >
+                  {homeCopy.foldersHintCta}
+                </Link>
+                <button
+                  type="button"
+                  className="pp-btn-secondary px-3 py-1 text-xs"
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
+                    setShowFoldersHint(false);
+                  }}
+                >
+                  {homeCopy.foldersHintClose}
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_min(17.5rem,300px)] xl:items-start">
             <div className="min-w-0 space-y-6">
@@ -1088,6 +1128,7 @@ export function DashboardView() {
                 appearance={shellAppearance}
                 skipSummaryCards
                 treasuryInSidebar={caps.fullDashboardCharts}
+                onAddClient={openAddClientModal}
               />
               <CollectionPipeline
                 clients={clients}

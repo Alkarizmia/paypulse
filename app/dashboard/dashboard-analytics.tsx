@@ -48,6 +48,7 @@ type DashboardAnalyticsProps = {
   showTreasuryInGrid?: boolean;
   /** true sur l’accueil desktop : trésorerie déplacée dans la colonne latérale. */
   treasuryInSidebar?: boolean;
+  onAddClient?: () => void;
 };
 
 export function DashboardAnalytics({
@@ -59,10 +60,12 @@ export function DashboardAnalytics({
   skipSummaryCards = false,
   showTreasuryInGrid = true,
   treasuryInSidebar = false,
+  onAddClient,
 }: DashboardAnalyticsProps) {
   const light = appearance === "light";
   const t = getDashboardAnalyticsCopy(locale);
   const money = useMoney();
+  const emptyAccount = clients.length === 0;
 
   const pendingAmount = useMemo(
     () => clients.filter((c) => c.status === "unpaid").reduce((s, c) => s + c.amountDue, 0),
@@ -244,16 +247,24 @@ export function DashboardAnalytics({
       {advancedStats ? (
         <div className="grid min-w-0 gap-3 sm:gap-4 sm:grid-cols-2">
           <div
-            className={`pp-dashboard-card-interactive rounded-2xl border px-4 py-3.5 sm:px-5 sm:py-4 ${
-              light
-                ? "border-violet-200 bg-violet-50 hover:border-violet-300"
-                : "border-violet-500/35 bg-violet-950/30 hover:border-violet-400/45"
+            className={`pp-dashboard-card-interactive rounded-2xl border border-l-[3px] border-l-warning px-4 py-3.5 sm:px-5 sm:py-4 ${
+              light ? "border-border bg-bg hover:border-border" : "border-white/[0.08] bg-bg-dark"
             }`}
           >
-            <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-violet-700" : "text-violet-300"}`}>{t.avgDelay}</p>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>{t.avgDelay}</p>
             <p className={`mt-2 text-xl font-bold sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>
-              {avgDelay === null ? (
-                <span className={`text-base font-medium ${light ? "text-slate-600" : "text-slate-400"}`}>{t.noHistory}</span>
+              {emptyAccount || avgDelay === null ? (
+                emptyAccount && onAddClient ? (
+                  <button
+                    type="button"
+                    onClick={onAddClient}
+                    className="text-left text-sm font-medium text-accent underline-offset-2 hover:underline"
+                  >
+                    {t.emptyCta}
+                  </button>
+                ) : (
+                  <span className={`text-base font-medium ${light ? "text-slate-600" : "text-slate-400"}`}>{t.noHistory}</span>
+                )
               ) : (
                 <>
                   {avgDelay}{" "}
@@ -263,14 +274,22 @@ export function DashboardAnalytics({
             </p>
           </div>
           <div
-            className={`pp-dashboard-card-interactive rounded-2xl border px-4 py-3.5 sm:px-5 sm:py-4 ${
-              light
-                ? "border-violet-200 bg-violet-50 hover:border-violet-300"
-                : "border-violet-500/35 bg-violet-950/30 hover:border-violet-400/45"
+            className={`pp-dashboard-card-interactive rounded-2xl border border-l-[3px] border-l-success px-4 py-3.5 sm:px-5 sm:py-4 ${
+              light ? "border-border bg-bg hover:border-border" : "border-white/[0.08] bg-bg-dark"
             }`}
           >
-            <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-violet-700" : "text-violet-300"}`}>{t.recovery}</p>
-            <p className={`mt-2 text-xl font-bold sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>{paidPct}%</p>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>{t.recovery}</p>
+            {emptyAccount && onAddClient ? (
+              <button
+                type="button"
+                onClick={onAddClient}
+                className="mt-2 text-left text-sm font-medium text-accent underline-offset-2 hover:underline"
+              >
+                {t.emptyCta}
+              </button>
+            ) : (
+              <p className={`mt-2 text-xl font-bold sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>{paidPct}%</p>
+            )}
           </div>
         </div>
       ) : null}
@@ -278,14 +297,15 @@ export function DashboardAnalytics({
       {fullCharts ? (
         <div className="min-w-0 space-y-4 sm:space-y-6">
           <div
-            className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-4 sm:p-6 ${
-              light
-                ? "border-slate-200 bg-white hover:border-emerald-300/50"
-                : "border-white/[0.08] bg-bg-dark hover:border-emerald-500/30"
+            className={`min-w-0 overflow-hidden rounded-2xl border ${
+              light ? "border-border bg-bg-alt" : "border-white/[0.08] bg-bg-dark"
             }`}
           >
-            <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.evolution}</h3>
-            <div className="mt-3 sm:mt-4">
+            <div className={`flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-6 ${light ? "border-border bg-bg" : "border-white/[0.08]"}`}>
+              <h3 className={`text-sm font-semibold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>{t.evolution}</h3>
+              <span className={`hidden h-1.5 w-1.5 rounded-full bg-accent sm:inline-block ${light ? "shadow-[0_0_10px_var(--color-accent)]" : ""}`} aria-hidden />
+            </div>
+            <div className="p-4 sm:p-6">
               <CollectionEvolutionChart clients={clients} locale={locale} light={light} copy={t} />
             </div>
           </div>
@@ -303,52 +323,87 @@ export function DashboardAnalytics({
               }`}
             >
               <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.distribution}</h3>
-              <div className="mt-6 grid min-w-0 grid-cols-1 items-center gap-6 sm:gap-8 md:grid-cols-[minmax(9rem,auto)_minmax(0,1fr)_minmax(10.5rem,13.5rem)] md:gap-6 lg:gap-8">
-                <div className="relative mx-auto grid h-36 w-36 shrink-0 place-items-center sm:mx-0">
-                  <div
-                    className="col-start-1 row-start-1 h-full w-full rounded-full p-[11px]"
-                    style={{
-                      background: `conic-gradient(from -90deg, var(--color-accent) 0 ${paidPct}%, var(--color-primary) ${paidPct}% ${paidPct + pendPct}%, var(--color-warning) ${paidPct + pendPct}% 100%)`,
-                    }}
-                  >
-                    <div className={`flex h-full w-full items-center justify-center rounded-full ${light ? "bg-white" : "bg-bg-dark"}`}>
-                      <div className="px-2 text-center">
-                        <span className={`block text-[10px] uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-400"}`}>
-                          {t.chartTotal}
-                        </span>
-                        <span className={`mt-0.5 block text-sm font-bold tabular-nums sm:text-base ${light ? "text-slate-900" : "text-white"}`}>
-                          {money.format(totalVolume)}
-                        </span>
-                      </div>
-                    </div>
+              <div className="mt-6 grid min-w-0 grid-cols-1 items-end gap-6 sm:gap-8 md:grid-cols-[minmax(11rem,auto)_minmax(0,1fr)_minmax(10.5rem,13.5rem)] md:gap-6 lg:gap-8">
+                <div className="relative mx-auto w-[11.5rem] shrink-0 sm:mx-0">
+                  <svg viewBox="0 0 200 112" className="h-auto w-full" aria-hidden>
+                    <path
+                      d="M 22 100 A 78 78 0 0 1 178 100"
+                      fill="none"
+                      stroke="var(--color-border)"
+                      strokeWidth="16"
+                      strokeLinecap="butt"
+                    />
+                    {emptyAccount ? null : (
+                      <>
+                        <path
+                          d="M 22 100 A 78 78 0 0 1 178 100"
+                          fill="none"
+                          stroke="var(--color-accent)"
+                          strokeWidth="16"
+                          pathLength={100}
+                          strokeDasharray={`${paidPct} ${100 - paidPct}`}
+                          strokeDashoffset={0}
+                        />
+                        <path
+                          d="M 22 100 A 78 78 0 0 1 178 100"
+                          fill="none"
+                          stroke="var(--color-primary)"
+                          strokeWidth="16"
+                          pathLength={100}
+                          strokeDasharray={`${pendPct} ${100 - pendPct}`}
+                          strokeDashoffset={-paidPct}
+                        />
+                        <path
+                          d="M 22 100 A 78 78 0 0 1 178 100"
+                          fill="none"
+                          stroke="var(--color-warning)"
+                          strokeWidth="16"
+                          pathLength={100}
+                          strokeDasharray={`${overPct} ${100 - overPct}`}
+                          strokeDashoffset={-(paidPct + pendPct)}
+                        />
+                      </>
+                    )}
+                  </svg>
+                  <div className="pointer-events-none absolute inset-x-0 bottom-1 text-center">
+                    <span className={`block text-[10px] uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-400"}`}>
+                      {t.chartTotal}
+                    </span>
+                    <span className={`mt-0.5 block text-sm font-bold tabular-nums sm:text-base ${light ? "text-slate-900" : "text-white"}`}>
+                      {money.format(
+                        distributionSegments.paidAmount +
+                          distributionSegments.pendingAmount +
+                          distributionSegments.overdueAmount,
+                      )}
+                    </span>
                   </div>
                 </div>
                 <ul className={`flex min-w-0 flex-col gap-4 text-sm ${light ? "text-slate-700" : "text-slate-200"}`}>
                   <li className="flex min-w-0 items-center justify-between gap-4">
                     <span className="inline-flex min-w-0 items-center gap-2.5 whitespace-nowrap">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
+                      <span className="h-1.5 w-4 shrink-0 rounded-sm bg-accent" aria-hidden />
                       {t.paid}
                     </span>
                     <span className={`shrink-0 tabular-nums font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>
-                      {paidPct}%
+                      {emptyAccount ? 0 : paidPct}%
                     </span>
                   </li>
                   <li className="flex min-w-0 items-center justify-between gap-4">
                     <span className="inline-flex min-w-0 items-center gap-2.5 whitespace-nowrap">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" aria-hidden />
+                      <span className="h-1.5 w-4 shrink-0 rounded-sm bg-primary" aria-hidden />
                       {t.pendingL}
                     </span>
                     <span className={`shrink-0 tabular-nums font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>
-                      {pendPct}%
+                      {emptyAccount ? 0 : pendPct}%
                     </span>
                   </li>
                   <li className="flex min-w-0 items-center justify-between gap-4">
                     <span className="inline-flex min-w-0 items-center gap-2.5 whitespace-nowrap">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-orange-400" aria-hidden />
+                      <span className="h-1.5 w-4 shrink-0 rounded-sm bg-warning" aria-hidden />
                       {t.overdueL}
                     </span>
                     <span className={`shrink-0 tabular-nums font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>
-                      {overPct}%
+                      {emptyAccount ? 0 : overPct}%
                     </span>
                   </li>
                 </ul>

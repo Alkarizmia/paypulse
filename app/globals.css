@@ -92,6 +92,56 @@ body {
   color: var(--color-text);
 }
 
+.pp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+.pp-btn-primary:hover {
+  background: #4f46e5;
+}
+.pp-btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.pp-btn-secondary:hover {
+  background: var(--color-bg-alt);
+}
+
+.pp-field {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  outline: none;
+}
+.pp-field:focus,
+.pp-field:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
 /* Onglet en arrière-plan (voir `PageVisibilityHtmlAttrs`) : pause les animations CSS
    (landing, marquee, etc.) pour limiter CPU/GPU quand une autre page est au premier plan. */
 html.pp-doc-hidden *,

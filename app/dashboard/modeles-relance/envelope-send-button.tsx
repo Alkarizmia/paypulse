@@ -188,7 +188,7 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
           setTab("everyone");
           setSelectedIds(new Set());
         }}
-        className="inline-flex items-center gap-2 rounded-xl border border-fuchsia-400/40 bg-fuchsia-600/25 px-4 py-2.5 text-sm font-semibold text-fuchsia-50 shadow-[0_0_24px_-8px_rgba(232,121,249,0.5)] transition hover:bg-fuchsia-600/40 hover:border-fuchsia-300/50"
+        className="pp-btn-primary px-4 py-2.5 text-sm"
         aria-label={labels.envelopeAria}
       >
         <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -234,7 +234,7 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
                   aria-selected={tab === k}
                   onClick={() => setTab(k)}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    tab === k ? "bg-fuchsia-600 text-white" : "border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+                    tab === k ? "bg-accent text-white" : "pp-btn-secondary py-1.5"
                   }`}
                 >
                   {label}
@@ -250,7 +250,7 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
                   value={manualTo}
                   onChange={(e) => setManualTo(e.target.value)}
                   placeholder={labels.toPlaceholder}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:border-fuchsia-500/50 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/40"
+                  className="pp-field mt-1 px-3 py-2 text-sm"
                   autoComplete="email"
                 />
               </>
@@ -337,14 +337,14 @@ export function EnvelopeSendButton({ subject, body, labels, clients, locale, pla
               <button
                 type="button"
                 onClick={() => void handleCopy()}
-                className="rounded-lg border border-white/[0.12] bg-white/[0.06] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.1]"
+                className="pp-btn-secondary px-3 py-2 text-xs"
               >
                 {copied ? labels.copied : labels.copy}
               </button>
               {canOpenMail ? (
                 <a
                   href={mailtoHref}
-                  className="inline-flex rounded-lg bg-fuchsia-600 px-3 py-2 text-xs font-semibold text-white hover:bg-fuchsia-500"
+                  className="pp-btn-primary px-3 py-2 text-xs"
                 >
                   {labels.openMail}
                 </a>

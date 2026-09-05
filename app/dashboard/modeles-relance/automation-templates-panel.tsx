@@ -148,24 +148,17 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
     locale === "fr"
       ? {
           title: "Relances automatiques",
-          hint: (
-            <>
-              PayPulss envoie ces mails <strong>pour vous</strong>, uniquement aux{" "}
-              <strong>factures encore impayées</strong> du portefeuille sélectionné. Vos clients voient généralement l’expéditeur{" "}
-              <strong>{AUTO_REMINDER_FROM_DISPLAY}</strong> (configuré côté serveur PayPulss / votre domaine peut aussi être utilisé).
-            </>
-          ),
-          hintTech:
-            "L’envoi réel passe par une tâche automatique régulière (cron) configurée pour votre projet : elle appelle le serveur, qui vérifie les échéances et envoie au bon jour.",
+          hint: "PayPulss envoie automatiquement un e-mail aux factures impayées du portefeuille sélectionné.",
+          hintLearnMore: "En savoir plus",
+          hintTech: `L’expéditeur affiché est en général ${AUTO_REMINDER_FROM_DISPLAY} (ou votre domaine s’il est configuré). L’envoi part d’une tâche automatique régulière qui vérifie les échéances. Les délais J+n se calculent à partir de la date d’échéance, puis le message part souvent le matin (fuseau Paris).`,
           enable: "Activer les relances automatiques pour ce portefeuille",
           daysTitle: "Délais après la date d’échéance (J+n)",
-          daysExpl:
-            "Pour chaque retard, vous choisissez un délai « J+n » : par exemple « J+3 », c’est trois jours après la date d’échéance de la facture dans PayPulss. Une ligne n’est prise en compte que si elle est impayée et en retard. Le calcul passe par la date/heure UTC côté serveur puis l’e-mail sort en général le matin (souvent 9 h à 11 h Paris, après le créneau d’envoi et le passage du cron).",
+          daysExpl: "Choisissez le nombre de jours après l’échéance avant chaque relance automatique.",
           preset37: "Préréglage : J+3 · 7 · 21",
           preset137: "Préréglage : J+1 · 3 · 7 · 21",
           maxRun: "Plafond d’envois par passage",
           maxRunExpl: (cap: number) =>
-            `Garde-fou : à chaque passage du robot, ce portefeuille n’envoie pas plus de relances auto que ce nombre si beaucoup de retards coïncident. Plafond maximum autorisé sur votre plan : ${cap}.`,
+            `Nombre maximum de relances automatiques envoyées d’un coup pour ce portefeuille (limite du plan : ${cap}).`,
           save: "Enregistrer les règles et modèles",
           modelsTitle: "Modèles d’e-mails",
           unpaidOnlyHint:
@@ -205,23 +198,17 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         }
       : {
           title: "Automatic reminders",
-          hint: (
-            <>
-              PayPulss sends these on your behalf to <strong>unpaid overdue rows</strong> in the wallet you selected. Clients usually see&nbsp;
-              <strong>{AUTO_REMINDER_FROM_DISPLAY}</strong> as the sender (server-side branding / domain may vary).
-            </>
-          ),
-          hintTech:
-            "Your hosting runs a cron job periodically; it pings the PayPulss server, which checks due dates and sends at the scheduled time.",
+          hint: "PayPulss automatically emails unpaid invoices in the selected wallet.",
+          hintLearnMore: "Learn more",
+          hintTech: `Clients usually see ${AUTO_REMINDER_FROM_DISPLAY} (or your domain if configured). Sends run on a regular automatic check of due dates. J+n delays are counted from the due date, then the message typically goes out in the morning (Paris time).`,
           enable: "Enable automatic reminders for this wallet",
           daysTitle: "Delays after the due date (J+n)",
-          daysExpl:
-            "Pick a delay like J+3: three calendar days after the due date recorded on the unpaid row in PayPulss. Unpaid-but-not-yet-due rows stay quiet until they become overdue (UTC-backed schedule; typical send window is roughly 9am–11am Paris depending on cron).",
+          daysExpl: "Choose how many days after the due date each automatic reminder should wait.",
           preset37: "Preset: J+3 · 7 · 21",
           preset137: "Preset: J+1 · 3 · 7 · 21",
-          maxRun: "Max reminders per cron run",
+          maxRun: "Max reminders per run",
           maxRunExpl: (cap: number) =>
-            `Safety valve: each cron pass won’t send more than this many auto reminders for this wallet when many rows are due. Your plan’s hard cap is ${cap}.`,
+            `Maximum automatic reminders sent at once for this wallet (plan limit: ${cap}).`,
           save: "Save rules and templates",
           modelsTitle: "Email templates",
           unpaidOnlyHint:
@@ -402,7 +389,10 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
         <h2 className="text-base font-semibold text-slate-900">{t.title}</h2>
         <div className="mt-2 space-y-2 text-sm text-slate-600">
           <p>{t.hint}</p>
-          <p className="text-xs leading-relaxed text-slate-500">{t.hintTech}</p>
+          <details className="rounded-lg border border-border bg-bg-alt px-3 py-2">
+            <summary className="cursor-pointer text-xs font-semibold text-slate-700">{t.hintLearnMore}</summary>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">{t.hintTech}</p>
+          </details>
         </div>
         <form onSubmit={handleSave} className="mt-4 space-y-4">
           <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -423,7 +413,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                   type="button"
                   disabled={memberReadOnly}
                   onClick={() => applyPreset([3, 7, 21])}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="pp-btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
                 >
                   {t.preset37}
                 </button>
@@ -431,7 +421,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                   type="button"
                   disabled={memberReadOnly}
                   onClick={() => applyPreset([1, 3, 7, 21])}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="pp-btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
                 >
                   {t.preset137}
                 </button>
@@ -451,7 +441,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                 const next = Number.isFinite(n) ? n : 1;
                 setRuleMax(Math.max(1, Math.min(next, maxJobsCap)));
               }}
-              className="mt-1 w-32 rounded-lg border border-slate-200 px-3 py-2"
+              className="pp-field mt-1 w-32 px-3 py-2"
             />
             <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.maxRunExpl(maxJobsCap)}</p>
           </label>
@@ -468,7 +458,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
               type="button"
               disabled={memberReadOnly || rows.length >= maxModels}
               onClick={addRow}
-              className="mt-3 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              className="mt-3 pp-btn-primary px-3 py-1.5 text-xs disabled:opacity-50"
             >
               {t.add}
             </button>
@@ -503,7 +493,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
                           }}
                           className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
                             r.daysAfterDue === day
-                              ? "border-blue-500 bg-blue-600 text-white"
+                              ? "border-accent bg-accent text-white"
                               : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                           }`}
                         >
@@ -583,7 +573,7 @@ export function AutomationTemplatesPanel({ supabase, userId, planId, memberReadO
           <button
             type="submit"
             disabled={saving || memberReadOnly}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="pp-btn-primary px-4 py-2 text-sm disabled:opacity-60"
           >
             {saving ? "…" : t.save}
           </button>

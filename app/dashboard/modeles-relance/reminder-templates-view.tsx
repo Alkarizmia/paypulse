@@ -616,61 +616,61 @@ export function ReminderTemplatesView() {
           <section
             className={
               shellAppearance === "light"
-                ? "rounded-2xl border border-violet-200 bg-violet-50 p-6"
-                : "rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/40 to-violet-950/30 p-6"
+                ? "rounded-2xl border border-border bg-bg p-6"
+                : "rounded-2xl border border-white/[0.08] bg-bg-dark p-6"
             }
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
-                <h3 className={`text-sm font-semibold ${shellAppearance === "light" ? "text-violet-900" : "text-fuchsia-100"}`}>{t.aiTitle}</h3>
+                <h3 className={`text-sm font-semibold ${shellAppearance === "light" ? "text-text" : "text-text-dark"}`}>{t.aiTitle}</h3>
                 <p className={`mt-2 text-sm ${shellAppearance === "light" ? "text-slate-700" : "text-slate-300"}`}>{t.aiHint}</p>
                 {caps.aiReminderDrafts ? (
-                  <div className="mt-4 space-y-3 rounded-xl border border-white/[0.08] bg-black/25 p-4">
-                    <p className="text-xs font-semibold text-fuchsia-50/90">{t.aiParamsTitle}</p>
+                  <div className="mt-4 space-y-3 rounded-xl border border-border bg-bg-alt p-4">
+                    <p className={`text-xs font-semibold ${shellAppearance === "light" ? "text-text" : "text-text-dark"}`}>{t.aiParamsTitle}</p>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block text-[11px] text-slate-400 sm:col-span-2">
+                      <label className="block text-[11px] text-slate-500 sm:col-span-2">
                         {t.aiSenderLabel}
                         <input
                           type="text"
                           value={aiSender}
                           onChange={(e) => setAiSender(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-slate-100 focus:border-fuchsia-500/40 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/30"
+                          className="pp-field mt-1 px-3 py-2 text-sm"
                         />
                       </label>
-                      <label className="block text-[11px] text-slate-400 sm:col-span-2">
+                      <label className="block text-[11px] text-slate-500 sm:col-span-2">
                         {t.aiRefLabel}
                         <input
                           type="text"
                           value={aiInvoiceRef}
                           onChange={(e) => setAiInvoiceRef(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-slate-100 focus:border-fuchsia-500/40 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/30"
+                          className="pp-field mt-1 px-3 py-2 text-sm"
                         />
                       </label>
-                      <label className="block text-[11px] text-slate-400">
+                      <label className="block text-[11px] text-slate-500">
                         {t.aiAmountLabel}
                         <input
                           type="text"
                           value={aiAmount}
                           onChange={(e) => setAiAmount(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-slate-100 focus:border-fuchsia-500/40 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/30"
+                          className="pp-field mt-1 px-3 py-2 text-sm"
                         />
                       </label>
-                      <label className="block text-[11px] text-slate-400">
+                      <label className="block text-[11px] text-slate-500">
                         {t.aiDaysLabel}
                         <input
                           type="number"
                           min={1}
                           value={aiDaysAfter}
                           onChange={(e) => setAiDaysAfter(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-slate-100 focus:border-fuchsia-500/40 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/30"
+                          className="pp-field mt-1 px-3 py-2 text-sm"
                         />
                       </label>
-                      <label className="block text-[11px] text-slate-400 sm:col-span-2">
+                      <label className="block text-[11px] text-slate-500 sm:col-span-2">
                         {t.aiToneLabel}
                         <select
                           value={aiTone}
                           onChange={(e) => setAiTone(e.target.value as ReminderDraftTone)}
-                          className="mt-1 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm text-slate-100 focus:border-fuchsia-500/40 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/30"
+                          className="pp-field mt-1 px-3 py-2 text-sm"
                         >
                           {REMINDER_DRAFT_TONE_IDS.map((id) => (
                             <option key={id} value={id}>
@@ -684,11 +684,11 @@ export function ReminderTemplatesView() {
                       type="button"
                       onClick={() => void handleAiGenerate()}
                       disabled={aiLoading}
-                      className="rounded-lg border border-violet-500/50 bg-violet-600/30 px-4 py-2 text-xs font-semibold text-violet-50 hover:bg-violet-600/45 disabled:pointer-events-none disabled:opacity-50"
+                      className="pp-btn-secondary px-4 py-2 text-xs disabled:pointer-events-none"
                     >
                       {aiLoading ? t.aiGenerating : t.aiGenerate}
                     </button>
-                    {aiBanner ? <p className="text-xs text-amber-200/95">{aiBanner}</p> : null}
+                    {aiBanner ? <p className="text-xs text-amber-700">{aiBanner}</p> : null}
                   </div>
                 ) : null}
               </div>
@@ -709,14 +709,14 @@ export function ReminderTemplatesView() {
                 type="text"
                 value={d.draftSubject}
                 onChange={(e) => patchDraft({ draftSubject: e.target.value })}
-                className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-violet-100 placeholder:text-slate-600 focus:border-fuchsia-500/50 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/40"
+                className="pp-field px-3 py-2 text-sm"
               />
               <label className="block text-xs font-medium uppercase tracking-wide text-slate-400">{t.bodyLabel}</label>
               <textarea
                 value={d.draftBody}
                 onChange={(e) => patchDraft({ draftBody: e.target.value })}
                 rows={6}
-                className="w-full resize-y rounded-lg border border-white/10 bg-black/30 p-3 font-mono text-[13px] leading-relaxed text-violet-100 placeholder:text-slate-600 focus:border-fuchsia-500/50 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/40"
+                className="pp-field resize-y p-3 font-mono text-[13px] leading-relaxed"
               />
             </div>
           </section>

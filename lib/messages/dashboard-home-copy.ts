@@ -10,6 +10,11 @@ export type DashboardHomeCopy = {
   kpiAvgDelay: string;
   kpiRemindersSent: string;
   kpiNoHistory: string;
+  kpiEmptyCta: string;
+  kpiEmptyReminders: string;
+  foldersHintTitle: string;
+  foldersHintCta: string;
+  foldersHintClose: string;
   kpiDays: string;
   integrationsTitle: string;
   calendarBannerConnected: string;
@@ -94,6 +99,11 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiAvgDelay: "Délai moyen",
       kpiRemindersSent: "Relances envoyées",
       kpiNoHistory: "Pas encore de données",
+      kpiEmptyCta: "Ajoute ton premier client pour voir tes stats ici",
+      kpiEmptyReminders: "Envoie une première relance pour suivre tes envois ici",
+      foldersHintTitle: "Nouveau : Dossiers",
+      foldersHintCta: "Découvrir",
+      foldersHintClose: "Fermer",
       kpiDays: "jours",
       integrationsTitle: "Intégrations",
       calendarBannerConnected: "Google Calendar connecté",
@@ -178,6 +188,11 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiAvgDelay: "Avg. delay",
       kpiRemindersSent: "Reminders sent",
       kpiNoHistory: "No data yet",
+      kpiEmptyCta: "Add your first client to see stats here",
+      kpiEmptyReminders: "Send a first reminder to track sends here",
+      foldersHintTitle: "New: Folders",
+      foldersHintCta: "Open",
+      foldersHintClose: "Close",
       kpiDays: "days",
       integrationsTitle: "Integrations",
       calendarBannerConnected: "Google Calendar connected",
@@ -262,6 +277,11 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiAvgDelay: "Gem. vertraging",
       kpiRemindersSent: "Herinneringen verstuurd",
       kpiNoHistory: "Nog geen gegevens",
+      kpiEmptyCta: "Voeg je eerste klant toe om hier stats te zien",
+      kpiEmptyReminders: "Stuur een eerste herinnering om verzendingen te volgen",
+      foldersHintTitle: "Nieuw: Mappen",
+      foldersHintCta: "Ontdekken",
+      foldersHintClose: "Sluiten",
       kpiDays: "dagen",
       integrationsTitle: "Integraties",
       calendarBannerConnected: "Google Calendar verbonden",
@@ -346,6 +366,11 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiAvgDelay: "Retraso medio",
       kpiRemindersSent: "Recordatorios enviados",
       kpiNoHistory: "Sin datos aún",
+      kpiEmptyCta: "Añade tu primer cliente para ver las estadísticas aquí",
+      kpiEmptyReminders: "Envía un primer recordatorio para seguir los envíos aquí",
+      foldersHintTitle: "Nuevo: Carpetas",
+      foldersHintCta: "Descubrir",
+      foldersHintClose: "Cerrar",
       kpiDays: "días",
       integrationsTitle: "Integraciones",
       calendarBannerConnected: "Google Calendar conectado",

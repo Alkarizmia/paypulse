@@ -24,88 +24,84 @@ export function TreasuryForecastChart({ clients, locale, light, copy }: Treasury
   const buckets = useMemo(() => treasuryForecastByHorizon(clients), [clients]);
   const maxVal = useMemo(() => Math.max(...buckets.map((b) => b.value), 0), [buckets]);
   const axisMax = useMemo(() => niceChartAxisMax(maxVal), [maxVal]);
-  const xTicks = useMemo(() => chartYAxisTicks(maxVal, 3), [maxVal]);
+  const xTicks = useMemo(() => {
+    const raw = chartYAxisTicks(maxVal, 3);
+    const uniq = Array.from(new Set(raw.map((n) => Math.round(n * 100) / 100)));
+    return uniq.sort((a, b) => a - b);
+  }, [maxVal]);
 
   const money = useMoney();
-  const formatCompact = (amountEur: number) => money.format(amountEur, { compact: true });
-
-  const chartW = 280;
-  const barH = 22;
-  const gap = 14;
-  const chartH = buckets.length * barH + (buckets.length - 1) * gap + 8;
-  const labelW = 44;
-  const plotW = chartW - labelW - 8;
+  const formatAxis = (amountEur: number) => money.format(amountEur, { compact: true, maxFractionDigits: 0 });
 
   return (
     <div>
-      <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{copy.treasuryTitle}</h3>
-      <div className="mt-4 flex gap-2">
-        <div className="min-w-0 flex-1">
-          <svg viewBox={`0 0 ${chartW} ${chartH + 28}`} className="h-auto w-full max-w-full" aria-hidden>
-            {buckets.map((b, i) => {
-              const y = i * (barH + gap) + 4;
-              const w = axisMax > 0 ? (b.value / axisMax) * plotW : 0;
-              return (
-                <g key={b.days}>
-                  <text
-                    x={0}
-                    y={y + barH / 2 + 4}
-                    className={light ? "fill-slate-600" : "fill-slate-300"}
-                    fontSize="11"
-                    fontWeight="600"
+      <div className={`-mx-1 mb-4 flex items-center justify-between gap-3 border-b pb-3 ${light ? "border-border" : "border-white/[0.08]"}`}>
+        <h3 className={`text-sm font-semibold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>{copy.treasuryTitle}</h3>
+      </div>
+
+      <div className="space-y-3">
+        {buckets.map((b) => {
+          const pct = axisMax > 0 ? Math.min(100, (b.value / axisMax) * 100) : 0;
+          return (
+            <div key={b.days} className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-3">
+              <span className={`text-right text-[11px] font-semibold tabular-nums ${light ? "text-slate-500" : "text-slate-400"}`}>
+                {horizonLabel(b.days, copy)}
+              </span>
+              <div
+                className={`relative h-7 overflow-hidden rounded-md ${light ? "bg-slate-100" : "bg-white/[0.06]"}`}
+                role="img"
+                aria-label={`${horizonLabel(b.days, copy)} ${formatAxis(b.value)}`}
+              >
+                {xTicks.slice(1, -1).map((tick) => (
+                  <span
+                    key={`g-${b.days}-${tick}`}
+                    className={`pointer-events-none absolute inset-y-0 w-px ${light ? "bg-border" : "bg-white/10"}`}
+                    style={{ left: axisMax > 0 ? `${(tick / axisMax) * 100}%` : 0 }}
+                    aria-hidden
+                  />
+                ))}
+                {pct > 0 ? (
+                  <div
+                    className="absolute inset-y-1 left-0 rounded-[5px] bg-accent"
+                    style={{ width: `max(${pct}%, 0.5rem)` }}
+                  />
+                ) : null}
+                {b.value > 0 ? (
+                  <span
+                    className={`absolute inset-y-0 right-2 flex items-center text-[10px] font-semibold tabular-nums ${
+                      pct > 42 ? "text-white" : light ? "text-slate-600" : "text-slate-300"
+                    }`}
                   >
-                    {horizonLabel(b.days, copy)}
-                  </text>
-                  <rect
-                    x={labelW}
-                    y={y}
-                    width={plotW}
-                    height={barH}
-                    rx={6}
-                    className={light ? "fill-slate-100" : "fill-white/[0.04]"}
-                  />
-                  <rect
-                    x={labelW}
-                    y={y}
-                    width={Math.max(w, b.value > 0 ? 6 : 0)}
-                    height={barH}
-                    rx={6}
-                    fill={light ? "var(--color-primary)" : "var(--color-accent)"}
-                  />
-                </g>
-              );
-            })}
-            {xTicks.map((tick) => {
-              const x = labelW + (tick / axisMax) * plotW;
-              return (
-                <g key={tick}>
-                  <line
-                    x1={x}
-                    y1={0}
-                    x2={x}
-                    y2={chartH}
-                    stroke={light ? "var(--color-border)" : "rgba(148,163,184,0.15)"}
-                    strokeWidth="1"
-                  />
-                  <text
-                    x={x}
-                    y={chartH + 20}
-                    textAnchor="middle"
-                    className={light ? "fill-slate-500" : "fill-slate-500"}
-                    fontSize="9"
-                  >
-                    {formatCompact(tick)}
-                  </text>
-                </g>
-              );
-            })}
-            <text x={labelW} y={chartH + 20} className={light ? "fill-slate-500" : "fill-slate-500"} fontSize="9">
-              {formatCompact(0)}
-            </text>
-          </svg>
+                    {formatAxis(b.value)}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-2 grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3">
+        <span aria-hidden />
+        <div className="relative h-5">
+          {xTicks.map((tick, i) => {
+            const left = axisMax > 0 ? (tick / axisMax) * 100 : 0;
+            const align = i === 0 ? "left" : i === xTicks.length - 1 ? "right" : "center";
+            const transform = align === "left" ? "translateX(0)" : align === "right" ? "translateX(-100%)" : "translateX(-50%)";
+            return (
+              <span
+                key={`x-${tick}`}
+                className={`absolute top-0 text-[10px] font-medium tabular-nums ${light ? "text-slate-500" : "text-slate-400"}`}
+                style={{ left: `${left}%`, transform }}
+              >
+                {formatAxis(tick)}
+              </span>
+            );
+          })}
         </div>
       </div>
-      <p className={`mt-2 text-[11px] ${light ? "text-slate-500" : "text-slate-500"}`}>{copy.treasuryHint}</p>
+
+      <p className={`mt-3 text-[11px] leading-snug ${light ? "text-slate-500" : "text-slate-500"}`}>{copy.treasuryHint}</p>
     </div>
   );
 }
