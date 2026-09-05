@@ -45,10 +45,10 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
           <rect x="28" y="24" width="184" height="88" rx="14" fill={`url(#${g.surface})`} stroke="#e2e8f0" strokeWidth="1.25" />
           {[0, 1, 2].map((i) => (
             <g key={i} transform={`translate(44 ${40 + i * 24})`}>
-              <circle cx="10" cy="8" r="7" fill="#ede9fe" stroke="#8b5cf6" strokeWidth="1.25" />
+              <circle cx="10" cy="8" r="7" fill="#ede9fe" stroke="#7254D6" strokeWidth="1.25" />
               <rect x="26" y="4" width="88" height="4" rx="2" fill="#cbd5e1" />
               <rect x="26" y="12" width="58" height="3" rx="1.5" fill="#e2e8f0" />
-              <rect x="128" y="3" width="44" height="12" rx="6" fill="#d1fae5" stroke="#34d399" strokeWidth="1" />
+              <rect x="128" y="3" width="44" height="12" rx="6" fill="#d1fae5" stroke="#63d5d0" strokeWidth="1" />
             </g>
           ))}
         </>
@@ -61,7 +61,7 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
           <path
             d="M168 34c12 0 22 10 22 22v8H146v-8c0-12 10-22 22-22Z"
             fill="#ede9fe"
-            stroke="#8b5cf6"
+            stroke="#7254D6"
             strokeWidth="1.25"
           />
           <circle cx="120" cy="96" r="16" fill={`url(#${g.emerald})`} opacity="0.9" />
@@ -83,7 +83,7 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
             strokeDasharray="4 6"
           />
           <path d="M36 44c32-18 80-18 112 8" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          <circle cx="176" cy="38" r="6" fill="#34d399" />
+          <circle cx="176" cy="38" r="6" fill="#63d5d0" />
         </>
       )}
 
@@ -128,7 +128,7 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
                 cx={cx}
                 cy={cy}
                 r={i === 0 ? 5 : 4}
-                fill={i === 0 ? "#34d399" : "#cbd5e1"}
+                fill={i === 0 ? "#63d5d0" : "#cbd5e1"}
                 opacity={i === 0 ? 1 : 0.7}
               />
             );

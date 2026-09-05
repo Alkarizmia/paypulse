@@ -14,10 +14,12 @@ export function LandingPreviewClients({
   locale,
   appearance,
   onToggleAppearance,
+  frameClassName,
 }: {
   locale: AppLocale;
   appearance: UiResolvedAppearance;
   onToggleAppearance: () => void;
+  frameClassName?: string;
 }) {
   const c = getDashboardViewCopy(locale);
 
@@ -27,6 +29,7 @@ export function LandingPreviewClients({
       appearance={appearance}
       onToggleAppearance={onToggleAppearance}
       windowTitle={`PayPulss · ${c.clientsTitle}`}
+      frameClassName={frameClassName}
     >
       <div className="p-3 sm:p-4">
         <ClientList

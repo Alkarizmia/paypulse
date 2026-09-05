@@ -239,7 +239,7 @@ export function LandingDemoSection({
             <Link
               href={ctaHref}
               onClick={stopAutoPlay}
-              className="inline-flex items-center justify-center rounded-full bg-[#34D399] px-8 py-3.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400"
+              className="inline-flex items-center justify-center rounded-full bg-[#63D5D0] px-8 py-3.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400"
             >
               {ctaLabel}
             </Link>

@@ -13,19 +13,23 @@ type LocaleContextValue = {
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  /** Toujours « fr » au premier rendu (serveur + hydratation), puis locale stockée après montage. */
-  const [locale, setLocale] = useState<Locale>("fr");
+  /** Always "en" on first render (server + hydration), then stored locale after mount. */
+  const [locale, setLocale] = useState<Locale>("en");
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem("paypulse_locale");
-      if (isAppLocale(stored) && stored !== "fr") {
+      if (isAppLocale(stored)) {
         setLocale(stored);
       }
     } catch {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = locale === "en" ? "en" : locale;
+  }, [locale]);
 
   function setAndPersist(next: Locale) {
     setLocale(next);

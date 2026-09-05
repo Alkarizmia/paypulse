@@ -239,8 +239,8 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
             <svg viewBox={`0 0 ${chartW} ${chartH}`} className="h-full w-full" preserveAspectRatio="none" aria-hidden>
               <defs>
                 <linearGradient id={fillPaid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#34d399" stopOpacity={light ? "0.32" : "0.24"} />
-                  <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#63d5d0" stopOpacity={light ? "0.32" : "0.24"} />
+                  <stop offset="100%" stopColor="#63d5d0" stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id={fillPending} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#fb923c" stopOpacity={light ? "0.24" : "0.18"} />
@@ -282,7 +282,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
               />
               <polyline
                 fill="none"
-                stroke="#34d399"
+                stroke="#63d5d0"
                 strokeWidth="2"
                 strokeLinejoin="round"
                 strokeLinecap="round"

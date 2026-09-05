@@ -104,7 +104,7 @@ export function PwaInstallButton({ labels }: { labels: InstallLabels }) {
         <button
           type="button"
           onClick={() => void install()}
-          className="pp-hero-cta inline-flex items-center justify-center rounded-full border border-violet-200 bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 backdrop-blur-sm hover:border-violet-300 hover:bg-violet-100 hover:shadow-[0_0_28px_rgba(139,92,246,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+          className="pp-hero-cta inline-flex items-center justify-center rounded-full border border-violet-200 bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 backdrop-blur-sm hover:border-violet-300 hover:bg-violet-100 hover:shadow-[0_0_28px_rgba(114,84,214,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
         >
           {ctaLabel}
         </button>

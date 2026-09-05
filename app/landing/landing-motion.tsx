@@ -51,7 +51,7 @@ export function LandingStarfield() {
       {STAR_PRESETS.map((dot, i) => (
         <motion.div
           key={i}
-          className="absolute rounded-full bg-white shadow-[0_0_6px_rgba(167,139,250,0.35)]"
+          className="absolute rounded-full bg-white shadow-[0_0_6px_rgba(114,84,214,0.35)]"
           style={{
             left: `${dot.x}%`,
             top: `${dot.y}%`,
@@ -189,7 +189,7 @@ export function HeroWingAurora() {
           className="absolute left-1/2 top-[4vh] h-[min(78vh,640px)] w-[min(920px,135vw)] -translate-x-1/2 rounded-[44%] opacity-[0.38]"
           style={{
             background:
-              "radial-gradient(ellipse 68% 46% at 50% 48%, rgba(139,92,246,0.22) 0%, rgba(52,211,153,0.08) 48%, transparent 72%)",
+              "radial-gradient(ellipse 68% 46% at 50% 48%, rgba(114,84,214,0.22) 0%, rgba(99,213,208,0.08) 48%, transparent 72%)",
             filter: "blur(56px)",
           }}
         />
@@ -209,7 +209,7 @@ export function HeroWingAurora() {
             className="absolute inset-[-8%] rounded-[42%]"
             style={{
               background:
-                "radial-gradient(ellipse 72% 44% at 50% 46%, rgba(167,139,250,0.34) 0%, rgba(109,40,217,0.14) 42%, rgba(15,23,42,0) 70%)",
+                "radial-gradient(ellipse 72% 44% at 50% 46%, rgba(114,84,214,0.34) 0%, rgba(109,40,217,0.14) 42%, rgba(15,23,42,0) 70%)",
               filter: "blur(52px)",
               transformOrigin: "50% 48%",
             }}
@@ -233,7 +233,7 @@ export function HeroWingAurora() {
             className="absolute inset-[-12%] rounded-[48%] mix-blend-screen"
             style={{
               background:
-                "radial-gradient(ellipse 58% 38% at 48% 52%, rgba(52,211,153,0.22) 0%, rgba(52,211,153,0.1) 38%, transparent 68%)",
+                "radial-gradient(ellipse 58% 38% at 48% 52%, rgba(99,213,208,0.22) 0%, rgba(99,213,208,0.1) 38%, transparent 68%)",
               filter: "blur(44px)",
               transformOrigin: "48% 52%",
             }}
@@ -252,7 +252,7 @@ export function HeroWingAurora() {
         className="absolute left-1/2 top-[22vh] h-[min(42vh,360px)] w-[min(520px,90vw)] -translate-x-1/2 rounded-full sm:top-[18vh]"
         style={{
           background:
-            "radial-gradient(circle at 50% 50%, rgba(196,181,253,0.12) 0%, rgba(52,211,153,0.06) 35%, transparent 62%)",
+            "radial-gradient(circle at 50% 50%, rgba(196,181,253,0.12) 0%, rgba(99,213,208,0.06) 35%, transparent 62%)",
           filter: "blur(36px)",
         }}
         animate={{
@@ -286,7 +286,7 @@ export function HeroBlurOrb() {
       className="pointer-events-none absolute left-1/2 top-[2%] z-[2] h-[min(420px,56vw)] w-[min(640px,96vw)] -translate-x-1/2 rounded-full"
       style={{
         background:
-          "radial-gradient(circle at 40% 42%, rgba(167, 139, 250, 0.5), rgba(59, 130, 246, 0.22) 46%, transparent 72%)",
+          "radial-gradient(circle at 40% 42%, rgba(114, 84, 214, 0.5), rgba(49, 91, 203, 0.22) 46%, transparent 72%)",
         filter: "blur(76px)",
         willChange: "opacity, transform",
       }}
@@ -344,7 +344,7 @@ export function HeroHeadlineGlow() {
       transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
       style={{
         background:
-          "radial-gradient(ellipse 88% 58% at 50% 0%, rgba(59, 130, 246, 0.28), rgba(99, 102, 241, 0.14) 42%, rgba(37, 99, 235, 0.06) 58%, transparent 74%)",
+          "radial-gradient(ellipse 88% 58% at 50% 0%, rgba(49, 91, 203, 0.28), rgba(99, 102, 241, 0.14) 42%, rgba(37, 99, 235, 0.06) 58%, transparent 74%)",
         filter: "blur(22px)",
       }}
     />

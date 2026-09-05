@@ -57,7 +57,7 @@ export function GlobalTopBar() {
     window.alert(error);
   }
 
-  if (isDashboard) {
+  if (isDashboard || isHome) {
     return null;
   }
 

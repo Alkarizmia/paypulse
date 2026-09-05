@@ -13,10 +13,12 @@ export function LandingPreviewRemind({
   locale,
   appearance,
   onToggleAppearance,
+  frameClassName,
 }: {
   locale: AppLocale;
   appearance: UiResolvedAppearance;
   onToggleAppearance: () => void;
+  frameClassName?: string;
 }) {
   const light = appearance === "light";
   const data = useMemo(() => getDefaultReminderTemplates(locale), [locale]);
@@ -105,6 +107,7 @@ export function LandingPreviewRemind({
       appearance={appearance}
       onToggleAppearance={onToggleAppearance}
       windowTitle={`PayPulss · ${t.page}`}
+      frameClassName={frameClassName}
     >
       <div className="space-y-4 p-3 sm:p-4">
         <section className={sectionClass}>

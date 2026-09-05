@@ -10,7 +10,7 @@ export const size = {
 export const contentType = "image/png";
 
 async function logoDataUri() {
-  const logoPath = path.join(process.cwd(), "public", "branding", "paypulse-logo-transparent.png");
+  const logoPath = path.join(process.cwd(), "public", "branding", "paypulss-official-mark.png");
   const logoBuffer = await readFile(logoPath);
   return `data:image/png;base64,${logoBuffer.toString("base64")}`;
 }
@@ -26,12 +26,11 @@ export default async function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "4px",
+          padding: "2px",
           backgroundColor: "transparent",
         }}
       >
-        {/* Keep original brand logo, only scaled for tab icon. */}
-        <img src={src} alt="PayPulss" width={24} height={24} />
+        <img src={src} alt="PayPulss" width={28} height={28} />
       </div>
     ),
     { ...size },

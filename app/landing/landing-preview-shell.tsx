@@ -6,6 +6,7 @@ import { pickQuad } from "@/lib/messages/pick";
 import type { AppLocale } from "@/lib/app-locale";
 
 /** Hauteur fixe du cadre produit (tous les onglets). */
+
 export const LANDING_PREVIEW_FRAME_CLASS = "h-[34rem]";
 
 type LandingPreviewShellProps = {
@@ -14,6 +15,7 @@ type LandingPreviewShellProps = {
   appearance: UiResolvedAppearance;
   onToggleAppearance: () => void;
   children: ReactNode;
+  frameClassName?: string;
 };
 
 export function LandingPreviewShell({
@@ -22,6 +24,7 @@ export function LandingPreviewShell({
   appearance,
   onToggleAppearance,
   children,
+  frameClassName,
 }: LandingPreviewShellProps) {
   const light = appearance === "light";
   const toggleLabel = pickQuad(locale, {
@@ -33,7 +36,7 @@ export function LandingPreviewShell({
 
   return (
     <div
-      className={`flex ${LANDING_PREVIEW_FRAME_CLASS} flex-col overflow-hidden ${
+      className={`flex ${frameClassName ?? LANDING_PREVIEW_FRAME_CLASS} flex-col overflow-hidden ${
         light ? "bg-slate-100" : "bg-[#08080c]"
       }`}
     >

@@ -1,4 +1,4 @@
-const ACCENT = "#34D399";
+import { ACCENT } from "@/lib/brand-colors";
 
 export function ProductDemoMock({
   demo,
@@ -30,10 +30,10 @@ export function ProductDemoMock({
           <span className="text-xs text-slate-400">{demo.toggleLabel}</span>
           <button
             type="button"
-            className="relative h-5 w-9 rounded-full bg-[#34D399]/30 transition"
+            className="relative h-5 w-9 rounded-full bg-[#63D5D0]/30 transition"
             aria-label="Toggle"
           >
-            <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-[#34D399] shadow" />
+            <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-[#63D5D0] shadow" />
           </button>
         </div>
       </div>

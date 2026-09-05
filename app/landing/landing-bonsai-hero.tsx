@@ -426,7 +426,7 @@ function LandingHeroAmbientLayers({
           className={`pp-landing-ambient__blob pp-landing-ambient__blob--2 ${blob1Motion ? "right-[-18%] top-[12%] h-[min(480px,65vw)] w-[min(480px,65vw)]" : "right-[-10%] top-[18%] h-[min(340px,62vw)] w-[min(340px,62vw)]"}`}
           style={{
             background:
-              "radial-gradient(circle, rgba(52,211,153,0.34) 0%, rgba(16,185,129,0.14) 48%, transparent 74%)",
+              "radial-gradient(circle, rgba(99,213,208,0.34) 0%, rgba(16,185,129,0.14) 48%, transparent 74%)",
           }}
         />
         <motion.div

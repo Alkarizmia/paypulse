@@ -63,7 +63,7 @@ function HeroColorFlowLines() {
       <defs>
         <linearGradient id="pp-hero-flow-g1" x1="0%" y1="50%" x2="100%" y2="50%">
           <stop offset="0%" stopColor="#a855f7" stopOpacity="0.95" />
-          <stop offset="45%" stopColor="#34D399" stopOpacity="0.88" />
+          <stop offset="45%" stopColor="#63D5D0" stopOpacity="0.88" />
           <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.9" />
         </linearGradient>
         <linearGradient id="pp-hero-flow-g2" x1="100%" y1="0%" x2="0%" y2="100%">
@@ -72,9 +72,9 @@ function HeroColorFlowLines() {
           <stop offset="100%" stopColor="#c084fc" stopOpacity="0.85" />
         </linearGradient>
         <linearGradient id="pp-hero-flow-g3" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#34d399" stopOpacity="0.75" />
-          <stop offset="50%" stopColor="#34D399" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="#63d5d0" stopOpacity="0.75" />
+          <stop offset="50%" stopColor="#63D5D0" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="#7254D6" stopOpacity="0.8" />
         </linearGradient>
         <linearGradient id="pp-hero-flow-g4" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#fb923c" stopOpacity="0.45" />
@@ -130,7 +130,7 @@ export function HeroAmbientVisual() {
           className="absolute inset-0 opacity-[0.72]"
           style={{
             background:
-              "radial-gradient(ellipse 88% 52% at 50% 40%, rgba(37,99,235,0.45), rgba(59,130,246,0.16) 40%, transparent 66%), radial-gradient(ellipse 82% 48% at 50% 14%, rgba(109,40,217,0.22), rgba(139,92,246,0.1) 38%, transparent 58%), radial-gradient(ellipse 68% 42% at 88% 72%, rgba(61,255,138,0.14), transparent 54%)",
+              "radial-gradient(ellipse 88% 52% at 50% 40%, rgba(37,99,235,0.45), rgba(59,130,246,0.16) 40%, transparent 66%), radial-gradient(ellipse 82% 48% at 50% 14%, rgba(109,40,217,0.22), rgba(114,84,214,0.1) 38%, transparent 58%), radial-gradient(ellipse 68% 42% at 88% 72%, rgba(61,255,138,0.14), transparent 54%)",
           }}
         />
       </div>
@@ -197,7 +197,7 @@ export function HeroAmbientVisual() {
       <motion.div
         className="absolute -right-[12%] top-[18%] h-[min(62%,520px)] w-[min(65vw,520px)] rounded-full"
         style={{
-          background: "radial-gradient(circle at 48% 48%, rgba(61,255,138,0.46), rgba(52,211,153,0.18) 42%, transparent 65%)",
+          background: "radial-gradient(circle at 48% 48%, rgba(61,255,138,0.46), rgba(99,213,208,0.18) 42%, transparent 65%)",
           filter: "blur(64px)",
         }}
         animate={{
@@ -211,7 +211,7 @@ export function HeroAmbientVisual() {
       <motion.div
         className="absolute bottom-[-8%] left-1/2 h-[min(50%,420px)] w-[min(90vw,720px)] -translate-x-1/2 rounded-full"
         style={{
-          background: "radial-gradient(circle at 50% 40%, rgba(56,189,248,0.34), rgba(139,92,246,0.22) 45%, transparent 62%)",
+          background: "radial-gradient(circle at 50% 40%, rgba(56,189,248,0.34), rgba(114,84,214,0.22) 45%, transparent 62%)",
           filter: "blur(70px)",
         }}
         animate={{
@@ -292,7 +292,7 @@ export function HeroAmbientVisual() {
         <defs>
           <linearGradient id="pp-hero-ring" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.95" />
-            <stop offset="50%" stopColor="#34D399" stopOpacity="0.55" />
+            <stop offset="50%" stopColor="#63D5D0" stopOpacity="0.55" />
             <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.65" />
           </linearGradient>
         </defs>

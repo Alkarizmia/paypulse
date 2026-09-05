@@ -18,27 +18,27 @@ const font = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PayPulss · Factures et relances pour freelances",
+  title: "PayPulss · Invoices and reminders for freelancers",
   description:
-    "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
+    "SaaS for freelancers: invoice tracking, automatic reminders, a simple dashboard. PayPulss.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "PayPulss · Factures et relances pour freelances",
+    title: "PayPulss · Invoices and reminders for freelancers",
     description:
-      "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
+      "SaaS for freelancers: invoice tracking, automatic reminders, a simple dashboard. PayPulss.",
     url: "/",
     siteName: "PayPulss",
-    locale: "fr_FR",
+    locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PayPulss · Factures et relances pour freelances",
+    title: "PayPulss · Invoices and reminders for freelancers",
     description:
-      "SaaS pour freelances : suivi des factures, relances automatiques, tableau de bord simple. PayPulss.",
+      "SaaS for freelancers: invoice tracking, automatic reminders, a simple dashboard. PayPulss.",
   },
   robots: {
     index: true,
@@ -59,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={font.variable} suppressHydrationWarning>
+    <html lang="en" className={font.variable} suppressHydrationWarning>
       <body className={`${font.className} min-h-screen antialiased`} suppressHydrationWarning>
         <LowPerformanceHtmlAttrs />
         <PageVisibilityHtmlAttrs />

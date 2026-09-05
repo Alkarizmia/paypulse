@@ -12,10 +12,12 @@ export function LandingDashboardPreview({
   locale,
   appearance,
   onToggleAppearance,
+  frameClassName,
 }: {
   locale: AppLocale;
   appearance: UiResolvedAppearance;
   onToggleAppearance: () => void;
+  frameClassName?: string;
 }) {
   const title = pickQuad(locale, {
     fr: "Tableau de bord",
@@ -30,6 +32,7 @@ export function LandingDashboardPreview({
       appearance={appearance}
       onToggleAppearance={onToggleAppearance}
       windowTitle={`PayPulss · ${title}`}
+      frameClassName={frameClassName}
     >
       <div className="p-3 sm:p-4">
         <DashboardAnalytics

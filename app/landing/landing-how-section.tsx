@@ -91,7 +91,7 @@ function HowStepCard({
         className={`pp-how-step-card__panel flex flex-col rounded-2xl border border-slate-200 bg-white shadow-[0_14px_40px_-28px_rgba(15,23,42,0.14)] transition-[box-shadow,border-color] duration-200 ease-out ${
           compact
             ? "p-4 hover:border-violet-300/50"
-            : "p-6 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.16)] hover:border-violet-400/35 hover:shadow-[0_24px_52px_-26px_rgba(139,92,246,0.22)] sm:min-h-[22rem] sm:p-7 lg:min-h-[24rem] lg:rounded-3xl lg:p-8"
+            : "p-6 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.16)] hover:border-violet-400/35 hover:shadow-[0_24px_52px_-26px_rgba(114,84,214,0.22)] sm:min-h-[22rem] sm:p-7 lg:min-h-[24rem] lg:rounded-3xl lg:p-8"
         }`}
         variants={compact ? undefined : CARD_LIFT_HOVER_VARIANTS}
       >

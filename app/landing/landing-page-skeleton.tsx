@@ -1,28 +1,28 @@
-/** Placeholder pendant le chargement client de la landing (évite l’hydratation Framer Motion). */
+/** Placeholder pendant le chargement client de la landing. */
 export function LandingPageSkeleton() {
   return (
-    <div className="min-h-screen bg-[#f8fafc]" aria-busy="true" aria-label="Chargement">
-      <div className="animate-pulse">
-        <div className="border-b border-slate-200/80 bg-white px-4 py-3">
-          <div className="mx-auto flex h-10 max-w-6xl items-center justify-between">
-            <div className="h-8 w-28 rounded-lg bg-slate-200" />
-            <div className="hidden gap-3 md:flex">
-              <div className="h-4 w-16 rounded bg-slate-100" />
-              <div className="h-4 w-16 rounded bg-slate-100" />
-              <div className="h-4 w-16 rounded bg-slate-100" />
-            </div>
-          </div>
+    <div className="relative min-h-screen overflow-hidden bg-[#F7F8FC]" aria-busy="true" aria-label="Chargement">
+      <div
+        className="pointer-events-none absolute left-[6%] top-[-12%] h-[480px] w-[640px] rounded-full"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(49,91,203,0.26) 0%, rgba(114,84,214,0.16) 40%, transparent 70%)",
+          filter: "blur(90px)",
+        }}
+        aria-hidden
+      />
+      <div className="relative animate-pulse">
+        <div className="mx-auto max-w-6xl px-4 pt-3 sm:px-6">
+          <div className="h-12 rounded-full border border-[#E7EAF0] bg-white/80" />
         </div>
-        <div className="mx-auto max-w-4xl px-6 pb-16 pt-16 text-center">
-          <div className="mx-auto h-4 w-40 rounded bg-slate-200" />
-          <div className="mx-auto mt-8 h-10 w-full max-w-md rounded-xl bg-slate-200" />
-          <div className="mx-auto mt-3 h-10 w-full max-w-sm rounded-xl bg-slate-200" />
-          <div className="mx-auto mt-8 h-12 w-52 rounded-full bg-slate-300" />
-          <div className="mx-auto mt-10 flex justify-center gap-4">
-            <div className="h-48 w-28 rounded-2xl bg-slate-200" />
-            <div className="h-56 w-32 rounded-2xl bg-slate-300" />
-            <div className="h-48 w-28 rounded-2xl bg-slate-200" />
-          </div>
+        <div className="mx-auto max-w-3xl px-6 pb-10 pt-24 text-center">
+          <div className="mx-auto h-3 w-40 rounded bg-[#E7EAF0]" />
+          <div className="mx-auto mt-8 h-12 w-full max-w-lg rounded-xl bg-[#E7EAF0]" />
+          <div className="mx-auto mt-3 h-12 w-full max-w-md rounded-xl bg-[#E7EAF0]" />
+          <div className="mx-auto mt-8 h-11 w-48 rounded-full bg-[#dbe0ea]" />
+        </div>
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="h-[22rem] rounded-2xl border border-[#E7EAF0] bg-white" />
         </div>
       </div>
     </div>

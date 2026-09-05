@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LandingPageDynamic } from "@/app/landing/landing-page-dynamic";
 
 export const metadata: Metadata = {
-  title: "PayPulss · Encaissez plus vite, relances incluses",
+  title: "PayPulss · Your work deserves to be paid on time",
   description:
-    "PayPulss : clients, factures, statuts payé / non payé, relances e-mail automatiques et tableau de bord (en attente, reçu, retard moyen). Offres Free, Starter, Pro, Agency.",
+    "Track payments, automate follow-ups, and keep a clear view of your activity. No scattered spreadsheets.",
 };
 
 export default function Home() {

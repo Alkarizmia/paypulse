@@ -308,7 +308,7 @@ export function DashboardAnalytics({
                   <div
                     className="col-start-1 row-start-1 h-full w-full rounded-full p-[11px]"
                     style={{
-                      background: `conic-gradient(from -90deg, #8b5cf6 0 ${paidPct}%, #3b82f6 ${paidPct}% ${paidPct + pendPct}%, #fb923c ${paidPct + pendPct}% 100%)`,
+                      background: `conic-gradient(from -90deg, #7254D6 0 ${paidPct}%, #315BCB ${paidPct}% ${paidPct + pendPct}%, #fb923c ${paidPct + pendPct}% 100%)`,
                     }}
                   >
                     <div className={`flex h-full w-full items-center justify-center rounded-full ${light ? "bg-white" : "bg-[#14141c]"}`}>

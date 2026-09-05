@@ -70,7 +70,7 @@ export function TreasuryForecastChart({ clients, locale, light, copy }: Treasury
                     width={Math.max(w, b.value > 0 ? 6 : 0)}
                     height={barH}
                     rx={6}
-                    fill={light ? "#3b82f6" : "#60a5fa"}
+                    fill={light ? "#315BCB" : "#60a5fa"}
                   />
                 </g>
               );

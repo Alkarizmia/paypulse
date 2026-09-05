@@ -1,7 +1,7 @@
 /** Langues supportées (interface + profil). */
 export type AppLocale = "fr" | "en" | "nl" | "es";
 
-export const APP_LOCALES: readonly AppLocale[] = ["fr", "en", "nl", "es"] as const;
+export const APP_LOCALES: readonly AppLocale[] = ["en", "fr", "nl", "es"] as const;
 
 export function isAppLocale(value: string | null | undefined): value is AppLocale {
   return value === "fr" || value === "en" || value === "nl" || value === "es";

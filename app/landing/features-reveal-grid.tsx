@@ -79,12 +79,12 @@ function FeatureRevealCard({
           className={`flex h-full min-h-[10.75rem] w-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm backdrop-blur-md transition-[box-shadow,border-color] duration-200 ease-out sm:min-h-[10.25rem] lg:min-h-[9.75rem] ${
             reduceMotion
               ? ""
-              : "group-hover:border-violet-400/25 group-hover:shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35),0_0_0_1px_rgba(139,92,246,0.2),0_0_40px_-18px_rgba(139,92,246,0.35)]"
+              : "group-hover:border-violet-400/25 group-hover:shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35),0_0_0_1px_rgba(114,84,214,0.2),0_0_40px_-18px_rgba(114,84,214,0.35)]"
           }`}
           variants={CARD_LIFT_HOVER_VARIANTS}
         >
           <div className="flex flex-1 items-start gap-4">
-            <div className="relative shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-[0_0_24px_-12px_rgba(139,92,246,0.3)]">
+            <div className="relative shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-[0_0_24px_-12px_rgba(114,84,214,0.3)]">
               {card.icon}
             </div>
             <div className="flex min-h-0 flex-1 flex-col">
