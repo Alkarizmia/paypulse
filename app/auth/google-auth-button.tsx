@@ -82,7 +82,7 @@ export function GoogleAuthButton({
       type="button"
       onClick={() => void onClick()}
       disabled={disabled || loading}
-      className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+      className="pp-lp-btn w-full gap-3 border border-border bg-white px-4 py-2.5 text-text hover:border-border disabled:cursor-not-allowed disabled:opacity-70"
     >
       <GoogleMark />
       <span>{loading ? "..." : label}</span>

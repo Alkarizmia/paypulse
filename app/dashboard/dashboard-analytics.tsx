@@ -168,7 +168,7 @@ export function DashboardAnalytics({
           className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
             light
               ? "border-slate-200 bg-white shadow-sm hover:border-violet-300/60"
-              : "border-white/[0.08] bg-[#14141c] shadow-none hover:border-violet-500/35"
+              : "border-white/[0.08] bg-bg-dark shadow-none hover:border-violet-500/35"
           }`}
           style={{ "--pp-rise-delay": "0.04s" } as CSSProperties}
         >
@@ -189,7 +189,7 @@ export function DashboardAnalytics({
           className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
             light
               ? "border-slate-200 bg-white hover:border-emerald-300/60"
-              : "border-white/[0.08] bg-[#14141c] hover:border-emerald-500/35"
+              : "border-white/[0.08] bg-bg-dark hover:border-emerald-500/35"
           }`}
           style={{ "--pp-rise-delay": "0.1s" } as CSSProperties}
         >
@@ -223,7 +223,7 @@ export function DashboardAnalytics({
           className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
             light
               ? "border-slate-200 bg-white hover:border-orange-300/60"
-              : "border-white/[0.08] bg-[#14141c] hover:border-orange-500/35"
+              : "border-white/[0.08] bg-bg-dark hover:border-orange-500/35"
           }`}
           style={{ "--pp-rise-delay": "0.16s" } as CSSProperties}
         >
@@ -281,7 +281,7 @@ export function DashboardAnalytics({
             className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-4 sm:p-6 ${
               light
                 ? "border-slate-200 bg-white hover:border-emerald-300/50"
-                : "border-white/[0.08] bg-[#14141c] hover:border-emerald-500/30"
+                : "border-white/[0.08] bg-bg-dark hover:border-emerald-500/30"
             }`}
           >
             <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.evolution}</h3>
@@ -299,7 +299,7 @@ export function DashboardAnalytics({
               className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border p-5 sm:p-6 ${
                 light
                   ? "border-slate-200 bg-white hover:border-violet-300/60"
-                  : "border-white/[0.08] bg-[#14141c] hover:border-violet-500/35"
+                  : "border-white/[0.08] bg-bg-dark hover:border-violet-500/35"
               }`}
             >
               <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.distribution}</h3>
@@ -308,10 +308,10 @@ export function DashboardAnalytics({
                   <div
                     className="col-start-1 row-start-1 h-full w-full rounded-full p-[11px]"
                     style={{
-                      background: `conic-gradient(from -90deg, #7254D6 0 ${paidPct}%, #315BCB ${paidPct}% ${paidPct + pendPct}%, #fb923c ${paidPct + pendPct}% 100%)`,
+                      background: `conic-gradient(from -90deg, var(--color-accent) 0 ${paidPct}%, var(--color-primary) ${paidPct}% ${paidPct + pendPct}%, var(--color-warning) ${paidPct + pendPct}% 100%)`,
                     }}
                   >
-                    <div className={`flex h-full w-full items-center justify-center rounded-full ${light ? "bg-white" : "bg-[#14141c]"}`}>
+                    <div className={`flex h-full w-full items-center justify-center rounded-full ${light ? "bg-white" : "bg-bg-dark"}`}>
                       <div className="px-2 text-center">
                         <span className={`block text-[10px] uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-400"}`}>
                           {t.chartTotal}
@@ -400,7 +400,7 @@ export function DashboardAnalytics({
                 } ${
                   light
                     ? "border-slate-200 bg-white hover:border-sky-300/60"
-                    : "border-white/[0.08] bg-[#14141c] hover:border-sky-500/35"
+                    : "border-white/[0.08] bg-bg-dark hover:border-sky-500/35"
                 }`}
               >
                 <TreasuryForecastChart clients={clients} locale={locale} light={light} copy={t} />
@@ -411,7 +411,7 @@ export function DashboardAnalytics({
       ) : (
         <div
           className={`pp-dashboard-card-interactive rounded-2xl border p-6 text-center ${
-            light ? "border-slate-200 bg-white hover:border-slate-300" : "border-white/[0.08] bg-[#14141c] hover:border-white/15"
+            light ? "border-slate-200 bg-white hover:border-slate-300" : "border-white/[0.08] bg-bg-dark hover:border-white/15"
           }`}
         >
           <p className={`text-sm ${light ? "text-slate-600" : "text-slate-300"}`}>{t.upgradeStarterTeaser}</p>

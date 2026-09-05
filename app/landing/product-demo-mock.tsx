@@ -22,7 +22,7 @@ export function ProductDemoMock({
 }) {
   return (
     <div className={`relative mx-auto max-w-xl lg:mx-0 ${className ?? ""}`}>
-      <div className="absolute -right-6 -top-4 z-10 hidden max-w-[200px] rounded-xl border border-white/10 bg-[#0a1f35] p-3 shadow-xl sm:block">
+      <div className="absolute -right-6 -top-4 z-10 hidden max-w-[200px] rounded-xl border border-white/10 bg-bg-dark p-3 shadow-xl sm:block">
         <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: ACCENT }}>
           {demo.floatLabel}
         </p>
@@ -30,10 +30,10 @@ export function ProductDemoMock({
           <span className="text-xs text-slate-400">{demo.toggleLabel}</span>
           <button
             type="button"
-            className="relative h-5 w-9 rounded-full bg-[#63D5D0]/30 transition"
+            className="relative h-5 w-9 rounded-full bg-accent/30 transition"
             aria-label="Toggle"
           >
-            <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-[#63D5D0] shadow" />
+            <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-accent shadow" />
           </button>
         </div>
       </div>

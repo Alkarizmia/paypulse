@@ -31,21 +31,21 @@ export function LandingHero({
       <div className="relative mx-auto max-w-3xl text-center">
         <motion.p
           {...fade(0.04, 18)}
-          className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#64748B]"
+          className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-muted"
         >
           {c.badge}
         </motion.p>
         <motion.h1
           {...fade(0.1, 36)}
-          className="mt-6 text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.038em] text-[#172033] sm:text-5xl lg:text-[3.65rem]"
+          className="mt-6 text-[2.35rem] font-semibold leading-[1.08] tracking-[-0.038em] text-text sm:text-5xl lg:text-[3.65rem]"
         >
           {c.titleLine1}
           <br />
-          <span className="text-[#315BCB]">{c.titleAccent}</span>
+          <span className="text-accent">{c.titleAccent}</span>
         </motion.h1>
         <motion.p
           {...fade(0.2, 22)}
-          className="mx-auto mt-6 max-w-xl text-[1.05rem] leading-relaxed text-[#64748B] sm:text-lg"
+          className="mx-auto mt-6 max-w-xl text-[1.05rem] leading-relaxed text-text-muted sm:text-lg"
         >
           {c.subtitle}
         </motion.p>
@@ -53,23 +53,23 @@ export function LandingHero({
           {...fade(0.3, 16)}
           className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
         >
-          <Link href={primaryHref} className="pp-lp-btn w-full bg-[#315BCB] px-7 py-3 text-white hover:bg-[#2648a3] sm:w-auto">
+          <Link href={primaryHref} className="pp-lp-btn w-full bg-primary px-7 py-3 text-white hover:bg-bg-dark sm:w-auto">
             {primaryLabel}
           </Link>
           <a
             href="#features"
-            className="pp-lp-btn w-full border border-[#E7EAF0] bg-white px-7 py-3 text-[#172033] hover:border-[#d5dae3] sm:w-auto"
+            className="pp-lp-btn w-full border border-border bg-white px-7 py-3 text-text hover:border-border sm:w-auto"
           >
             {c.ctaSecondary}
           </a>
         </motion.div>
         <motion.ul
           {...fade(0.4, 14)}
-          className="mt-8 flex flex-col items-center justify-center gap-2 text-[13px] text-[#64748B] sm:flex-row sm:gap-6"
+          className="mt-8 flex flex-col items-center justify-center gap-2 text-[13px] text-text-muted sm:flex-row sm:gap-6"
         >
           {[c.trust1, c.trust2, c.trust3].map((item) => (
             <li key={item} className="flex items-center gap-2">
-              <span className="text-[#315BCB]" aria-hidden>
+              <span className="text-accent" aria-hidden>
                 ✓
               </span>
               {item}

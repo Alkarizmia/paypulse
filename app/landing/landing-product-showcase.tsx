@@ -29,7 +29,7 @@ export function LandingProductShowcase({
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-[#E7EAF0] bg-white shadow-[0_28px_80px_-48px_rgba(22,33,58,0.35)]">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border bg-white shadow-[0_28px_80px_-48px_rgba(22,33,58,0.35)]">
           <LandingDashboardPreview
             locale={locale}
             appearance={appearance}
@@ -38,7 +38,7 @@ export function LandingProductShowcase({
           />
         </div>
       </motion.div>
-      <p className="mx-auto mt-14 max-w-2xl text-center text-sm font-medium tracking-tight text-[#64748B] sm:text-base">
+      <p className="mx-auto mt-14 max-w-2xl text-center text-sm font-medium tracking-tight text-text-muted sm:text-base">
         {c.trustLine}
       </p>
     </div>

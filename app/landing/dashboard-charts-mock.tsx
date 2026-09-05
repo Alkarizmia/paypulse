@@ -25,7 +25,7 @@ export type ChartsMockCopy = {
 const DASHBOARD_MOCK_TOKENS = {
   dark: {
     card: "border-white/10 bg-[#08080c]/95 shadow-2xl shadow-black/40",
-    headerBar: "border-white/[0.08] bg-[#0c0c12]",
+    headerBar: "border-white/[0.08] bg-bg-dark",
     titleMute: "text-slate-500",
     inner: "border-white/[0.08] bg-[#14141c]",
     label: "text-slate-500",
@@ -37,7 +37,7 @@ const DASHBOARD_MOCK_TOKENS = {
     donutValue: "text-white",
     legendText: "text-slate-300",
     legendDim: "text-slate-500",
-    chartFill: { from: "#7254D6", fromOpacity: "0.38" },
+    chartFill: { from: "var(--color-accent)", fromOpacity: "0.38" },
   },
   light: {
     card: "border-slate-200 bg-white shadow-[0_28px_60px_-32px_rgba(15,23,42,0.18)]",
@@ -47,13 +47,13 @@ const DASHBOARD_MOCK_TOKENS = {
     label: "text-slate-500",
     value: "text-slate-900",
     hint: "text-emerald-600",
-    axisStroke: "#cbd5e1",
+    axisStroke: "var(--color-border)",
     donutCenter: "bg-white",
     donutLabel: "text-slate-500",
     donutValue: "text-slate-900",
     legendText: "text-slate-600",
     legendDim: "text-slate-400",
-    chartFill: { from: "#7254D6", fromOpacity: "0.18" },
+    chartFill: { from: "var(--color-accent)", fromOpacity: "0.18" },
   },
 } as const;
 
@@ -143,7 +143,7 @@ export function DashboardChartsMock({
               {values.map((v, i) => {
                 const x = pad + (n <= 1 ? 0 : (i * (w - pad * 2)) / (n - 1));
                 const y = h - ((v - min) / span) * (h - 18);
-                return <circle key={i} cx={x} cy={y} r="3.5" fill="#c4b5fd" stroke="#7254D6" strokeWidth="1.25" />;
+                return <circle key={i} cx={x} cy={y} r="3.5" fill="var(--color-accent)" stroke="var(--color-accent)" strokeWidth="1.25" />;
               })}
             </svg>
             <div className={`mt-1 flex justify-between gap-1 px-0.5 text-[9px] font-medium uppercase tracking-wider sm:text-[10px] ${tk.label}`}>
@@ -163,7 +163,7 @@ export function DashboardChartsMock({
               <div
                 className="col-start-1 row-start-1 h-full w-full rounded-full p-[9px]"
                 style={{
-                  background: `conic-gradient(from -90deg, #7254D6 0 ${paidPct}%, #315BCB ${paidPct}% ${paidPct + pendPct}%, #fb923c ${paidPct + pendPct}% 100%)`,
+                  background: `conic-gradient(from -90deg, var(--color-accent) 0 ${paidPct}%, var(--color-primary) ${paidPct}% ${paidPct + pendPct}%, var(--color-warning) ${paidPct + pendPct}% 100%)`,
                 }}
               >
                 <div className={`flex h-full w-full items-center justify-center rounded-full ${tk.donutCenter}`}>

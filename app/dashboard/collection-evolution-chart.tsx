@@ -174,7 +174,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
   const chartH = 140;
   const chartW = 400;
   const n = points.length;
-  const chartGridSoft = light ? "#e2e8f0" : "rgba(148,163,184,0.12)";
+  const chartGridSoft = light ? "var(--color-border)" : "rgba(148,163,184,0.12)";
   const axisText = light ? "text-slate-500" : "text-slate-400";
 
   const valueToY = (v: number) => {
@@ -209,7 +209,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
             className={`cursor-pointer rounded-lg border py-1.5 pl-2.5 pr-8 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
               light
                 ? "border-slate-200 bg-white text-slate-800"
-                : "border-white/10 bg-[#0c0c12] text-slate-100"
+                : "border-white/10 bg-bg-dark text-slate-100"
             }`}
             aria-label={copy.periodSelectLabel}
           >
@@ -239,12 +239,12 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
             <svg viewBox={`0 0 ${chartW} ${chartH}`} className="h-full w-full" preserveAspectRatio="none" aria-hidden>
               <defs>
                 <linearGradient id={fillPaid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#63d5d0" stopOpacity={light ? "0.32" : "0.24"} />
-                  <stop offset="100%" stopColor="#63d5d0" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--color-success)" stopOpacity={light ? "0.32" : "0.24"} />
+                  <stop offset="100%" stopColor="var(--color-success)" stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id={fillPending} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#fb923c" stopOpacity={light ? "0.24" : "0.18"} />
-                  <stop offset="100%" stopColor="#fb923c" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--color-warning)" stopOpacity={light ? "0.24" : "0.18"} />
+                  <stop offset="100%" stopColor="var(--color-warning)" stopOpacity="0" />
                 </linearGradient>
               </defs>
               {gridYs.map((gy, i) => (
@@ -254,7 +254,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
                   y1={gy}
                   x2={chartW}
                   y2={gy}
-                  stroke={i === gridYs.length - 1 ? (light ? "#cbd5e1" : "rgba(148,163,184,0.25)") : chartGridSoft}
+                  stroke={i === gridYs.length - 1 ? (light ? "var(--color-border)" : "rgba(148,163,184,0.25)") : chartGridSoft}
                   strokeWidth="1"
                   strokeDasharray={i === gridYs.length - 1 ? "4 6" : undefined}
                 />
@@ -274,7 +274,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
               <polygon fill={`url(#${fillPaid})`} points={area(paidPts)} />
               <polyline
                 fill="none"
-                stroke="#fb923c"
+                stroke="var(--color-warning)"
                 strokeWidth="2"
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -282,7 +282,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
               />
               <polyline
                 fill="none"
-                stroke="#63d5d0"
+                stroke="var(--color-success)"
                 strokeWidth="2"
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -294,8 +294,8 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
                   cx={p.x}
                   cy={p.y}
                   r={activeIndex === i ? 3 : 2}
-                  fill="#fdba74"
-                  stroke="#ea580c"
+                  fill="var(--color-warning)"
+                  stroke="var(--color-warning)"
                   strokeWidth="1"
                 />
               ))}
@@ -305,8 +305,8 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
                   cx={p.x}
                   cy={p.y}
                   r={activeIndex === i ? 3 : 2}
-                  fill="#6ee7b7"
-                  stroke="#059669"
+                  fill="var(--color-success)"
+                  stroke="var(--color-success)"
                   strokeWidth="1"
                 />
               ))}
@@ -336,7 +336,7 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
           {activePoint && activeIndex !== null && guideX !== null ? (
             <div
               className={`pointer-events-none absolute top-2 z-10 min-w-[9.5rem] rounded-lg border px-3 py-2 text-xs shadow-lg ${
-                light ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-[#1a1a24] text-slate-100"
+                light ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-bg-dark text-slate-100"
               }`}
               style={{
                 left: `${((activeIndex + 0.5) / n) * 100}%`,

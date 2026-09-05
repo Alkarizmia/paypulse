@@ -64,7 +64,7 @@ export function LandingNav() {
             <a
               key={item.href}
               href={item.href}
-              className="text-[13px] font-medium text-[#64748B] transition-colors hover:text-[#172033]"
+              className="text-[13px] font-medium text-text-muted transition-colors hover:text-text"
             >
               {item.label}
             </a>
@@ -79,7 +79,7 @@ export function LandingNav() {
                 type="button"
                 onClick={() => setLocale(code)}
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                  locale === code ? "text-[#315BCB]" : "text-[#64748B] hover:text-[#172033]"
+                  locale === code ? "text-accent" : "text-text-muted hover:text-text"
                 }`}
               >
                 {code.toUpperCase()}
@@ -89,20 +89,20 @@ export function LandingNav() {
           {!isAuthenticated ? (
             <Link
               href="/login"
-              className="hidden text-[13px] font-medium text-[#64748B] transition-colors hover:text-[#172033] md:inline"
+              className="hidden text-[13px] font-medium text-text-muted transition-colors hover:text-text md:inline"
             >
               {t.login}
             </Link>
           ) : null}
           <Link
             href={ctaHref}
-            className="pp-lp-btn hidden bg-[#315BCB] px-4 py-1.5 text-white hover:bg-[#2648a3] md:inline-flex"
+            className="pp-lp-btn hidden bg-primary px-4 py-1.5 text-white hover:bg-bg-dark md:inline-flex"
           >
             {ctaLabel}
           </Link>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#172033] md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text md:hidden"
             aria-expanded={open}
             aria-controls={menuId}
             onClick={() => setOpen((v) => !v)}
@@ -117,14 +117,14 @@ export function LandingNav() {
       </div>
 
       {open ? (
-        <div id={menuId} className="fixed inset-0 z-50 bg-[#F7F8FC] px-6 pt-6 md:hidden">
+        <div id={menuId} className="fixed inset-0 z-50 bg-bg-alt px-6 pt-6 md:hidden">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">PayPulss</span>
-            <button type="button" className="text-sm text-[#64748B]" onClick={() => setOpen(false)}>
+            <button type="button" className="text-sm text-text-muted" onClick={() => setOpen(false)}>
               {t.menuClose}
             </button>
           </div>
-          <nav className="mt-10 flex flex-col gap-5 text-lg font-medium text-[#172033]">
+          <nav className="mt-10 flex flex-col gap-5 text-lg font-medium text-text">
             {links.map((item) => (
               <a key={item.href} href={item.href} onClick={() => setOpen(false)}>
                 {item.label}
@@ -133,14 +133,14 @@ export function LandingNav() {
           </nav>
           <div className="mt-10 flex flex-col gap-3">
             {!isAuthenticated ? (
-              <Link href="/login" className="text-[#64748B]" onClick={() => setOpen(false)}>
+              <Link href="/login" className="text-text-muted" onClick={() => setOpen(false)}>
                 {t.login}
               </Link>
             ) : null}
             <Link
               href={ctaHref}
               onClick={() => setOpen(false)}
-              className="pp-lp-btn bg-[#315BCB] px-5 py-3 text-white"
+              className="pp-lp-btn bg-primary px-5 py-3 text-white"
             >
               {ctaLabel}
             </Link>

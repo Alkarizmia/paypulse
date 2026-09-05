@@ -7,7 +7,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { useLocale } from "@/app/locale-context";
 import type { AppLocale } from "@/lib/app-locale";
 import { pickQuad } from "@/lib/messages/pick";
-import { AuthPremiumBackground } from "@/app/auth/auth-premium-background";
+import { AuthPageShell } from "@/app/auth/auth-page-shell";
 import { GoogleAuthButton } from "@/app/auth/google-auth-button";
 import { AuthOrDivider } from "@/app/auth/auth-or-divider";
 
@@ -28,6 +28,7 @@ function signupCopy(locale: AppLocale) {
   return pickQuad(locale, {
     fr: {
       title: "Inscription",
+      subtitle: "Sans carte bancaire. Configuration rapide.",
       email: "Email",
       password: "Mot de passe",
       submit: "Creer le compte",
@@ -42,7 +43,8 @@ function signupCopy(locale: AppLocale) {
       googleFailed: "Inscription Google impossible. Reessayez ou utilisez email et mot de passe.",
     },
     en: {
-      title: "Signup",
+      title: "Create your account",
+      subtitle: "No credit card. Set up in minutes.",
       email: "Email",
       password: "Password",
       submit: "Create account",
@@ -57,6 +59,7 @@ function signupCopy(locale: AppLocale) {
     },
     nl: {
       title: "Registreren",
+      subtitle: "Geen creditcard. Snel ingesteld.",
       email: "E-mail",
       password: "Wachtwoord",
       submit: "Account aanmaken",
@@ -70,7 +73,8 @@ function signupCopy(locale: AppLocale) {
       googleFailed: "Google-registratie mislukt. Probeer opnieuw of gebruik e-mail en wachtwoord.",
     },
     es: {
-      title: "Registro",
+      title: "Crea tu cuenta",
+      subtitle: "Sin tarjeta. Configuracion rapida.",
       email: "Correo",
       password: "Contrasena",
       submit: "Crear cuenta",
@@ -144,12 +148,12 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="relative flex min-h-[calc(100svh-3.75rem)] items-center justify-center overflow-hidden bg-slate-50 px-4 py-8 sm:px-6">
-      <AuthPremiumBackground />
-      <section className="relative z-[1] mx-auto w-full max-w-md rounded-2xl border border-slate-200/90 bg-white/85 p-6 shadow-[0_28px_70px_-28px_rgba(15,23,42,0.18),0_0_0_1px_rgba(255,255,255,0.9)_inset] backdrop-blur-xl ring-1 ring-slate-200/60">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+    <AuthPageShell variant="signup">
+      <section className="pp-auth-card">
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-text">{t.title}</h1>
+        <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{t.subtitle}</p>
 
-        <div className="mt-5">
+        <div className="mt-6">
           <GoogleAuthButton
             supabase={supabase}
             label={t.google}
@@ -167,9 +171,9 @@ export default function SignupPage() {
 
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block text-sm">
-            <span className="font-medium text-slate-700">{t.email}</span>
+            <span className="font-medium text-text-muted">{t.email}</span>
             <input
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/25"
+              className="pp-auth-field mt-1.5"
               type="email"
               required
               value={email}
@@ -177,10 +181,10 @@ export default function SignupPage() {
             />
           </label>
           <label className="block text-sm">
-            <span className="font-medium text-slate-700">{t.password}</span>
-            <div className="relative mt-1">
+            <span className="font-medium text-text-muted">{t.password}</span>
+            <div className="relative mt-1.5">
               <input
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-11 text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/25"
+                className="pp-auth-field pr-11"
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={8}
@@ -190,7 +194,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-slate-500 transition hover:text-slate-800"
+                className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-text-muted transition hover:text-text"
                 aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               >
                 {showPassword ? (
@@ -209,17 +213,17 @@ export default function SignupPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           {info && <p className="text-sm text-emerald-700">{info}</p>}
           <button
-            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_-14px_rgba(37,99,235,0.55)] transition hover:bg-blue-700 disabled:opacity-70"
+            className="pp-lp-btn w-full bg-primary px-4 py-2.5 text-white hover:bg-bg-dark disabled:opacity-70"
             disabled={loading}
             type="submit"
           >
             {loading ? "..." : t.submit}
           </button>
         </form>
-        <Link href="/login" className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+        <Link href="/login" className="mt-5 inline-block text-sm font-medium text-accent hover:text-primary">
           {t.alt}
         </Link>
       </section>
-    </main>
+    </AuthPageShell>
   );
 }

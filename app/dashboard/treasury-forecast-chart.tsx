@@ -70,7 +70,7 @@ export function TreasuryForecastChart({ clients, locale, light, copy }: Treasury
                     width={Math.max(w, b.value > 0 ? 6 : 0)}
                     height={barH}
                     rx={6}
-                    fill={light ? "#315BCB" : "#60a5fa"}
+                    fill={light ? "var(--color-primary)" : "var(--color-accent)"}
                   />
                 </g>
               );
@@ -84,7 +84,7 @@ export function TreasuryForecastChart({ clients, locale, light, copy }: Treasury
                     y1={0}
                     x2={x}
                     y2={chartH}
-                    stroke={light ? "#e2e8f0" : "rgba(148,163,184,0.15)"}
+                    stroke={light ? "var(--color-border)" : "rgba(148,163,184,0.15)"}
                     strokeWidth="1"
                   />
                   <text

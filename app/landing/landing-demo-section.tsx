@@ -69,7 +69,7 @@ export function LandingDemoSection({
   return (
     <section
       id={t.demoAnchor}
-      className="relative scroll-mt-28 overflow-hidden bg-[#06060a] text-white"
+      className="relative scroll-mt-28 overflow-hidden bg-bg-dark text-white"
     >
       <div className="pp-landing-ambient pointer-events-none absolute inset-0 min-h-full" aria-hidden>
         <div
@@ -239,7 +239,7 @@ export function LandingDemoSection({
             <Link
               href={ctaHref}
               onClick={stopAutoPlay}
-              className="inline-flex items-center justify-center rounded-full bg-[#63D5D0] px-8 py-3.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400"
+              className="inline-flex items-center justify-center rounded-full bg-accent px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-violet-700"
             >
               {ctaLabel}
             </Link>
@@ -249,7 +249,7 @@ export function LandingDemoSection({
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-28 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/80 to-transparent sm:h-36"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-28 bg-gradient-to-t from-bg-alt via-bg-alt/80 to-transparent sm:h-36"
         aria-hidden
       />
     </section>

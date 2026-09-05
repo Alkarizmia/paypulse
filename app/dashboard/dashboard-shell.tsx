@@ -34,42 +34,48 @@ function navItems(locale: AppLocale): NavItem[] {
   const t = getDashboardHomeCopy(locale);
   const icon = (d: string) => (
     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d={d} />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={d} />
     </svg>
   );
   return [
     {
       id: "overview",
       label: t.navHome,
-      icon: icon("M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"),
+      icon: icon("M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"),
     },
     {
       id: "invoices",
       label: t.navClients,
-      icon: icon("M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.813-4.003M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"),
+      icon: icon("M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z"),
     },
     {
       id: "relances",
       label: t.navRelances,
-      icon: icon("M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"),
+      icon: icon("M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"),
     },
     {
       id: "paiements",
       label: t.navTreasury,
-      icon: icon("M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a1.5 1.5 0 001.5-1.5V6.75a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6.75v12A1.5 1.5 0 003.75 21z"),
+      icon: icon("M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"),
     },
   ];
 }
 
 const pipelineIcon = (
   <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-2.25A1.125 1.125 0 013 16.875v-3.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-8.25zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v12A2.25 2.25 0 018.25 20.25H6A2.25 2.25 0 013.75 18V6zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v7.5A2.25 2.25 0 0118 15.75h-2.25A2.25 2.25 0 0113.5 13.5V6z"
+    />
   </svg>
 );
 
 const bilanIcon = (
   <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-2.25A1.125 1.125 0 013 16.875v-3.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-8.25zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
   </svg>
 );
 
@@ -78,7 +84,7 @@ const trashNavIcon = (
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={1.75}
+      strokeWidth={2}
       d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
     />
   </svg>
@@ -89,7 +95,7 @@ const templatesNavIcon = (
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth={1.75}
+      strokeWidth={2}
       d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
     />
   </svg>
@@ -127,12 +133,12 @@ function shellNavBtn(active: boolean, light: boolean) {
   if (light) {
     return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
       active
-        ? "bg-emerald-50 text-emerald-900 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]"
+        ? "bg-violet-50 text-primary shadow-[inset_0_0_0_1px_var(--color-accent)]"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     }`;
   }
   return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-    active ? "bg-emerald-500/15 text-emerald-200 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+    active ? "bg-accent/20 text-text-dark shadow-[inset_0_0_0_1px_var(--color-accent)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
   }`;
 }
 
@@ -140,12 +146,12 @@ function shellNavLink(active: boolean, light: boolean) {
   if (light) {
     return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
       active
-        ? "bg-emerald-50 text-emerald-900 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.45)]"
+        ? "bg-violet-50 text-primary shadow-[inset_0_0_0_1px_var(--color-accent)]"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     }`;
   }
   return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-    active ? "bg-emerald-500/15 text-emerald-200 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.35)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+    active ? "bg-accent/20 text-text-dark shadow-[inset_0_0_0_1px_var(--color-accent)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
   }`;
 }
 
@@ -404,8 +410,8 @@ export function DashboardShell({
     }
   }, [pathname]);
 
-  const navIconActive = light ? "text-emerald-600" : "text-emerald-300";
-  const navIconIdle = "text-slate-500";
+  const navIconActive = light ? "text-accent" : "text-violet-300";
+  const navIconIdle = light ? "text-slate-900" : "text-slate-100";
 
   function renderScrollableItem(item: NavItem) {
     const active = isDashHome && activeNav === item.id;
@@ -435,7 +441,7 @@ export function DashboardShell({
 
   function renderTemplatesNav(onNavigate?: () => void) {
     const subToggleClass = light
-      ? "shrink-0 rounded-xl px-2 py-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+      ? "shrink-0 rounded-xl px-2 py-2.5 text-slate-900 transition hover:bg-slate-100 hover:text-black"
       : "shrink-0 rounded-xl px-2 py-2.5 text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200";
 
     return (
@@ -508,21 +514,21 @@ export function DashboardShell({
     <div
       className={
         light
-          ? "flex min-h-screen overflow-x-hidden bg-slate-100 text-slate-900"
-          : "flex min-h-screen overflow-x-hidden bg-[#08080c] text-slate-100"
+          ? "flex min-h-screen overflow-x-hidden bg-bg-alt text-text"
+          : "flex min-h-screen overflow-x-hidden bg-bg-dark text-text-dark"
       }
     >
       <aside
         className={
           light
-            ? "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-slate-200 bg-white px-3 py-4 lg:flex"
-            : "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-white/[0.06] bg-[#0c0c12] px-3 py-4 lg:flex"
+            ? "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-border bg-bg px-3 py-4 lg:flex"
+            : "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-white/[0.06] bg-bg-dark px-3 py-4 lg:flex"
         }
       >
         <div className="shrink-0">
           <div className="flex flex-col gap-1 px-2">
             <div className="flex items-center gap-2">
-              <PayPulseLogo className="h-8 w-8 shrink-0 text-emerald-500" />
+              <PayPulseLogo className="h-8" />
               <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
             </div>
             {workspaceLabel ? (
@@ -567,7 +573,7 @@ export function DashboardShell({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                   d="M3.75 7.5A1.5 1.5 0 015.25 6h4.19a1.5 1.5 0 011.06.44l1.06 1.06H18.75a1.5 1.5 0 011.5 1.5v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V7.5z"
                 />
               </svg>
@@ -580,7 +586,7 @@ export function DashboardShell({
           <Link href="/dashboard/organisation" className={shellNavLink(onOrganisation, light)}>
             <span className={onOrganisation ? navIconActive : navIconIdle}>
               <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M2.25 21h19.5M4.5 3h15M6 3v3m12-3v3M4.5 9.75h15M4.5 15h15" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.25 21h19.5M4.5 3h15M6 3v3m12-3v3M4.5 9.75h15M4.5 15h15" />
               </svg>
             </span>
             {homeCopy.navOrganization}
@@ -588,7 +594,7 @@ export function DashboardShell({
           <Link href="/dashboard/integrations" className={shellNavLink(onIntegrations, light)}>
             <span className={onIntegrations ? navIconActive : navIconIdle}>
               <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v2.25A2.25 2.25 0 006 10.5zm0 9.75h2.25A2.25 2.25 0 0010.5 18v-2.25a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25V18A2.25 2.25 0 006 20.25zm9.75-9.75H18a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0018 3.75h-2.25A2.25 2.25 0 0013.5 6v2.25a2.25 2.25 0 002.25 2.25z" />
               </svg>
             </span>
             {homeCopy.navIntegrations}
@@ -597,7 +603,7 @@ export function DashboardShell({
             <Link href="/dashboard/equipe" className={shellNavLink(onEquipe, light)}>
               <span className={onEquipe ? navIconActive : navIconIdle}>
                 <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l-.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-2.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l-.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-2.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </span>
               {homeCopy.navTeam}
@@ -612,14 +618,14 @@ export function DashboardShell({
               : "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
           }
         >
-          <svg className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+          <svg className={`h-5 w-5 ${navIconIdle}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={1.75}
+              strokeWidth={2}
               d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
             />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           {t.settings}
         </Link>
@@ -643,7 +649,7 @@ export function DashboardShell({
                 : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
             }
           >
-            <span className="text-slate-500" aria-hidden>
+            <span className={navIconIdle} aria-hidden>
               ↗
             </span>
             {t.sitePaypulss}
@@ -656,7 +662,7 @@ export function DashboardShell({
                 : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
             }
           >
-            <span className="text-slate-500" aria-hidden>
+            <span className={navIconIdle} aria-hidden>
               ✉
             </span>
             {t.contactPage}
@@ -669,11 +675,11 @@ export function DashboardShell({
                 : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
             }
           >
-            <svg className="h-4 w-4 shrink-0 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+            <svg className={`h-4 w-4 shrink-0 ${navIconIdle}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={1.75}
+                strokeWidth={2}
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
@@ -698,12 +704,12 @@ export function DashboardShell({
           className={
             light
               ? "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:px-6"
-              : "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-[#08080c]/90 px-3 py-3 backdrop-blur-md sm:px-6"
+              : "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-bg-dark/90 px-3 py-3 backdrop-blur-md sm:px-6"
           }
         >
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2 lg:hidden">
-              <PayPulseLogo className="h-7 w-7 text-violet-400" />
+              <PayPulseLogo className="h-7" />
             </div>
             <button
               type="button"
@@ -719,11 +725,11 @@ export function DashboardShell({
             >
               {mobileMenuOpen ? (
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
                 </svg>
               )}
             </button>
@@ -767,7 +773,7 @@ export function DashboardShell({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={1.75}
+                    strokeWidth={2}
                     d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.001 3.465-.368 5.071-1.09M15 9.75V9a3 3 0 10-6 0v.75m6 0H9"
                   />
                 </svg>
@@ -922,13 +928,13 @@ export function DashboardShell({
           className={`fixed inset-y-0 left-0 z-40 flex h-dvh min-h-0 w-72 max-w-[86vw] flex-col overflow-hidden px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
             light
               ? "border-r border-slate-200 bg-white"
-              : "border-r border-white/[0.08] bg-[#0c0c12]"
+              : "border-r border-white/[0.08] bg-bg-dark"
           } ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
           aria-hidden={!mobileMenuOpen}
         >
           <div className="flex shrink-0 items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <PayPulseLogo className="h-7 w-7 text-emerald-500" />
+              <PayPulseLogo className="h-7" />
               <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
             </div>
             <button
@@ -942,7 +948,7 @@ export function DashboardShell({
               aria-label="Fermer le menu"
             >
               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -1019,7 +1025,7 @@ export function DashboardShell({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={1.75}
+                    strokeWidth={2}
                     d="M3.75 7.5A1.5 1.5 0 015.25 6h4.19a1.5 1.5 0 011.06.44l1.06 1.06H18.75a1.5 1.5 0 011.5 1.5v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V7.5z"
                   />
                 </svg>
@@ -1053,14 +1059,14 @@ export function DashboardShell({
                   : "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
               }
             >
-              <svg className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <svg className={`h-5 w-5 ${navIconIdle}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                   d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"
                 />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {t.settings}
             </Link>

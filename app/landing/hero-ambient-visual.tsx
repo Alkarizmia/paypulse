@@ -63,7 +63,7 @@ function HeroColorFlowLines() {
       <defs>
         <linearGradient id="pp-hero-flow-g1" x1="0%" y1="50%" x2="100%" y2="50%">
           <stop offset="0%" stopColor="#a855f7" stopOpacity="0.95" />
-          <stop offset="45%" stopColor="#63D5D0" stopOpacity="0.88" />
+          <stop offset="45%" stopColor="var(--color-accent)" stopOpacity="0.88" />
           <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.9" />
         </linearGradient>
         <linearGradient id="pp-hero-flow-g2" x1="100%" y1="0%" x2="0%" y2="100%">
@@ -72,12 +72,12 @@ function HeroColorFlowLines() {
           <stop offset="100%" stopColor="#c084fc" stopOpacity="0.85" />
         </linearGradient>
         <linearGradient id="pp-hero-flow-g3" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#63d5d0" stopOpacity="0.75" />
-          <stop offset="50%" stopColor="#63D5D0" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#7254D6" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="var(--color-success)" stopOpacity="0.75" />
+          <stop offset="50%" stopColor="var(--color-accent)" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0.8" />
         </linearGradient>
         <linearGradient id="pp-hero-flow-g4" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#fb923c" stopOpacity="0.45" />
+          <stop offset="0%" stopColor="var(--color-warning)" stopOpacity="0.45" />
           <stop offset="40%" stopColor="#a78bfa" stopOpacity="0.78" />
           <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.65" />
         </linearGradient>
@@ -292,7 +292,7 @@ export function HeroAmbientVisual() {
         <defs>
           <linearGradient id="pp-hero-ring" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.95" />
-            <stop offset="50%" stopColor="#63D5D0" stopOpacity="0.55" />
+            <stop offset="50%" stopColor="var(--color-accent)" stopOpacity="0.55" />
             <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.65" />
           </linearGradient>
         </defs>

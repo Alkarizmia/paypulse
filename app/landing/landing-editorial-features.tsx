@@ -58,12 +58,12 @@ export function LandingEditorialFeatures({
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <div>
-              <h2 className="max-w-md text-3xl font-semibold tracking-[-0.03em] text-[#172033] sm:text-4xl">
+              <h2 className="max-w-md text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">
                 {row.title}
               </h2>
-              <p className="mt-5 max-w-md text-base leading-relaxed text-[#64748B]">{row.body}</p>
+              <p className="mt-5 max-w-md text-base leading-relaxed text-text-muted">{row.body}</p>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-[#E7EAF0] bg-white shadow-[0_20px_60px_-42px_rgba(22,33,58,0.28)]">
+            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-[0_20px_60px_-42px_rgba(22,33,58,0.28)]">
               {row.preview}
             </div>
           </motion.article>

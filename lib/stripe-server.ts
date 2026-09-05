@@ -13,6 +13,10 @@ export function getStripe(): Stripe | null {
 
 /** URL de base pour success/cancel Checkout (sans slash final). */
 export function getAppOrigin(): string {
+  if (process.env.NODE_ENV === "development") {
+    const port = process.env.PORT?.trim() || "3000";
+    return `http://localhost:${port}`;
+  }
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (explicit) return explicit.replace(/\/$/, "");
   const vercel = process.env.VERCEL_URL?.trim();

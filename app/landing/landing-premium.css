@@ -1,18 +1,18 @@
 @import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap");
 
 .pp-lp {
-  --navy: #16213a;
-  --blue: #315bcb;
-  --purple: #7254d6;
-  --cyan: #63d5d0;
-  --bg: #f7f8fc;
-  --white: #ffffff;
-  --text: #172033;
-  --muted: #64748b;
-  --border: #e7eaf0;
+  --navy: var(--color-primary);
+  --blue: var(--color-primary);
+  --purple: var(--color-accent);
+  --cyan: var(--color-accent);
+  --bg: var(--color-bg-alt);
+  --white: var(--color-bg);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
   font-family: "Satoshi", var(--font-paypulse), ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
-  background: #ffffff;
+  background: var(--color-bg);
 }
 
 .pp-lp-atmosphere {
@@ -25,11 +25,11 @@
   height: min(1080px, 125vh);
   overflow: hidden;
   background:
-    radial-gradient(ellipse 58% 42% at 12% 6%, rgba(114, 84, 214, 0.11) 0%, transparent 62%),
-    radial-gradient(ellipse 50% 38% at 88% 10%, rgba(49, 91, 203, 0.09) 0%, transparent 58%),
-    radial-gradient(ellipse 42% 32% at 72% 22%, rgba(99, 213, 208, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 48% at 50% 18%, rgba(255, 255, 255, 0.55) 0%, transparent 70%),
-    linear-gradient(180deg, #f5f4fb 0%, #f8f9fc 36%, #fbfcfe 68%, #ffffff 100%);
+    radial-gradient(ellipse 58% 42% at 12% 6%, color-mix(in srgb, var(--color-accent) 14%, transparent) 0%, transparent 62%),
+    radial-gradient(ellipse 50% 38% at 88% 10%, color-mix(in srgb, var(--color-primary) 10%, transparent) 0%, transparent 58%),
+    radial-gradient(ellipse 42% 32% at 72% 22%, color-mix(in srgb, var(--color-success) 8%, transparent) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 48% at 50% 18%, color-mix(in srgb, var(--color-bg) 55%, transparent) 0%, transparent 70%),
+    linear-gradient(180deg, var(--color-bg-alt) 0%, var(--color-bg-alt) 36%, var(--color-bg) 68%, var(--color-bg) 100%);
 }
 
 .pp-lp-nav-shell {
@@ -93,7 +93,7 @@
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: -0.03em;
-  color: #172033;
+  color: var(--color-text);
   line-height: 1;
 }
 
@@ -101,7 +101,7 @@
   position: relative;
   isolation: isolate;
   overflow: visible;
-  background: linear-gradient(180deg, transparent 0%, transparent 42%, rgba(255, 255, 255, 0.55) 72%, #ffffff 100%);
+  background: linear-gradient(180deg, transparent 0%, transparent 42%, color-mix(in srgb, var(--color-bg) 55%, transparent) 72%, var(--color-bg) 100%);
 }
 
 .pp-lp-hero-fx {
@@ -124,7 +124,7 @@
   top: -28%;
   width: min(70vw, 820px);
   height: min(70vw, 820px);
-  background: radial-gradient(circle, rgba(114, 84, 214, 0.16) 0%, rgba(49, 91, 203, 0.07) 46%, transparent 72%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 16%, transparent) 0%, color-mix(in srgb, var(--color-primary) 8%, transparent) 46%, transparent 72%);
   filter: blur(120px);
   opacity: 0.42;
 }
@@ -134,7 +134,7 @@
   top: -18%;
   width: min(58vw, 680px);
   height: min(58vw, 680px);
-  background: radial-gradient(circle, rgba(49, 91, 203, 0.12) 0%, rgba(99, 213, 208, 0.07) 44%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 12%, transparent) 0%, color-mix(in srgb, var(--color-accent) 8%, transparent) 44%, transparent 70%);
   filter: blur(130px);
   opacity: 0.36;
   animation-delay: -9s;
@@ -145,7 +145,7 @@
   top: 14%;
   width: min(52vw, 520px);
   height: min(34vw, 320px);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(49, 91, 203, 0.05) 48%, transparent 74%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-bg) 50%, transparent) 0%, color-mix(in srgb, var(--color-accent) 6%, transparent) 48%, transparent 74%);
   filter: blur(100px);
   opacity: 0.4;
   animation-name: pp-lp-halo-center;
@@ -178,7 +178,7 @@
   height: 3px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 8px rgba(49, 91, 203, 0.18);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 18%, transparent);
   opacity: 0.22;
   animation: pp-lp-spark 9s ease-in-out infinite;
 }
@@ -228,7 +228,7 @@
   width: 88px;
   height: 1px;
   border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), rgba(99, 213, 208, 0.22), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-bg) 45%, transparent), color-mix(in srgb, var(--color-accent) 22%, transparent), transparent);
   filter: blur(0.35px);
   opacity: 0;
   animation: pp-lp-star 11s linear infinite;
@@ -282,14 +282,14 @@
   width: 2px;
   height: 2px;
   border-radius: 50%;
-  background: rgba(49, 91, 203, 0.18);
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
   box-shadow:
-    18vw 8vh 0 0 rgba(114, 84, 214, 0.12),
-    38vw 4vh 0 0 rgba(99, 213, 208, 0.12),
-    62vw 12vh 0 0 rgba(49, 91, 203, 0.1),
-    74vw 22vh 0 0 rgba(114, 84, 214, 0.08),
-    8vw 26vh 0 0 rgba(99, 213, 208, 0.1),
-    52vw 30vh 0 0 rgba(49, 91, 203, 0.08);
+    18vw 8vh 0 0 color-mix(in srgb, var(--color-accent) 12%, transparent),
+    38vw 4vh 0 0 color-mix(in srgb, var(--color-success) 12%, transparent),
+    62vw 12vh 0 0 color-mix(in srgb, var(--color-primary) 10%, transparent),
+    74vw 22vh 0 0 color-mix(in srgb, var(--color-accent) 8%, transparent),
+    8vw 26vh 0 0 color-mix(in srgb, var(--color-success) 10%, transparent),
+    52vw 30vh 0 0 color-mix(in srgb, var(--color-primary) 8%, transparent);
   filter: blur(0.5px);
   animation: pp-lp-dust 18s ease-in-out infinite;
 }
@@ -327,6 +327,84 @@
 
 .pp-lp-btn:active {
   transform: translateY(0);
+}
+
+.pp-auth-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  height: 100dvh;
+  max-height: 100svh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.pp-auth-page .pp-lp-atmosphere {
+  height: 100%;
+}
+
+.pp-auth-page .pp-lp-nav-shell {
+  position: relative;
+  z-index: 50;
+  flex-shrink: 0;
+  padding: 12px 16px 0;
+}
+
+.pp-auth-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px 16px 20px;
+}
+
+.pp-auth-card {
+  width: 100%;
+  max-width: 26.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 50px rgba(22, 33, 58, 0.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  padding: 1.75rem 1.5rem 1.6rem;
+}
+
+@media (max-height: 740px) {
+  .pp-auth-page .pp-lp-nav-shell {
+    padding-top: 8px;
+  }
+
+  .pp-auth-page .pp-lp-nav-capsule {
+    height: 3.1rem;
+  }
+
+  .pp-auth-card {
+    padding: 1.2rem 1.25rem 1.1rem;
+  }
+
+  .pp-auth-card h1 {
+    font-size: 1.35rem;
+  }
+}
+
+.pp-auth-field {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: 0.7rem 0.85rem;
+  color: var(--color-text);
+  outline: none;
+}
+
+.pp-auth-field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 16%, transparent);
 }
 
 @media (max-width: 767px) {

@@ -3,25 +3,25 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   const icons: NonNullable<MetadataRoute.Manifest["icons"]> = [
     {
-      src: "/branding/paypulse-logo-192.png",
+      src: "/branding/paypulss-official-mark-192.png",
       sizes: "192x192",
       type: "image/png",
       purpose: "any",
     },
     {
-      src: "/branding/paypulse-logo-512.png",
+      src: "/branding/paypulss-official-mark-512.png",
       sizes: "512x512",
       type: "image/png",
       purpose: "any",
     },
     {
-      src: "/branding/paypulse-logo-192.png",
+      src: "/branding/paypulss-official-mark-192.png",
       sizes: "192x192",
       type: "image/png",
       purpose: "maskable",
     },
     {
-      src: "/branding/paypulse-logo-512.png",
+      src: "/branding/paypulss-official-mark-512.png",
       sizes: "512x512",
       type: "image/png",
       purpose: "maskable",

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { useLocale } from "@/app/locale-context";
-import { AuthPremiumBackground } from "@/app/auth/auth-premium-background";
+import { AuthPageShell } from "@/app/auth/auth-page-shell";
 
 function AuthCallbackInner() {
   const { locale } = useLocale();
@@ -83,22 +83,21 @@ function AuthCallbackInner() {
   }, [router, searchParams, supabase, t.failed, t.missing]);
 
   return (
-    <main className="relative flex min-h-[calc(100svh-3.75rem)] items-center justify-center overflow-hidden bg-slate-50 px-4 py-8 sm:px-6">
-      <AuthPremiumBackground />
-      <section className="relative z-[1] mx-auto w-full max-w-md rounded-2xl border border-slate-200/90 bg-white/85 p-6 text-center shadow-[0_28px_70px_-28px_rgba(15,23,42,0.18)] backdrop-blur-xl ring-1 ring-slate-200/60">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+    <AuthPageShell variant="login">
+      <section className="pp-auth-card text-center">
+        <h1 className="text-xl font-semibold tracking-[-0.03em] text-text">{t.title}</h1>
         {message ? (
           <>
             <p className="mt-4 text-sm text-red-600">{message}</p>
-            <Link href="/login" className="mt-6 inline-block text-sm font-medium text-blue-600 hover:underline">
+            <Link href="/login" className="mt-6 inline-block text-sm font-medium text-accent hover:text-primary">
               {t.back}
             </Link>
           </>
         ) : (
-          <p className="mt-4 text-sm text-slate-600">{t.loading}</p>
+          <p className="mt-4 text-sm text-text-muted">{t.loading}</p>
         )}
       </section>
-    </main>
+    </AuthPageShell>
   );
 }
 

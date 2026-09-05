@@ -8,6 +8,10 @@ export function getAuthSiteOrigin(): string {
   if (typeof window !== "undefined") {
     return window.location.origin;
   }
+  if (process.env.NODE_ENV === "development") {
+    const port = process.env.PORT?.trim() || "3000";
+    return `http://localhost:${port}`;
+  }
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
   return fromEnv || "http://localhost:3000";
 }

@@ -84,8 +84,8 @@ export function LandingPage() {
         <section id="pricing" className="scroll-mt-28 px-4 py-24 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-semibold tracking-[-0.03em] text-[#172033] sm:text-4xl">{t.pricingTitle}</h2>
-              <p className="mt-4 text-[#64748B]">{t.pricingSub}</p>
+              <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">{t.pricingTitle}</h2>
+              <p className="mt-4 text-text-muted">{t.pricingSub}</p>
               <div
                 role="tablist"
                 aria-label={pickQuad(locale, {
@@ -94,7 +94,7 @@ export function LandingPage() {
                   nl: "Kies maandelijkse of jaarlijkse facturatie",
                   es: "Elige facturación mensual o anual",
                 })}
-                className="mx-auto mt-8 flex h-11 w-[min(100%,18rem)] rounded-full border border-[#E7EAF0] bg-white p-1"
+                className="mx-auto mt-8 flex h-11 w-[min(100%,18rem)] rounded-full border border-border bg-white p-1"
               >
                 {(["monthly", "annual"] as const).map((cycle) => (
                   <button
@@ -104,7 +104,7 @@ export function LandingPage() {
                     aria-selected={billingCycle === cycle}
                     onClick={() => setBillingCycle(cycle)}
                     className={`flex-1 rounded-full text-sm font-medium transition-colors ${
-                      billingCycle === cycle ? "bg-[#16213A] text-white" : "text-[#64748B]"
+                      billingCycle === cycle ? "bg-primary text-white" : "text-text-muted"
                     }`}
                   >
                     {cycle === "monthly" ? t.pricingBillingMonthly : t.pricingBillingAnnual}
@@ -112,7 +112,7 @@ export function LandingPage() {
                 ))}
               </div>
               {billingCycle === "annual" ? (
-                <p className="mt-3 text-xs text-[#64748B]">{t.pricingAnnualSavingsNote}</p>
+                <p className="mt-3 text-xs text-text-muted">{t.pricingAnnualSavingsNote}</p>
               ) : null}
             </div>
 
@@ -147,26 +147,26 @@ export function LandingPage() {
                   <article
                     key={plan.id}
                     className={`flex flex-col rounded-2xl border p-6 ${
-                      highlight ? "border-[#315BCB]/35 bg-white" : "border-[#E7EAF0] bg-white"
+                      highlight ? "border-accent/35 bg-white" : "border-border bg-white"
                     }`}
                   >
                     {highlight ? (
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#315BCB]">{t.popular}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">{t.popular}</p>
                     ) : (
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-transparent">.</p>
                     )}
-                    <h3 className="mt-3 text-lg font-semibold text-[#172033]">{name}</h3>
-                    <p className="mt-1 min-h-[2.75rem] text-sm leading-relaxed text-[#64748B]">{description}</p>
+                    <h3 className="mt-3 text-lg font-semibold text-text">{name}</h3>
+                    <p className="mt-1 min-h-[2.75rem] text-sm leading-relaxed text-text-muted">{description}</p>
                     <p className="mt-6 flex items-baseline gap-1">
-                      <span className="text-3xl font-semibold tracking-tight text-[#172033]">{shownPrice}</span>
-                      <span className="text-sm text-[#64748B]">{period}</span>
+                      <span className="text-3xl font-semibold tracking-tight text-text">{shownPrice}</span>
+                      <span className="text-sm text-text-muted">{period}</span>
                     </p>
                     {showAnnual ? (
-                      <p className="mt-2 text-xs text-[#64748B]">
+                      <p className="mt-2 text-xs text-text-muted">
                         {t.pricingAnnualOldLabel} <span className="line-through">{annualPricing!.oldAnnual}</span>
                       </p>
                     ) : null}
-                    <ul className="mt-6 flex-1 space-y-2 text-sm text-[#64748B]">
+                    <ul className="mt-6 flex-1 space-y-2 text-sm text-text-muted">
                       {features.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
@@ -175,8 +175,8 @@ export function LandingPage() {
                       href={resolvePlanCtaHref(plan.id)}
                       className={`pp-lp-btn mt-8 w-full py-2.5 ${
                         highlight
-                          ? "bg-[#315BCB] text-white hover:bg-[#2648a3]"
-                          : "border border-[#E7EAF0] text-[#172033] hover:border-[#d5dae3]"
+                          ? "bg-primary text-white hover:bg-bg-dark"
+                          : "border border-border text-text hover:border-border"
                       }`}
                     >
                       {cta}
@@ -188,20 +188,20 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-28 border-t border-[#E7EAF0] px-4 py-24 sm:px-6">
+        <section id="faq" className="scroll-mt-28 border-t border-border px-4 py-24 sm:px-6">
           <div className="mx-auto max-w-2xl">
-            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-[#172033]">{t.faqTitle}</h2>
-            <p className="mt-3 text-[#64748B]">{t.faqSub}</p>
-            <div className="mt-10 divide-y divide-[#E7EAF0] border-y border-[#E7EAF0]">
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text">{t.faqTitle}</h2>
+            <p className="mt-3 text-text-muted">{t.faqSub}</p>
+            <div className="mt-10 divide-y divide-border border-y border-border">
               {t.faqItems.map((item) => (
                 <details key={item.q} className="group py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-medium text-[#172033] [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-medium text-text [&::-webkit-details-marker]:hidden">
                     {item.q}
-                    <span className="text-[#64748B] transition group-open:rotate-45" aria-hidden>
+                    <span className="text-text-muted transition group-open:rotate-45" aria-hidden>
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-[#64748B]">{item.a}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-text-muted">{item.a}</p>
                 </details>
               ))}
             </div>
@@ -210,10 +210,10 @@ export function LandingPage() {
 
         <section className="px-4 py-24 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-[#172033] sm:text-4xl">{p.finalTitle}</h2>
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">{p.finalTitle}</h2>
             <Link
               href={primaryHref}
-              className="pp-lp-btn mt-8 bg-[#315BCB] px-8 py-3 text-white hover:bg-[#2648a3]"
+              className="pp-lp-btn mt-8 bg-primary px-8 py-3 text-white hover:bg-bg-dark"
             >
               {primaryLabel}
             </Link>
@@ -221,68 +221,68 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-[#E7EAF0] px-4 py-12 sm:px-6">
+      <footer className="border-t border-border px-4 py-12 sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-2">
-            <PayPulseLogo className="h-8 w-8" />
-            <span className="text-sm font-semibold text-[#172033]">PayPulss</span>
+          <div className="flex items-center gap-3">
+            <PayPulseLogo className="h-9" />
+            <span className="text-[15px] font-semibold tracking-tight text-text">PayPulss</span>
           </div>
           <div className="grid grid-cols-2 gap-10 text-sm sm:grid-cols-3">
             <div>
-              <p className="font-medium text-[#172033]">{t.footerProduct}</p>
-              <ul className="mt-3 space-y-2 text-[#64748B]">
+              <p className="font-medium text-text">{t.footerProduct}</p>
+              <ul className="mt-3 space-y-2 text-text-muted">
                 <li>
-                  <a href="#features" className="hover:text-[#172033]">
+                  <a href="#features" className="hover:text-text">
                     {t.footerLinks.features}
                   </a>
                 </li>
                 <li>
-                  <a href="#apercu" className="hover:text-[#172033]">
+                  <a href="#apercu" className="hover:text-text">
                     {t.footerLinks.preview}
                   </a>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-[#172033]">
+                  <a href="#pricing" className="hover:text-text">
                     {t.footerLinks.pricing}
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="hover:text-[#172033]">
+                  <a href="#faq" className="hover:text-text">
                     {t.footerLinks.faq}
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <p className="font-medium text-[#172033]">{t.footerCompany}</p>
-              <ul className="mt-3 space-y-2 text-[#64748B]">
+              <p className="font-medium text-text">{t.footerCompany}</p>
+              <ul className="mt-3 space-y-2 text-text-muted">
                 <li>
-                  <Link href="/a-propos" className="hover:text-[#172033]">
+                  <Link href="/a-propos" className="hover:text-text">
                     {t.footerLinks.about}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="hover:text-[#172033]">
+                  <Link href="/contact" className="hover:text-text">
                     {t.footerLinks.contact}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <p className="font-medium text-[#172033]">{t.footerLegal}</p>
-              <ul className="mt-3 space-y-2 text-[#64748B]">
+              <p className="font-medium text-text">{t.footerLegal}</p>
+              <ul className="mt-3 space-y-2 text-text-muted">
                 <li>
-                  <Link href="/legal" className="hover:text-[#172033]">
+                  <Link href="/legal" className="hover:text-text">
                     {t.footerLinks.legalHub}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/confidentialite" className="hover:text-[#172033]">
+                  <Link href="/confidentialite" className="hover:text-text">
                     {t.footerLinks.privacy}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/conditions-utilisation" className="hover:text-[#172033]">
+                  <Link href="/conditions-utilisation" className="hover:text-text">
                     {t.footerLinks.terms}
                   </Link>
                 </li>

@@ -162,7 +162,7 @@ function HeroCopyBlock({
       <HeroRevealStep step={0}>
         <p className="text-sm font-medium text-slate-600">{t.heroWelcome}</p>
         <div className="mt-4 flex items-center justify-center gap-2">
-          <PayPulseLogo className="h-8 w-8 sm:h-9 sm:w-9" />
+          <PayPulseLogo className="h-8 sm:h-9" />
           <span className="text-sm font-semibold tracking-tight text-slate-900">PayPulss</span>
         </div>
       </HeroRevealStep>

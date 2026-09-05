@@ -57,7 +57,10 @@ export function GlobalTopBar() {
     window.alert(error);
   }
 
-  if (isDashboard || isHome) {
+  const isAuthRoute =
+    pathname === "/login" || pathname === "/signup" || Boolean(pathname?.startsWith("/auth"));
+
+  if (isDashboard || isHome || isAuthRoute) {
     return null;
   }
 
@@ -93,7 +96,7 @@ export function GlobalTopBar() {
               href="/"
               className="flex items-center gap-2 rounded-lg text-blue-600 outline-none ring-blue-500/40 focus-visible:ring-2"
             >
-              <PayPulseLogo className="h-8 w-8 shrink-0 text-blue-600" />
+              <PayPulseLogo className="h-8" />
               <span className="truncate text-sm font-semibold tracking-tight text-slate-900">PayPulss</span>
             </Link>
             {isHome ? (

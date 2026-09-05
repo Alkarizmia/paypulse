@@ -35,20 +35,20 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
           <stop offset="100%" stopColor="#6366f1" />
         </linearGradient>
         <linearGradient id={g.emerald} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#6ee7b7" />
+          <stop offset="0%" stopColor="var(--color-success)" />
           <stop offset="100%" stopColor="#10b981" />
         </linearGradient>
       </defs>
 
       {kind === "clients" && (
         <>
-          <rect x="28" y="24" width="184" height="88" rx="14" fill={`url(#${g.surface})`} stroke="#e2e8f0" strokeWidth="1.25" />
+          <rect x="28" y="24" width="184" height="88" rx="14" fill={`url(#${g.surface})`} stroke="var(--color-border)" strokeWidth="1.25" />
           {[0, 1, 2].map((i) => (
             <g key={i} transform={`translate(44 ${40 + i * 24})`}>
-              <circle cx="10" cy="8" r="7" fill="#ede9fe" stroke="#7254D6" strokeWidth="1.25" />
-              <rect x="26" y="4" width="88" height="4" rx="2" fill="#cbd5e1" />
-              <rect x="26" y="12" width="58" height="3" rx="1.5" fill="#e2e8f0" />
-              <rect x="128" y="3" width="44" height="12" rx="6" fill="#d1fae5" stroke="#63d5d0" strokeWidth="1" />
+              <circle cx="10" cy="8" r="7" fill="var(--color-violet-100)" stroke="var(--color-accent)" strokeWidth="1.25" />
+              <rect x="26" y="4" width="88" height="4" rx="2" fill="var(--color-border)" />
+              <rect x="26" y="12" width="58" height="3" rx="1.5" fill="var(--color-border)" />
+              <rect x="128" y="3" width="44" height="12" rx="6" fill="#d1fae5" stroke="var(--color-success)" strokeWidth="1" />
             </g>
           ))}
         </>
@@ -56,12 +56,12 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
 
       {kind === "reminders" && (
         <>
-          <rect x="52" y="28" width="136" height="80" rx="14" fill={`url(#${g.surface})`} stroke="#e2e8f0" strokeWidth="1.25" />
+          <rect x="52" y="28" width="136" height="80" rx="14" fill={`url(#${g.surface})`} stroke="var(--color-border)" strokeWidth="1.25" />
           <path d="M72 48h96M72 62h68M72 76h84" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" />
           <path
             d="M168 34c12 0 22 10 22 22v8H146v-8c0-12 10-22 22-22Z"
-            fill="#ede9fe"
-            stroke="#7254D6"
+            fill="var(--color-violet-100)"
+            stroke="var(--color-accent)"
             strokeWidth="1.25"
           />
           <circle cx="120" cy="96" r="16" fill={`url(#${g.emerald})`} opacity="0.9" />
@@ -83,14 +83,14 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
             strokeDasharray="4 6"
           />
           <path d="M36 44c32-18 80-18 112 8" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          <circle cx="176" cy="38" r="6" fill="#63d5d0" />
+          <circle cx="176" cy="38" r="6" fill="var(--color-success)" />
         </>
       )}
 
       {kind === "deadlines" && (
         <>
-          <rect x="56" y="26" width="128" height="84" rx="14" fill={`url(#${g.surface})`} stroke="#e2e8f0" strokeWidth="1.25" />
-          <rect x="72" y="40" width="96" height="8" rx="4" fill="#e2e8f0" />
+          <rect x="56" y="26" width="128" height="84" rx="14" fill={`url(#${g.surface})`} stroke="var(--color-border)" strokeWidth="1.25" />
+          <rect x="72" y="40" width="96" height="8" rx="4" fill="var(--color-border)" />
           <rect x="88" y="58" width="64" height="40" rx="8" fill="#e0f2fe" stroke="#38bdf8" strokeWidth="1.25" />
           <circle cx="120" cy="78" r="10" fill="#0ea5e9" opacity="0.2" />
           <path d="M120 72v12M114 78h12" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" />
@@ -103,11 +103,11 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
           <path
             d="M120 24 76 44v38c0 26 20 42 44 46 24-4 44-20 44-46V44Z"
             fill={`url(#${g.surface})`}
-            stroke="#cbd5e1"
+            stroke="var(--color-border)"
             strokeWidth="1.25"
           />
-          <rect x="92" y="58" width="56" height="5" rx="2.5" fill="#e2e8f0" />
-          <rect x="92" y="72" width="40" height="5" rx="2.5" fill="#e2e8f0" />
+          <rect x="92" y="58" width="56" height="5" rx="2.5" fill="var(--color-border)" />
+          <rect x="92" y="72" width="40" height="5" rx="2.5" fill="var(--color-border)" />
           <circle cx="120" cy="48" r="12" fill={`url(#${g.emerald})`} />
           <path d="M114 48l5 5 10-11" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
         </>
@@ -115,7 +115,7 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
 
       {kind === "rhythm" && (
         <>
-          <circle cx="120" cy="68" r="44" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="1.25" />
+          <circle cx="120" cy="68" r="44" fill="#f8fafc" stroke="var(--color-border)" strokeWidth="1.25" />
           <path d="M120 68V38M120 68l20 12" stroke={`url(#${g.violet})`} strokeWidth="3" strokeLinecap="round" />
           <circle cx="120" cy="68" r="5" fill="#475569" />
           {[0, 1, 2, 3].map((i) => {
@@ -128,7 +128,7 @@ function MiniArt({ kind, artId }: { kind: ProductTourMarqueePanel["kind"]; artId
                 cx={cx}
                 cy={cy}
                 r={i === 0 ? 5 : 4}
-                fill={i === 0 ? "#63d5d0" : "#cbd5e1"}
+                fill={i === 0 ? "var(--color-success)" : "var(--color-border)"}
                 opacity={i === 0 ? 1 : 0.7}
               />
             );
