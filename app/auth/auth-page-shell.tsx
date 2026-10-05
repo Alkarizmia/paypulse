@@ -22,16 +22,10 @@ export function AuthPageShell({
 
   return (
     <div className="pp-lp pp-auth-page">
-      <div className="pp-lp-atmosphere" aria-hidden>
-        <div className="pp-lp-hero-fx">
-          <span className="pp-lp-halo pp-lp-halo--tl" />
-          <span className="pp-lp-halo pp-lp-halo--tr" />
-          <span className="pp-lp-halo pp-lp-halo--center" />
-        </div>
-      </div>
+      <div className="pp-lp-atmosphere" aria-hidden />
 
       <header className="pp-lp-nav-shell">
-        <div className="pp-lp-nav-capsule">
+        <div className="pp-lp-nav-capsule is-scrolled">
           <Link href="/" className="pp-lp-nav-brand">
             <PayPulseLogo className="pp-lp-nav-mark" />
             <span className="pp-lp-nav-wordmark">PayPulss</span>
@@ -51,7 +45,7 @@ export function AuthPageShell({
                 </button>
               ))}
             </div>
-            <Link href={ctaHref} className="pp-lp-btn bg-primary px-4 py-1.5 text-white hover:bg-bg-dark">
+            <Link href={ctaHref} className="pp-lp-btn bg-primary px-4 py-1.5 text-white">
               {ctaLabel}
             </Link>
           </div>

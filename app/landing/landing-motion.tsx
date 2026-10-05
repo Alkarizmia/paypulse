@@ -145,31 +145,29 @@ type RevealProps = {
   delay?: number;
 };
 
-/** Scroll-in: fade + slight rise */
+/** Scroll-in: fade + slight rise + blur (once, ~20% visible). Reduced-motion = fade only. */
 export function Reveal({ children, className, delay = 0 }: RevealProps) {
   const reduce = usePreferMinimalMotion();
-  const hydrated = useHydrated();
-  const controls = useAnimationControls();
-  if (reduce) return <div className={className}>{children}</div>;
+  if (reduce) {
+    return (
+      <motion.div
+        className={className}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.35, delay }}
+      >
+        {children}
+      </motion.div>
+    );
+  }
   return (
     <motion.div
       className={className}
-      initial={false}
-      animate={controls}
-      onViewportEnter={() => {
-        if (!hydrated) return;
-        void controls.start({
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.52, delay, ease: EASE },
-        });
-      }}
-      viewport={{
-        once: true,
-        amount: 0.08,
-        /* Marge basse positive : déclenche avant que le bloc soit entièrement visible (ex. sous le pin sticky). */
-        margin: "-32px 0px 220px 0px",
-      }}
+      initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
+      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.7, delay, ease: EASE }}
     >
       {children}
     </motion.div>

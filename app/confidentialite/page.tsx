@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function ConfidentialitePage() {
   const e = LEGAL_ENTITY;
   return (
-    <LegalLayout title="Politique de confidentialité" updated="9 mai 2026">
+    <LegalLayout title="Politique de confidentialité" updated="5 octobre 2026">
       <p>
         La présente politique décrit comment <strong>{e.productBrand}</strong> (ci-après « nous », « le service »),
         édité par <strong>{e.denomination}</strong>, traite les données personnelles dans le cadre du logiciel en ligne
@@ -32,6 +32,16 @@ export default function ConfidentialitePage() {
         <br />
         Responsable légale : {e.publicationDirector}
       </p>
+
+      <p className="rounded-lg border border-indigo-200 bg-indigo-50/80 p-4 text-sm text-slate-800">
+        <strong className="text-slate-900">Disposition temporaire : liste d&apos;attente</strong>
+        <br />
+        Tant que le produit n&apos;est pas ouvert au public, l&apos;accès au tableau de bord et à l&apos;inscription
+        peut être fermé en production. Sur le site, vous pouvez uniquement laisser votre adresse e-mail pour être
+        prévenu du lancement. Cette disposition s&apos;applique uniquement pendant cette période ; elle sera retirée
+        ou mise à jour lorsque le service sera ouvert.
+      </p>
+
       <p className="text-sm text-slate-600">
         Une relecture juridique reste recommandée avant toute obligation contractuelle forte ou traitement sensible à
         grande échelle.
@@ -41,8 +51,14 @@ export default function ConfidentialitePage() {
       <p>Nous pouvons traiter notamment :</p>
       <ul>
         <li>
+          <strong>Liste d&apos;attente (période actuelle)</strong> : adresse e-mail, date d&apos;inscription, langue
+          d&apos;interface et source du formulaire (ex. page d&apos;accueil). Aucun mot de passe n&apos;est demandé
+          pour cette inscription.
+        </li>
+        <li>
           <strong>Données de compte</strong> : adresse e-mail, mot de passe (haché par notre prestataire
-          d&apos;authentification), identifiant technique, préférences de langue le cas échéant.
+          d&apos;authentification), identifiant technique, préférences de langue le cas échéant, lorsque
+          l&apos;inscription au produit est ouverte.
         </li>
         <li>
           <strong>Données que vous saisissez dans le service</strong> : noms ou dénominations de clients, montants
@@ -56,8 +72,47 @@ export default function ConfidentialitePage() {
         </li>
       </ul>
 
-      <h2>2. Finalités et bases légales (RGPD)</h2>
+      <h2>2. Liste d&apos;attente : finalité, durée et droits</h2>
+      <p>
+        Pendant la période précédant l&apos;ouverture publique de {e.productBrand}, l&apos;e-mail fourni via le
+        formulaire « liste d&apos;attente » est traité uniquement pour :
+      </p>
       <ul>
+        <li>
+          vous informer de l&apos;ouverture du service (un message de lancement, sans newsletter commerciale
+          récurrente pendant cette disposition) ;
+        </li>
+        <li>
+          stocker l&apos;inscription dans notre base de données (Supabase), avec les métadonnées techniques utiles
+          (langue, source, date).
+        </li>
+      </ul>
+      <p>
+        <strong>Base légale :</strong> votre consentement (soumission volontaire du formulaire).{" "}
+        <strong>Désinscription :</strong> vous pouvez demander le retrait de votre e-mail à tout moment en écrivant à{" "}
+        <a href={`mailto:${e.contactEmail}?subject=D%C3%A9sinscription%20liste%20d%27attente`} className="text-blue-700 underline hover:text-blue-800">
+          {e.contactEmail}
+        </a>
+        , ou en répondant à l&apos;e-mail de lancement lorsque celui-ci sera envoyé.
+      </p>
+      <p>
+        <strong>Conservation :</strong> l&apos;e-mail est conservé jusqu&apos;à l&apos;envoi de l&apos;annonce de
+        lancement (ou jusqu&apos;à votre demande d&apos;effacement), puis supprimé ou anonymisé dans un délai
+        raisonnable, sauf si vous créez ensuite un compte utilisateur.
+      </p>
+      <p>
+        <strong>Envoi de l&apos;annonce :</strong> lorsque le produit sera ouvert, l&apos;e-mail de publication pourra
+        être envoyé via notre fournisseur d&apos;e-mail transactionnel <strong>Resend</strong>, à partir des adresses
+        enregistrées dans Supabase. Aucun envoi automatique n&apos;est déclenché au moment de l&apos;inscription sur
+        la liste d&apos;attente.
+      </p>
+
+      <h2>3. Finalités et bases légales (RGPD)</h2>
+      <ul>
+        <li>
+          <strong>Liste d&apos;attente / préavis de lancement</strong> (consentement) : voir la section 2, tant que
+          cette disposition est en vigueur.
+        </li>
         <li>
           <strong>Fourniture et sécurisation du service</strong> (exécution du contrat / mesures précontractuelles ;
           intérêt légitime pour la sécurité) : authentification, stockage de vos données métier, isolation entre
@@ -82,14 +137,15 @@ export default function ConfidentialitePage() {
         </li>
       </ul>
 
-      <h2>3. Sous-traitants et hébergement</h2>
+      <h2>4. Sous-traitants et hébergement</h2>
       <p>
         Nous faisons appel à des prestataires techniques conformes aux usages du secteur. À titre indicatif (liste à
         actualiser selon votre déploiement réel) :
       </p>
       <ul>
         <li>
-          <strong>Supabase</strong> : hébergement de la base de données, authentification, stockage associé au produit.
+          <strong>Supabase</strong> : hébergement de la base de données (y compris la table liste d&apos;attente),
+          authentification, stockage associé au produit.
         </li>
         <li>
           <strong>Hébergeur du site et des API</strong> (ex. Vercel ou équivalent) : diffusion de l&apos;application
@@ -101,8 +157,10 @@ export default function ConfidentialitePage() {
           complets sur nos propres serveurs applicatifs.
         </li>
         <li>
-          <strong>Fournisseur d&apos;e-mail transactionnel</strong> : lorsque l&apos;envoi des relances sera branché
-          (ex. Resend, SendGrid, etc.), les métadonnées nécessaires à l&apos;envoi transiteront par ce prestataire.
+          <strong>Fournisseur d&apos;e-mail transactionnel (Resend)</strong> : envoi de l&apos;annonce de lancement
+          aux inscrits de la liste d&apos;attente, et, une fois le produit ouvert, envoi des relances configurées
+          dans le service. Les métadonnées nécessaires à l&apos;envoi (destinataire, contenu du message) transitent
+          par ce prestataire.
         </li>
         <li>
           <strong>Intégrations et exports</strong> : si vous utilisez des webhooks ou des exports vers vos propres
@@ -110,7 +168,7 @@ export default function ConfidentialitePage() {
         </li>
       </ul>
 
-      <h2>4. Transferts hors Union européenne</h2>
+      <h2>5. Transferts hors Union européenne</h2>
       <p>
         Certains prestataires peuvent être établis ou héberger des données en dehors de l&apos;Espace économique
         européen. Le cas échéant, nous nous appuyons sur les mécanismes reconnus par la réglementation (clauses types de
@@ -118,8 +176,12 @@ export default function ConfidentialitePage() {
         proposent. Le détail peut varier selon les sous-traitants effectivement retenus, tenez cette section à jour.
       </p>
 
-      <h2>5. Durées de conservation</h2>
+      <h2>6. Durées de conservation</h2>
       <ul>
+        <li>
+          <strong>Liste d&apos;attente</strong> : jusqu&apos;à l&apos;annonce de lancement ou jusqu&apos;à votre
+          demande d&apos;effacement (voir section 2).
+        </li>
         <li>
           Données de compte et données métier : conservées tant que votre compte est actif, puis suppression ou
           anonymisation dans des délais raisonnables après clôture du compte, sauf obligation légale de conservation plus
@@ -128,7 +190,7 @@ export default function ConfidentialitePage() {
         <li>Journaux techniques : durées courtes et proportionnées aux besoins de sécurité et de diagnostic.</li>
       </ul>
 
-      <h2>6. Vos droits</h2>
+      <h2>7. Vos droits</h2>
       <p>
         Sous réserve des conditions prévues par le RGPD, vous disposez des droits d&apos;accès, de rectification,
         d&apos;effacement, de limitation du traitement, d&apos;opposition (notamment au traitement fondé sur
@@ -136,14 +198,15 @@ export default function ConfidentialitePage() {
         consentement ou le contrat et automatisé.
       </p>
       <p>
-        Vous pouvez exercer vos droits en écrivant à <strong>contact@paypulss.com</strong>. Réclamation auprès de la CNIL :{" "}
-        <a href="https://www.cnil.fr" className="text-blue-700 underline hover:text-blue-800">
-          www.cnil.fr
+        Vous pouvez exercer vos droits en écrivant à <strong>{e.contactEmail}</strong>. Réclamation auprès de
+        l&apos;Autorité de protection des données (Belgique) :{" "}
+        <a href="https://www.autoriteprotectiondonnees.be" className="text-blue-700 underline hover:text-blue-800">
+          www.autoriteprotectiondonnees.be
         </a>
         .
       </p>
 
-      <h2>7. Cookies et traceurs</h2>
+      <h2>8. Cookies et traceurs</h2>
       <p>
         L&apos;application peut utiliser des cookies ou stockages locaux <strong>strictement nécessaires</strong>{" "}
         au fonctionnement (par exemple session, préférences de langue). Si vous ajoutez des outils d&apos;analyse ou de
@@ -151,13 +214,14 @@ export default function ConfidentialitePage() {
         politique cookies dédiée) et mettre à jour la présente politique.
       </p>
 
-      <h2>8. Sécurité</h2>
+      <h2>9. Sécurité</h2>
       <p>
         Nous mettons en œuvre des mesures techniques et organisationnelles conformes aux pratiques courantes du secteur
         (authentification, contrôle d&apos;accès, chiffrement en transit via HTTPS, politiques d&apos;accès en base).
         Aucun système n&apos;est toutefois garanti exempt de risque ; signalement des vulnérabilités :{" "}
-        <strong>contact@paypulss.com</strong>.
+        <strong>{e.contactEmail}</strong>.
       </p>
     </LegalLayout>
   );
 }
+

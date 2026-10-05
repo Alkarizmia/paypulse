@@ -49,6 +49,8 @@ type DashboardAnalyticsProps = {
   /** true sur l’accueil desktop : trésorerie déplacée dans la colonne latérale. */
   treasuryInSidebar?: boolean;
   onAddClient?: () => void;
+  /** Landing hero : désactive pp-rise (load) au profit du stagger au scroll. */
+  landingHeroReveal?: boolean;
 };
 
 export function DashboardAnalytics({
@@ -61,6 +63,7 @@ export function DashboardAnalytics({
   showTreasuryInGrid = true,
   treasuryInSidebar = false,
   onAddClient,
+  landingHeroReveal = false,
 }: DashboardAnalyticsProps) {
   const light = appearance === "light";
   const t = getDashboardAnalyticsCopy(locale);
@@ -168,12 +171,12 @@ export function DashboardAnalytics({
       {skipSummaryCards ? null : (
       <div className="grid min-w-0 gap-3 sm:gap-4 sm:grid-cols-3">
         <div
-          className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
+          className={`${landingHeroReveal ? "pp-lp-mock-stat" : "pp-rise"} pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
             light
               ? "border-slate-200 bg-white shadow-sm hover:border-violet-300/60"
               : "border-white/[0.08] bg-bg-dark shadow-none hover:border-violet-500/35"
           }`}
-          style={{ "--pp-rise-delay": "0.04s" } as CSSProperties}
+          style={landingHeroReveal ? undefined : ({ "--pp-rise-delay": "0.04s" } as CSSProperties)}
         >
           <div className="flex items-start justify-between gap-2">
             <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>{t.pending}</p>
@@ -189,12 +192,12 @@ export function DashboardAnalytics({
           <p className={`mt-1 text-xs font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{t.instant}</p>
         </div>
         <div
-          className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
+          className={`${landingHeroReveal ? "pp-lp-mock-stat" : "pp-rise"} pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
             light
               ? "border-slate-200 bg-white hover:border-emerald-300/60"
               : "border-white/[0.08] bg-bg-dark hover:border-emerald-500/35"
           }`}
-          style={{ "--pp-rise-delay": "0.1s" } as CSSProperties}
+          style={landingHeroReveal ? undefined : ({ "--pp-rise-delay": "0.1s" } as CSSProperties)}
         >
           <div className="flex items-start justify-between gap-2">
             <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>{t.received}</p>
@@ -223,12 +226,12 @@ export function DashboardAnalytics({
           <p className={`mt-1 text-[10px] ${light ? "text-slate-500" : "text-slate-500"}`}>{trendRollingLine}</p>
         </div>
         <div
-          className={`pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
+          className={`${landingHeroReveal ? "pp-lp-mock-stat" : "pp-rise"} pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${
             light
               ? "border-slate-200 bg-white hover:border-orange-300/60"
               : "border-white/[0.08] bg-bg-dark hover:border-orange-500/35"
           }`}
-          style={{ "--pp-rise-delay": "0.16s" } as CSSProperties}
+          style={landingHeroReveal ? undefined : ({ "--pp-rise-delay": "0.16s" } as CSSProperties)}
         >
           <div className="flex items-start justify-between gap-2">
             <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>{t.overdue}</p>
@@ -297,7 +300,7 @@ export function DashboardAnalytics({
       {fullCharts ? (
         <div className="min-w-0 space-y-4 sm:space-y-6">
           <div
-            className={`min-w-0 overflow-hidden rounded-2xl border ${
+            className={`${landingHeroReveal ? "pp-lp-mock-chart" : ""} min-w-0 overflow-hidden rounded-2xl border ${
               light ? "border-border bg-bg-alt" : "border-white/[0.08] bg-bg-dark"
             }`}
           >

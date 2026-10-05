@@ -210,7 +210,7 @@ function LoginPageInner() {
           </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
-            className="pp-lp-btn w-full bg-primary px-4 py-2.5 text-white hover:bg-bg-dark disabled:opacity-70"
+            className="pp-lp-btn w-full bg-primary px-4 py-2.5 text-white disabled:opacity-70"
             disabled={loading}
             type="submit"
           >

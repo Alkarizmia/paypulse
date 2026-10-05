@@ -7,7 +7,15 @@ import { useLocale } from "@/app/locale-context";
 import { APP_LOCALES } from "@/lib/app-locale";
 import { getGlobalTopBarCopy } from "@/lib/messages/global-topbar-copy";
 
-export function LandingNav() {
+export function LandingNav({
+  waitlistMode = false,
+  waitlistCtaLabel,
+  onWaitlistClick,
+}: {
+  waitlistMode?: boolean;
+  waitlistCtaLabel?: string;
+  onWaitlistClick?: () => void;
+} = {}) {
   const { locale, setLocale } = useLocale();
   const { isAuthenticated } = useAuth();
   const t = getGlobalTopBarCopy(locale);
@@ -15,7 +23,12 @@ export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
   const menuId = useId();
   const ctaHref = isAuthenticated ? "/dashboard" : "/signup";
-  const ctaLabel = isAuthenticated ? t.goDashboard : t.cta;
+  const ctaLabel = waitlistMode
+    ? (waitlistCtaLabel ?? t.cta)
+    : isAuthenticated
+      ? t.goDashboard
+      : t.cta;
+  const showLogin = !waitlistMode && !isAuthenticated;
 
   useEffect(() => {
     if (!open) return;
@@ -32,7 +45,7 @@ export function LandingNav() {
   }, [open]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    const onScroll = () => setScrolled(window.scrollY > 20);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -44,6 +57,9 @@ export function LandingNav() {
     { href: "#pricing", label: t.pricing },
     { href: "#faq", label: t.faq },
   ] as const;
+
+  const ctaClassName = "pp-lp-btn hidden bg-primary px-4 py-1.5 text-white md:inline-flex";
+  const ctaMobileClassName = "pp-lp-btn bg-primary px-5 py-3 text-white";
 
   return (
     <header className="pp-lp-nav-shell">
@@ -86,7 +102,7 @@ export function LandingNav() {
               </button>
             ))}
           </div>
-          {!isAuthenticated ? (
+          {showLogin ? (
             <Link
               href="/login"
               className="hidden text-[13px] font-medium text-text-muted transition-colors hover:text-text md:inline"
@@ -94,12 +110,15 @@ export function LandingNav() {
               {t.login}
             </Link>
           ) : null}
-          <Link
-            href={ctaHref}
-            className="pp-lp-btn hidden bg-primary px-4 py-1.5 text-white hover:bg-bg-dark md:inline-flex"
-          >
-            {ctaLabel}
-          </Link>
+          {waitlistMode ? (
+            <button type="button" onClick={onWaitlistClick} className={ctaClassName}>
+              {ctaLabel}
+            </button>
+          ) : (
+            <Link href={ctaHref} className={ctaClassName}>
+              {ctaLabel}
+            </Link>
+          )}
           <button
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text md:hidden"
@@ -132,18 +151,31 @@ export function LandingNav() {
             ))}
           </nav>
           <div className="mt-10 flex flex-col gap-3">
-            {!isAuthenticated ? (
+            {showLogin ? (
               <Link href="/login" className="text-text-muted" onClick={() => setOpen(false)}>
                 {t.login}
               </Link>
             ) : null}
-            <Link
-              href={ctaHref}
-              onClick={() => setOpen(false)}
-              className="pp-lp-btn bg-primary px-5 py-3 text-white"
-            >
-              {ctaLabel}
-            </Link>
+            {waitlistMode ? (
+              <button
+                type="button"
+                className={ctaMobileClassName}
+                onClick={() => {
+                  setOpen(false);
+                  onWaitlistClick?.();
+                }}
+              >
+                {ctaLabel}
+              </button>
+            ) : (
+              <Link
+                href={ctaHref}
+                onClick={() => setOpen(false)}
+                className={ctaMobileClassName}
+              >
+                {ctaLabel}
+              </Link>
+            )}
           </div>
         </div>
       ) : null}

@@ -13,11 +13,14 @@ export function LandingDashboardPreview({
   appearance,
   onToggleAppearance,
   frameClassName,
+  heroScrollReveal = false,
 }: {
   locale: AppLocale;
   appearance: UiResolvedAppearance;
   onToggleAppearance: () => void;
   frameClassName?: string;
+  /** Entrée staggered (cartes + graphique) pour le mockup sous le hero. */
+  heroScrollReveal?: boolean;
 }) {
   const title = pickQuad(locale, {
     fr: "Tableau de bord",
@@ -44,6 +47,7 @@ export function LandingDashboardPreview({
           skipSummaryCards={false}
           showTreasuryInGrid={false}
           treasuryInSidebar={false}
+          landingHeroReveal={heroScrollReveal}
         />
       </div>
     </LandingPreviewShell>

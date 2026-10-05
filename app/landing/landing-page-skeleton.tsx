@@ -1,13 +1,12 @@
 /** Placeholder pendant le chargement client de la landing. */
 export function LandingPageSkeleton() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-bg-alt" aria-busy="true" aria-label="Chargement">
+    <div className="pp-lp relative min-h-screen overflow-hidden bg-bg-alt" aria-busy="true" aria-label="Chargement">
       <div
-        className="pointer-events-none absolute left-[6%] top-[-12%] h-[480px] w-[640px] rounded-full"
+        className="pointer-events-none absolute left-[10%] top-[-8%] h-[420px] w-[520px] rounded-full opacity-50"
         style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(49,91,203,0.26) 0%, rgba(114,84,214,0.16) 40%, transparent 70%)",
-          filter: "blur(90px)",
+          background: "radial-gradient(ellipse at center, rgba(99,102,241,0.12) 0%, transparent 70%)",
+          filter: "blur(80px)",
         }}
         aria-hidden
       />
@@ -19,7 +18,7 @@ export function LandingPageSkeleton() {
           <div className="mx-auto h-3 w-40 rounded bg-[var(--color-border)]" />
           <div className="mx-auto mt-8 h-12 w-full max-w-lg rounded-xl bg-[var(--color-border)]" />
           <div className="mx-auto mt-3 h-12 w-full max-w-md rounded-xl bg-[var(--color-border)]" />
-          <div className="mx-auto mt-8 h-11 w-48 rounded-full bg-[#dbe0ea]" />
+          <div className="mx-auto mt-8 h-11 w-48 rounded-full bg-indigo-200/80" />
         </div>
         <div className="mx-auto max-w-5xl px-6">
           <div className="h-[22rem] rounded-2xl border border-border bg-white" />

@@ -1,6 +1,15 @@
 @import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap");
 
+/* Landing / auth marketing : fond clair (motion inchangé). Dashboard non impacté. */
 .pp-lp {
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8fafc;
+  --color-bg-dark: #0f172a;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-primary: #6366f1;
+  --color-accent: #6366f1;
   --navy: var(--color-primary);
   --blue: var(--color-primary);
   --purple: var(--color-accent);
@@ -10,6 +19,8 @@
   --text: var(--color-text);
   --muted: var(--color-text-muted);
   --border: var(--color-border);
+  --pp-surface: #ffffff;
+  --pp-surface-raised: #f8fafc;
   font-family: "Satoshi", var(--font-paypulse), ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
   background: var(--color-bg);
@@ -22,14 +33,12 @@
   right: 0;
   left: 0;
   z-index: 0;
-  height: min(1080px, 125vh);
+  height: min(920px, 110vh);
   overflow: hidden;
   background:
-    radial-gradient(ellipse 58% 42% at 12% 6%, color-mix(in srgb, var(--color-accent) 14%, transparent) 0%, transparent 62%),
-    radial-gradient(ellipse 50% 38% at 88% 10%, color-mix(in srgb, var(--color-primary) 10%, transparent) 0%, transparent 58%),
-    radial-gradient(ellipse 42% 32% at 72% 22%, color-mix(in srgb, var(--color-success) 8%, transparent) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 48% at 50% 18%, color-mix(in srgb, var(--color-bg) 55%, transparent) 0%, transparent 70%),
-    linear-gradient(180deg, var(--color-bg-alt) 0%, var(--color-bg-alt) 36%, var(--color-bg) 68%, var(--color-bg) 100%);
+    radial-gradient(ellipse 55% 40% at 18% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 58%),
+    radial-gradient(ellipse 45% 36% at 88% 8%, rgba(15, 23, 42, 0.03) 0%, transparent 55%),
+    linear-gradient(180deg, #f8fafc 0%, #ffffff 42%, #ffffff 100%);
 }
 
 .pp-lp-nav-shell {
@@ -50,23 +59,26 @@
   height: 3.5rem;
   margin-inline: auto;
   padding-inline: 1.05rem 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: 0 8px 32px rgba(22, 33, 58, 0.05);
-  -webkit-backdrop-filter: blur(18px) saturate(1.35);
-  backdrop-filter: blur(18px) saturate(1.35);
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   transform: translateZ(0);
   transition:
     background-color 0.3s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+    border-color 0.3s ease,
+    -webkit-backdrop-filter 0.3s ease,
+    backdrop-filter 0.3s ease;
 }
 
 .pp-lp-nav-capsule.is-scrolled {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(231, 234, 240, 0.9);
-  box-shadow: 0 10px 36px rgba(22, 33, 58, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .pp-lp-nav-brand {
@@ -101,7 +113,7 @@
   position: relative;
   isolation: isolate;
   overflow: visible;
-  background: linear-gradient(180deg, transparent 0%, transparent 42%, color-mix(in srgb, var(--color-bg) 55%, transparent) 72%, var(--color-bg) 100%);
+  background: transparent;
 }
 
 .pp-lp-hero-fx {
@@ -112,198 +124,11 @@
   overflow: hidden;
 }
 
-.pp-lp-halo {
-  position: absolute;
-  border-radius: 50%;
-  will-change: transform;
-  animation: pp-lp-halo 26s ease-in-out infinite;
-}
-
-.pp-lp-halo--tl {
-  left: -22%;
-  top: -28%;
-  width: min(70vw, 820px);
-  height: min(70vw, 820px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 16%, transparent) 0%, color-mix(in srgb, var(--color-primary) 8%, transparent) 46%, transparent 72%);
-  filter: blur(120px);
-  opacity: 0.42;
-}
-
-.pp-lp-halo--tr {
-  right: -20%;
-  top: -18%;
-  width: min(58vw, 680px);
-  height: min(58vw, 680px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 12%, transparent) 0%, color-mix(in srgb, var(--color-accent) 8%, transparent) 44%, transparent 70%);
-  filter: blur(130px);
-  opacity: 0.36;
-  animation-delay: -9s;
-}
-
-.pp-lp-halo--center {
-  left: 50%;
-  top: 14%;
-  width: min(52vw, 520px);
-  height: min(34vw, 320px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-bg) 50%, transparent) 0%, color-mix(in srgb, var(--color-accent) 6%, transparent) 48%, transparent 74%);
-  filter: blur(100px);
-  opacity: 0.4;
-  animation-name: pp-lp-halo-center;
-  animation-delay: -14s;
-}
-
-@keyframes pp-lp-halo {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(1.4%, 1%, 0);
-  }
-}
-
-@keyframes pp-lp-halo-center {
-  0%,
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-  50% {
-    transform: translate3d(-50%, 2%, 0);
-  }
-}
-
-.pp-lp-spark {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 18%, transparent);
-  opacity: 0.22;
-  animation: pp-lp-spark 9s ease-in-out infinite;
-}
-
-.pp-lp-spark--a {
-  top: 18%;
-  left: 22%;
-}
-
-.pp-lp-spark--b {
-  top: 12%;
-  left: 68%;
-  animation-delay: -3s;
-  opacity: 0.16;
-}
-
-.pp-lp-spark--c {
-  top: 32%;
-  left: 78%;
-  width: 2px;
-  height: 2px;
-  animation-delay: -6s;
-}
-
-.pp-lp-spark--d {
-  top: 26%;
-  left: 14%;
-  width: 2px;
-  height: 2px;
-  animation-delay: -1.5s;
-}
-
-@keyframes pp-lp-spark {
-  0%,
-  100% {
-    opacity: 0.1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.28;
-    transform: scale(1.35);
-  }
-}
-
-.pp-lp-star {
-  position: absolute;
-  width: 88px;
-  height: 1px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-bg) 45%, transparent), color-mix(in srgb, var(--color-accent) 22%, transparent), transparent);
-  filter: blur(0.35px);
-  opacity: 0;
-  animation: pp-lp-star 11s linear infinite;
-}
-
-.pp-lp-star--a {
-  top: 10%;
-  left: -6%;
-  animation-duration: 12s;
-  animation-delay: 1.8s;
-}
-
-.pp-lp-star--b {
-  top: 22%;
-  left: 12%;
-  width: 64px;
-  animation-duration: 14s;
-  animation-delay: 6.4s;
-}
-
-.pp-lp-star--c {
-  top: 7%;
-  right: 10%;
-  width: 72px;
-  animation-duration: 13s;
-  animation-delay: 10s;
-}
-
-@keyframes pp-lp-star {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0, 0) rotate(-26deg);
-  }
-  6% {
-    opacity: 0.16;
-  }
-  18% {
-    opacity: 0;
-    transform: translate3d(38vw, 14vh, 0) rotate(-26deg);
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(38vw, 14vh, 0) rotate(-26deg);
-  }
-}
-
-.pp-lp-dust {
-  position: absolute;
-  left: 12%;
-  top: 16%;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  box-shadow:
-    18vw 8vh 0 0 color-mix(in srgb, var(--color-accent) 12%, transparent),
-    38vw 4vh 0 0 color-mix(in srgb, var(--color-success) 12%, transparent),
-    62vw 12vh 0 0 color-mix(in srgb, var(--color-primary) 10%, transparent),
-    74vw 22vh 0 0 color-mix(in srgb, var(--color-accent) 8%, transparent),
-    8vw 26vh 0 0 color-mix(in srgb, var(--color-success) 10%, transparent),
-    52vw 30vh 0 0 color-mix(in srgb, var(--color-primary) 8%, transparent);
-  filter: blur(0.5px);
-  animation: pp-lp-dust 18s ease-in-out infinite;
-}
-
-@keyframes pp-lp-dust {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-    opacity: 0.35;
-  }
-  50% {
-    transform: translate3d(0, -10px, 0);
-    opacity: 0.55;
-  }
+.pp-lp-card {
+  background: var(--pp-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: 0 28px 80px -48px rgba(15, 23, 42, 0.28);
 }
 
 .pp-lp-btn {
@@ -315,18 +140,29 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
 }
 
 .pp-lp-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1.5px);
 }
 
 .pp-lp-btn:active {
   transform: translateY(0);
+}
+
+.pp-lp .pp-lp-btn.bg-primary:hover {
+  background: color-mix(in srgb, var(--color-primary) 88%, black);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.pp-lp .pp-lp-btn.border:hover {
+  border-color: #cbd5e1;
+  background: var(--pp-surface-raised);
 }
 
 .pp-auth-page {
@@ -365,12 +201,12 @@
 .pp-auth-card {
   width: 100%;
   max-width: 26.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--color-border);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 18px 50px rgba(22, 33, 58, 0.08);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  backdrop-filter: blur(18px) saturate(1.2);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   padding: 1.75rem 1.5rem 1.6rem;
 }
 
@@ -426,41 +262,69 @@
     height: 1.9rem;
     max-height: 1.9rem;
   }
+}
 
-  .pp-lp-halo--tl,
-  .pp-lp-halo--tr {
-    filter: blur(90px);
-    opacity: 0.28;
+/* Mockup dashboard sous le hero : fade + translateY, GPU-only, stagger cartes → graphique */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pp-lp-mock-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 20px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
   }
 
-  .pp-lp-halo--center,
-  .pp-lp-star,
-  .pp-lp-spark,
-  .pp-lp-dust {
-    display: none;
+  .pp-lp-mockup.pp-lp-mockup--armed:not(.pp-lp-mockup--in) {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+
+  .pp-lp-mockup.pp-lp-mockup--in {
+    animation: pp-lp-mock-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat,
+  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-chart {
+    animation: pp-lp-mock-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat:nth-child(1) {
+    animation-delay: 0ms;
+  }
+
+  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat:nth-child(2) {
+    animation-delay: 90ms;
+  }
+
+  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat:nth-child(3) {
+    animation-delay: 180ms;
+  }
+
+  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-chart {
+    animation-delay: 330ms;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-lp-halo,
-  .pp-lp-star,
-  .pp-lp-spark,
-  .pp-lp-dust {
+  .pp-lp-mockup,
+  .pp-lp-mock-stat,
+  .pp-lp-mock-chart {
     animation: none !important;
-  }
-
-  .pp-lp-star,
-  .pp-lp-spark,
-  .pp-lp-dust {
-    display: none;
-  }
-
-  .pp-lp-halo--center {
-    transform: translate3d(-50%, 0, 0);
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   .pp-lp-btn:hover,
   .pp-lp-btn:active {
     transform: none;
+  }
+
+  .pp-lp-nav-capsule.is-scrolled {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.94);
   }
 }
