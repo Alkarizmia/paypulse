@@ -1,7 +1,5 @@
--- Complète waitlist si créée sans source/langue (schéma partiel).
+-- Ancienne migration obsolète : la table prod n'a pas source/langue.
+-- Conservée pour l'historique des fichiers ; no-op sûr.
 
-alter table public.waitlist
-  add column if not exists source text;
-
-alter table public.waitlist
-  add column if not exists langue text;
+-- provider sert de trace CTA+langue (ex. landing-nav:fr) côté /api/waitlist.
+select 1;

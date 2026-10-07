@@ -71,27 +71,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });
   }
 
-  // Schéma attendu : email + source + langue. Si colonnes absentes (table partielle),
-  // repli sur email seul pour ne pas bloquer la collecte.
-  let { error } = await supabase.client.from("waitlist").insert({
+  // Schéma prod : email + provider (check: "email") + status défaut en_attente.
+  const { error } = await supabase.client.from("waitlist").insert({
     email,
-    source,
-    langue,
+    provider: "email",
   });
-
-  if (error && isMissingWaitlistColumnError(error)) {
-    serverStructuredLog("api_waitlist_schema_fallback", {
-      code: typeof error.code === "string" ? error.code : "unknown",
-    });
-    ({ error } = await supabase.client.from("waitlist").insert({ email }));
-  }
 
   if (error) {
     // Unique violation (email déjà inscrit) → même succès
     const code = typeof error.code === "string" ? error.code : "";
     const msg = (error.message ?? "").toLowerCase();
     if (code === "23505" || msg.includes("duplicate") || msg.includes("unique")) {
-      serverStructuredLog("api_waitlist_duplicate");
+      serverStructuredLog("api_waitlist_duplicate", { source, langue });
       return successResponse();
     }
     serverStructuredLog("api_waitlist_insert_error", {
@@ -101,16 +92,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });
   }
 
-  serverStructuredLog("api_waitlist_ok");
+  serverStructuredLog("api_waitlist_ok", { source, langue });
   return successResponse();
-}
-
-function isMissingWaitlistColumnError(error: { code?: string; message?: string }): boolean {
-  const code = typeof error.code === "string" ? error.code : "";
-  const msg = (error.message ?? "").toLowerCase();
-  return (
-    code === "PGRST204" ||
-    (msg.includes("could not find") && msg.includes("column")) ||
-    (msg.includes("column") && msg.includes("does not exist"))
-  );
 }
