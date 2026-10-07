@@ -71,11 +71,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });
   }
 
-  const { error } = await supabase.client.from("waitlist").insert({
+  // Schéma attendu : email + source + langue. Si colonnes absentes (table partielle),
+  // repli sur email seul pour ne pas bloquer la collecte.
+  let { error } = await supabase.client.from("waitlist").insert({
     email,
     source,
     langue,
   });
+
+  if (error && isMissingWaitlistColumnError(error)) {
+    serverStructuredLog("api_waitlist_schema_fallback", {
+      code: typeof error.code === "string" ? error.code : "unknown",
+    });
+    ({ error } = await supabase.client.from("waitlist").insert({ email }));
+  }
 
   if (error) {
     // Unique violation (email déjà inscrit) → même succès
@@ -85,10 +94,23 @@ export async function POST(request: Request) {
       serverStructuredLog("api_waitlist_duplicate");
       return successResponse();
     }
-    serverStructuredLog("api_waitlist_insert_error", { code: code || "unknown" });
+    serverStructuredLog("api_waitlist_insert_error", {
+      code: code || "unknown",
+      hint: (error.message ?? "").slice(0, 120),
+    });
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });
   }
 
   serverStructuredLog("api_waitlist_ok");
   return successResponse();
+}
+
+function isMissingWaitlistColumnError(error: { code?: string; message?: string }): boolean {
+  const code = typeof error.code === "string" ? error.code : "";
+  const msg = (error.message ?? "").toLowerCase();
+  return (
+    code === "PGRST204" ||
+    (msg.includes("could not find") && msg.includes("column")) ||
+    (msg.includes("column") && msg.includes("does not exist"))
+  );
 }

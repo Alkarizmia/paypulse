@@ -10,17 +10,28 @@ type ServerSupabaseResult =
   | { ok: false; error: ServerSupabaseError };
 
 function trimEnv(value: string | undefined): string {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value !== "string") return "";
+  // Guillemets accidentels collés depuis le dashboard Vercel / .env
+  return value.trim().replace(/^['"]|['"]$/g, "").trim();
 }
 
 function isValidSupabaseUrl(url: string): boolean {
   if (!url) return false;
   try {
     const u = new URL(url);
-    return u.protocol === "https:" && u.hostname.endsWith(".supabase.co");
+    return (
+      u.protocol === "https:" &&
+      u.hostname.endsWith(".supabase.co") &&
+      u.hostname.length > ".supabase.co".length
+    );
   } catch {
     return false;
   }
+}
+
+/** JWT service_role (eyJ…) ou nouvelle clé secret (sb_secret_…). */
+function isValidServiceRoleKey(key: string): boolean {
+  return (key.startsWith("eyJ") && key.length >= 80) || key.startsWith("sb_secret_");
 }
 
 export function getSupabaseServerClient(): ServerSupabaseResult {
@@ -30,6 +41,9 @@ export function getSupabaseServerClient(): ServerSupabaseResult {
   if (!url) return { ok: false, error: "MISSING_SUPABASE_URL" };
   if (!isValidSupabaseUrl(url)) return { ok: false, error: "INVALID_SUPABASE_URL" };
   if (!serviceRoleKey) return { ok: false, error: "MISSING_SUPABASE_SERVICE_ROLE_KEY" };
+  if (!isValidServiceRoleKey(serviceRoleKey)) {
+    return { ok: false, error: "MISSING_SUPABASE_SERVICE_ROLE_KEY" };
+  }
 
   return {
     ok: true,

@@ -1,4 +1,5 @@
 -- Liste d'attente (emails au lancement). Accès uniquement via service role (API /api/waitlist).
+-- Si la table existait déjà sans source/langue, appliquer aussi 026_waitlist_source_langue.sql.
 
 create table if not exists public.waitlist (
   id uuid primary key default gen_random_uuid(),
