@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
-import { APP_LOCALES } from "@/lib/app-locale";
+import { APP_LOCALES, type AppLocale } from "@/lib/app-locale";
 import { getGlobalTopBarCopy } from "@/lib/messages/global-topbar-copy";
 import { isShowPricing } from "@/lib/show-pricing";
+
+const MENU_EXIT_MS = 280;
 
 export function LandingNav({
   waitlistMode = false,
@@ -21,6 +23,8 @@ export function LandingNav({
   const { isAuthenticated } = useAuth();
   const t = getGlobalTopBarCopy(locale);
   const [open, setOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuId = useId();
   const showPricing = isShowPricing();
@@ -33,7 +37,24 @@ export function LandingNav({
   const showLogin = !waitlistMode && !isAuthenticated;
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setMenuVisible(false);
+      const exitId = window.setTimeout(() => setMenuMounted(false), MENU_EXIT_MS);
+      return () => window.clearTimeout(exitId);
+    }
+    setMenuMounted(true);
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => setMenuVisible(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!menuMounted) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
@@ -44,7 +65,7 @@ export function LandingNav({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [menuMounted]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -124,11 +145,11 @@ export function LandingNav({
           <button
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text md:hidden"
-            aria-expanded={open}
+            aria-expanded={menuVisible}
             aria-controls={menuId}
             onClick={() => setOpen((v) => !v)}
           >
-            <span className="sr-only">{open ? t.menuClose : t.menuOpen}</span>
+            <span className="sr-only">{menuVisible ? t.menuClose : t.menuOpen}</span>
             <span className="flex flex-col gap-1.5" aria-hidden>
               <span className="block h-px w-4 bg-current" />
               <span className="block h-px w-4 bg-current" />
@@ -137,8 +158,12 @@ export function LandingNav({
         </div>
       </div>
 
-      {open ? (
-        <div id={menuId} className="fixed inset-0 z-50 bg-bg-alt px-6 pt-6 md:hidden">
+      {menuMounted ? (
+        <div
+          id={menuId}
+          className={`pp-lp-mobile-menu md:hidden ${menuVisible ? "pp-lp-mobile-menu--open" : ""}`}
+          aria-hidden={!menuVisible}
+        >
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">PayPulss</span>
             <button type="button" className="text-sm text-text-muted" onClick={() => setOpen(false)}>
@@ -152,6 +177,27 @@ export function LandingNav({
               </a>
             ))}
           </nav>
+          <div className="mt-8">
+            <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
+              {t.menuLangSection}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {APP_LOCALES.map((code: AppLocale) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLocale(code)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    locale === code
+                      ? "bg-primary text-white"
+                      : "bg-white/70 text-text-muted ring-1 ring-border hover:text-text"
+                  }`}
+                >
+                  {code.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="mt-10 flex flex-col gap-3">
             {showLogin ? (
               <Link href="/login" className="text-text-muted" onClick={() => setOpen(false)}>

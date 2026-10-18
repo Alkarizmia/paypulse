@@ -900,6 +900,57 @@
   }
 }
 
+/* Menu mobile landing : glisse + blur (pas d’apparition brutale) */
+.pp-lp-mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  padding: 1.5rem 1.5rem 2rem;
+  background: rgba(248, 250, 252, 0.72);
+  opacity: 0;
+  transform: translate3d(0, -18px, 0);
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    -webkit-backdrop-filter 0.22s ease,
+    backdrop-filter 0.22s ease;
+}
+
+.pp-lp-mobile-menu--open {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transition:
+    opacity 0.32s ease,
+    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    -webkit-backdrop-filter 0.36s ease,
+    backdrop-filter 0.36s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-lp-mobile-menu,
+  .pp-lp-mobile-menu--open {
+    transition: none !important;
+    transform: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .pp-lp-mobile-menu--open {
+    opacity: 1;
+    background: #f8fafc;
+  }
+}
+
+html[data-low-performance] .pp-lp-mobile-menu--open {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  background: rgba(248, 250, 252, 0.92);
+}
+
 /* Modale waitlist : fade + léger blur (GPU), sans Framer, sans lag */
 .pp-wl-backdrop {
   border: 0;
