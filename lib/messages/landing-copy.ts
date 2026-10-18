@@ -99,23 +99,24 @@ const fr = {
           faqItems: [
             {
               q: "Où sont stockées mes données ?",
-              a: "Sans Supabase configuré, les données restent dans votre navigateur (mode local). Avec Supabase, elles sont sur votre projet cloud, protégées par les règles d’accès que vous déployez.",
+              a: "Sur votre compte sécurisé (hébergement cloud). Vous contrôlez ce que vous saisissez : clients, montants, échéances.",
             },
             {
               q: "Puis-je essayer sans carte bancaire ?",
-              a: "Oui. L’offre gratuite suffit pour tester les flux et les quotas affichés sur le dashboard.",
+              a: "Oui. L’offre gratuite suffit pour tester la liste d’impayés et les relances depuis votre messagerie.",
             },
             {
+              // TODO(relances-auto-plan): aligné sur Starter (lib/plans.ts). Changer ici si « dès Pro ».
               q: "Les relances partent-elles toutes seules ?",
-              a: "Le MVP ouvre une prévisualisation (objet + corps) pour que vous validiez l’envoi depuis votre messagerie. Les relances automatiques complètes dépendent du plan et des réglages.",
+              a: "Sur le plan Gratuit, vous prévisualisez le message et l’envoyez depuis votre messagerie. Les relances planifiées (envoi automatique selon vos règles) sont disponibles dès Starter.",
             },
             {
-              q: "Pourquoi je ne vois pas les mêmes graphiques que sur la page d’accueil ?",
-              a: "L’image sur le site est une démo (données fictives) pour montrer le dashboard « complet ». Dans l’app, le plan Gratuit affiche les totaux principaux mais pas le graphique d’évolution ni la jauge de répartition : ces graphiques sont débloqués à partir de Starter (voir les offres).",
+              q: "La maquette du site montre-t-elle le plan Gratuit ?",
+              a: "Oui. La démo reprend la vue Free : totaux et liste de dossiers. Les graphiques d’évolution et de répartition arrivent avec Starter.",
             },
             {
               q: "C’est quoi la différence avec un tableur ?",
-              a: "Moins de copier-coller : une liste de dossiers, des statuts cohérents et des relances contextualisées au lieu de filtrer des lignes à la main.",
+              a: "Moins de copier-coller : une liste de dossiers, des statuts clairs et des relances prêtes, au lieu de filtrer des lignes à la main.",
             },
           ],
           personaTitle: "Lucas, designer freelance",
@@ -432,23 +433,24 @@ const en = {
           faqItems: [
             {
               q: "Where is my data stored?",
-              a: "Without Supabase configured, data stays in your browser (local mode). With Supabase, it lives in your cloud project, protected by the access rules you deploy.",
+              a: "In your secured cloud account. You control what you enter: clients, amounts, due dates.",
             },
             {
               q: "Can I try without a credit card?",
-              a: "Yes. The free tier is enough to test flows and the limits shown on the dashboard.",
+              a: "Yes. The free plan is enough to try the unpaid list and reminders from your mailbox.",
             },
             {
+              // TODO(relances-auto-plan): aligned with Starter (lib/plans.ts).
               q: "Do reminders send automatically?",
-              a: "The MVP opens a preview (subject + body) so you confirm send from your mail app. Full auto reminders depend on plan and settings.",
+              a: "On Free, you preview the message and send from your mailbox. Scheduled automatic reminders are available from Starter.",
             },
             {
-              q: "Why don’t I see the same charts as on your homepage?",
-              a: "The screenshot on the site is a demo (sample numbers) of the “full” dashboard. In the app, the Free plan shows the key totals but not the evolution chart or the paid/pending donut, those unlock from Starter upward (see plans).",
+              q: "Does the homepage mock show the Free plan?",
+              a: "Yes. The demo matches Free: totals and a case list. Evolution and breakdown charts unlock with Starter.",
             },
             {
               q: "How is this better than a spreadsheet?",
-              a: "Less copy/paste: a case list, consistent statuses, and contextual nudges instead of filtering rows by hand.",
+              a: "Less copy/paste: a clear case list, statuses, and ready-to-send follow-ups instead of filtering rows by hand.",
             },
           ],
           personaTitle: "Lucas, freelance designer",

@@ -1,6 +1,4 @@
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap");
-
-/* Landing / auth marketing : fond clair (motion inchangé). Dashboard non impacté. */
+/* Landing / auth marketing. Police = Inter self-hostée via next/font (--font-paypulse). Pas de CDN. */
 .pp-lp {
   --color-bg: #ffffff;
   --color-bg-alt: #f8fafc;
@@ -8,7 +6,8 @@
   --color-text: #0f172a;
   --color-text-muted: #64748b;
   --color-border: #e2e8f0;
-  --color-primary: #6366f1;
+  /* Un seul accent (existant), primary sombre pour CTA premium */
+  --color-primary: #0f172a;
   --color-accent: #6366f1;
   --navy: var(--color-primary);
   --blue: var(--color-primary);
@@ -21,7 +20,7 @@
   --border: var(--color-border);
   --pp-surface: #ffffff;
   --pp-surface-raised: #f8fafc;
-  font-family: "Satoshi", var(--font-paypulse), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-paypulse), ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
   background: var(--color-bg);
 }
@@ -36,9 +35,248 @@
   height: min(920px, 110vh);
   overflow: hidden;
   background:
-    radial-gradient(ellipse 55% 40% at 18% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 58%),
-    radial-gradient(ellipse 45% 36% at 88% 8%, rgba(15, 23, 42, 0.03) 0%, transparent 55%),
-    linear-gradient(180deg, #f8fafc 0%, #ffffff 42%, #ffffff 100%);
+    radial-gradient(ellipse 50% 36% at 50% 0%, rgba(99, 102, 241, 0.07) 0%, transparent 55%),
+    linear-gradient(180deg, #f8fafc 0%, #ffffff 48%, #ffffff 100%);
+}
+
+/* Une seule animation d'entrée douce (désactivée si prefers-reduced-motion) */
+@keyframes pp-lp-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pp-lp-enter {
+  animation: pp-lp-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-lp-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .pp-lp-btn:hover,
+  .pp-lp-btn:active {
+    transform: none;
+  }
+
+  .pp-lp-nav-capsule.is-scrolled {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.94);
+  }
+}
+
+/* Signature pouls */
+.pp-pulse {
+  width: 100%;
+}
+
+.pp-pulse-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.pp-pulse-line {
+  stroke: var(--color-accent);
+  opacity: 0.85;
+}
+
+.pp-pulse-dot--wait {
+  fill: #f59e0b;
+}
+
+.pp-pulse-dot--remind {
+  fill: var(--color-accent);
+}
+
+.pp-pulse-dot--paid {
+  fill: #10b981;
+}
+
+.pp-pulse-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pp-pulse-label--wait {
+  color: #d97706;
+}
+
+.pp-pulse-label--remind {
+  color: var(--color-accent);
+}
+
+.pp-pulse-label--paid {
+  color: #059669;
+}
+
+.pp-pulse-divider {
+  display: flex;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.pp-pulse-divider-svg {
+  width: min(100%, 14rem);
+  height: auto;
+}
+
+/* Maquette Free (capture vidéo mobile) */
+.pp-free-mock {
+  border: 1px solid var(--color-border);
+  border-radius: 1.1rem;
+  background: #0f172a;
+  color: #f8fafc;
+  overflow: hidden;
+  box-shadow: 0 24px 64px -40px rgba(15, 23, 42, 0.55);
+}
+
+.pp-free-mock-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  background: #111827;
+}
+
+.pp-free-mock-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: #475569;
+}
+
+.pp-free-mock-title {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.pp-free-mock-body {
+  padding: 1.1rem 1rem 1.15rem;
+}
+
+.pp-free-mock-total {
+  padding: 1rem 1.05rem;
+  border-radius: 0.85rem;
+  background: rgba(99, 102, 241, 0.14);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.pp-free-mock-total-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.pp-free-mock-total-value {
+  margin-top: 0.35rem;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.pp-free-mock-total-hint {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.pp-free-mock-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pp-free-mock-row {
+  padding: 0.85rem 0.9rem;
+  border-radius: 0.75rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+}
+
+.pp-free-mock-row-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pp-free-mock-name {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.pp-free-mock-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pp-free-mock-row-meta {
+  margin-top: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pp-free-mock-detail {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.pp-free-mock-badge {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pp-free-mock-badge--wait {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.pp-free-mock-badge--remind {
+  background: rgba(99, 102, 241, 0.22);
+  color: #a5b4fc;
+}
+
+.pp-free-mock-badge--paid {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.pp-free-mock-foot {
+  margin-top: 0.85rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #64748b;
 }
 
 .pp-lp-nav-shell {
@@ -116,19 +354,10 @@
   background: transparent;
 }
 
-.pp-lp-hero-fx {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
 .pp-lp-card {
   background: var(--pp-surface);
   border: 1px solid var(--color-border);
   border-radius: 1rem;
-  box-shadow: 0 28px 80px -48px rgba(15, 23, 42, 0.28);
 }
 
 .pp-lp-btn {
@@ -136,19 +365,19 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  min-height: 2.75rem;
   transition:
     background-color 0.22s ease,
     border-color 0.22s ease,
     color 0.22s ease,
-    box-shadow 0.22s ease,
     transform 0.22s ease;
 }
 
 .pp-lp-btn:hover {
-  transform: translateY(-1.5px);
+  transform: translateY(-1px);
 }
 
 .pp-lp-btn:active {
@@ -157,7 +386,6 @@
 
 .pp-lp .pp-lp-btn.bg-primary:hover {
   background: color-mix(in srgb, var(--color-primary) 88%, black);
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.04);
 }
 
 .pp-lp .pp-lp-btn.border:hover {
@@ -262,69 +490,13 @@
     height: 1.9rem;
     max-height: 1.9rem;
   }
-}
 
-/* Mockup dashboard sous le hero : fade + translateY, GPU-only, stagger cartes → graphique */
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes pp-lp-mock-enter {
-    from {
-      opacity: 0;
-      transform: translate3d(0, 20px, 0);
-    }
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
+  .pp-free-mock-total-value {
+    font-size: 1.75rem;
   }
 
-  .pp-lp-mockup.pp-lp-mockup--armed:not(.pp-lp-mockup--in) {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-
-  .pp-lp-mockup.pp-lp-mockup--in {
-    animation: pp-lp-mock-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat,
-  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-chart {
-    animation: pp-lp-mock-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat:nth-child(1) {
-    animation-delay: 0ms;
-  }
-
-  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat:nth-child(2) {
-    animation-delay: 90ms;
-  }
-
-  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-stat:nth-child(3) {
-    animation-delay: 180ms;
-  }
-
-  .pp-lp-mockup.pp-lp-mockup--in .pp-lp-mock-chart {
-    animation-delay: 330ms;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pp-lp-mockup,
-  .pp-lp-mock-stat,
-  .pp-lp-mock-chart {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .pp-lp-btn:hover,
-  .pp-lp-btn:active {
-    transform: none;
-  }
-
-  .pp-lp-nav-capsule.is-scrolled {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.94);
+  .pp-free-mock-name,
+  .pp-free-mock-amount {
+    font-size: 1rem;
   }
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LandingPageDynamic } from "@/app/landing/landing-page-dynamic";
+import { LandingPage } from "@/app/landing/landing-page";
 import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   },
 };
 
+/** Landing en SSR (Client Component hydraté) : H1 et copy présents dans le HTML initial. */
 export default function Home() {
-  return <LandingPageDynamic />;
+  return <LandingPage />;
 }
