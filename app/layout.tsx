@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ConditionalTopBar } from "./conditional-topbar";
 import { LocaleProvider } from "./locale-context";
@@ -78,6 +79,7 @@ export default function RootLayout({
           </LocaleProvider>
         </AuthProvider>
         </PwaInstallProvider>
+        <Analytics />
       </body>
     </html>
   );
