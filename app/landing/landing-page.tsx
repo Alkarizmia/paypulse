@@ -21,6 +21,11 @@ import { LandingHowSimple } from "@/app/landing/landing-how-simple";
 import { LandingLossCalculator } from "@/app/landing/landing-loss-calculator";
 import { WaitlistModal } from "@/app/landing/waitlist-modal";
 import { PaypulssPulseDivider } from "@/app/landing/paypulss-pulse";
+import {
+  beginWaitlistModalTrackEpoch,
+  track,
+  type TrackLocation,
+} from "@/lib/waitlist-track";
 import "./landing-premium.css";
 
 type BillingCycle = "monthly" | "annual";
@@ -42,6 +47,7 @@ export function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [waitlistSource, setWaitlistSource] = useState("landing");
+  const [waitlistTrackLocation, setWaitlistTrackLocation] = useState<TrackLocation | null>(null);
   const t = getLandingCopy(locale);
   const p = getLandingPremiumCopy(locale);
   const w = getWaitlistCopy(locale);
@@ -54,10 +60,16 @@ export function LandingPage() {
     captureWaitlistAttribution();
   }, []);
 
-  const openWaitlist = useCallback((source: string) => {
-    setWaitlistSource(source);
-    setWaitlistOpen(true);
-  }, []);
+  const openWaitlist = useCallback(
+    (source: string, location: TrackLocation) => {
+      beginWaitlistModalTrackEpoch();
+      track("cta_click", location, locale);
+      setWaitlistSource(source);
+      setWaitlistTrackLocation(location);
+      setWaitlistOpen(true);
+    },
+    [locale],
+  );
 
   const resolvePlanCtaHref = (planId: PlanId): string => {
     if (planId === "free") return isAuthenticated ? "/dashboard?plan=free" : "/signup?plan=free";
@@ -72,12 +84,13 @@ export function LandingPage() {
       <LandingNav
         waitlistMode={waitlist}
         waitlistCtaLabel={primaryLabel}
-        onWaitlistClick={() => openWaitlist("landing-nav")}
+        onWaitlistClick={() => openWaitlist("landing-nav", "menu")}
       />
       <WaitlistModal
         open={waitlistOpen}
         onClose={() => setWaitlistOpen(false)}
         source={waitlistSource}
+        trackLocation={waitlistTrackLocation}
       />
       <main className="relative z-[1]">
         <div className="pp-lp-top-scene">
@@ -86,7 +99,7 @@ export function LandingPage() {
             primaryHref={primaryHref}
             primaryLabel={primaryLabel}
             waitlistMode={waitlist}
-            onWaitlistClick={() => openWaitlist("landing-hero")}
+            onWaitlistClick={() => openWaitlist("landing-hero", "hero")}
             trustOverride={waitlist ? waitlistTrust : undefined}
           />
           <LandingProductShowcase locale={locale} />
@@ -97,7 +110,7 @@ export function LandingPage() {
           locale={locale}
           ctaLabel={primaryLabel}
           waitlistMode={waitlist}
-          onWaitlistClick={() => openWaitlist("landing-loss")}
+          onWaitlistClick={() => openWaitlist("landing-loss", "calculateur")}
           primaryHref={primaryHref}
         />
 
@@ -115,7 +128,7 @@ export function LandingPage() {
               pricingSub={pricingSub}
               waitlist={waitlist}
               primaryLabel={primaryLabel}
-              onWaitlistPlan={(planId) => openWaitlist(`landing-pricing-${planId}`)}
+              onWaitlistPlan={(planId) => openWaitlist(`landing-pricing-${planId}`, "fin_de_page")}
               resolvePlanCtaHref={resolvePlanCtaHref}
             />
           ) : (
@@ -128,7 +141,7 @@ export function LandingPage() {
               {waitlist ? (
                 <button
                   type="button"
-                  onClick={() => openWaitlist("landing-pricing-teaser")}
+                  onClick={() => openWaitlist("landing-pricing-teaser", "fin_de_page")}
                   className="pp-lp-btn mt-8 bg-primary px-8 py-3.5 text-base text-white"
                 >
                   {primaryLabel}
@@ -168,7 +181,7 @@ export function LandingPage() {
             {waitlist ? (
               <button
                 type="button"
-                onClick={() => openWaitlist("landing-final")}
+                onClick={() => openWaitlist("landing-final", "fin_de_page")}
                 className="pp-lp-btn mt-8 bg-primary px-8 py-3.5 text-base text-white"
               >
                 {primaryLabel}

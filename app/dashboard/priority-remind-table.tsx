@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import type { Client } from "./types";
 import { wasClientReminderSent } from "@/lib/client-reminder-track";
 import type { UiResolvedAppearance } from "@/lib/ui-theme";
@@ -35,7 +35,7 @@ export function PriorityRemindTable({
   remindCooldownUntil,
   invoiceActionsDisabled,
 }: PriorityRemindTableProps) {
-  const light = appearance === "light";
+  void appearance;
   const t = getDashboardHomeCopy(locale);
   const money = useMoney();
 
@@ -47,24 +47,20 @@ export function PriorityRemindTable({
   }, [clients]);
 
   return (
-    <section
-      className={`rounded-2xl border p-4 sm:p-5 ${
-        light ? "border-slate-200 bg-white" : "border-white/[0.08] bg-[#14141c]"
-      }`}
-    >
-      <h3 className={`text-sm font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.priorityTitle}</h3>
+    <section className="pp-dash-panel pp-dash-blur-in p-4 sm:p-5" style={{ "--pp-rise-delay": "0.28s" } as CSSProperties}>
+      <h3 className="text-sm font-semibold tracking-tight text-[var(--pp-dash-ink)]">{t.priorityTitle}</h3>
       {priority.length === 0 ? (
-        <p className={`mt-4 text-sm ${light ? "text-slate-600" : "text-slate-400"}`}>{t.priorityEmpty}</p>
+        <p className="mt-4 text-sm text-[var(--pp-dash-muted)]">{t.priorityEmpty}</p>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead>
-              <tr className={light ? "text-slate-500" : "text-slate-400"}>
-                <th className="pb-2 pr-4 text-xs font-semibold uppercase tracking-wide">{t.priorityClient}</th>
-                <th className="pb-2 pr-4 text-xs font-semibold uppercase tracking-wide">{t.priorityAmount}</th>
-                <th className="pb-2 pr-4 text-xs font-semibold uppercase tracking-wide">{t.priorityDue}</th>
-                <th className="pb-2 pr-4 text-xs font-semibold uppercase tracking-wide">{t.priorityLast}</th>
-                <th className="pb-2 text-xs font-semibold uppercase tracking-wide">{t.priorityAction}</th>
+              <tr className="text-[var(--pp-dash-muted)]">
+                <th className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-[0.08em]">{t.priorityClient}</th>
+                <th className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-[0.08em]">{t.priorityAmount}</th>
+                <th className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-[0.08em]">{t.priorityDue}</th>
+                <th className="pb-2 pr-4 text-[11px] font-semibold uppercase tracking-[0.08em]">{t.priorityLast}</th>
+                <th className="pb-2 text-[11px] font-semibold uppercase tracking-[0.08em]">{t.priorityAction}</th>
               </tr>
             </thead>
             <tbody>
@@ -73,28 +69,19 @@ export function PriorityRemindTable({
                 const onCooldown = typeof cooldown === "number" && Date.now() < cooldown;
                 const reminded = wasClientReminderSent(c.id);
                 return (
-                  <tr
-                    key={c.id}
-                    className={`border-t ${light ? "border-slate-100" : "border-white/[0.06]"}`}
-                  >
-                    <td className={`py-3 pr-4 font-medium ${light ? "text-slate-900" : "text-white"}`}>{c.name}</td>
-                    <td className={`py-3 pr-4 tabular-nums ${light ? "text-slate-700" : "text-slate-200"}`}>
-                      {money.format(c.amountDue)}
-                    </td>
-                    <td className={`py-3 pr-4 ${light ? "text-slate-600" : "text-slate-400"}`}>{c.dueDate}</td>
-                    <td className={`py-3 pr-4 text-xs ${light ? "text-slate-500" : "text-slate-500"}`}>
+                  <tr key={c.id} className="pp-dash-row border-t border-[var(--pp-dash-line)]">
+                    <td className="py-3.5 pr-4 font-medium tracking-tight text-[var(--pp-dash-ink)]">{c.name}</td>
+                    <td className="py-3.5 pr-4 tabular-nums text-[var(--pp-dash-ink)]">{money.format(c.amountDue)}</td>
+                    <td className="py-3.5 pr-4 text-[var(--pp-dash-muted)]">{c.dueDate}</td>
+                    <td className="py-3.5 pr-4 text-xs text-[var(--pp-dash-muted)]">
                       {reminded ? t.priorityYesterday : t.priorityNever}
                     </td>
-                    <td className="py-3">
+                    <td className="py-3.5">
                       <button
                         type="button"
                         disabled={invoiceActionsDisabled || onCooldown || c.status !== "unpaid"}
                         onClick={() => onRemind(c)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${
-                          light
-                            ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                            : "bg-emerald-600/90 text-white hover:bg-emerald-600"
-                        }`}
+                        className="pp-dash-btn-ink inline-flex rounded-lg px-3 py-1.5 text-xs disabled:opacity-50"
                       >
                         {t.priorityRemind}
                       </button>

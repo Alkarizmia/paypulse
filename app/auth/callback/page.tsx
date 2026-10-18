@@ -59,23 +59,54 @@ function AuthCallbackInner() {
       return;
     }
 
-    const code = searchParams.get("code");
-    if (!code) {
-      setMessage(t.failed);
-      return;
-    }
-
     let mounted = true;
     const next = searchParams.get("next")?.startsWith("/") ? searchParams.get("next")! : "/dashboard";
 
-    void supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+    const goNext = () => {
       if (!mounted) return;
-      if (error) {
+      router.replace(next);
+    };
+
+    const hasSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      return Boolean(data.session?.user);
+    };
+
+    void (async () => {
+      // Cas fréquent : Supabase a déjà consommé le code / le hash avant ce rendu.
+      // URL typique : /auth/callback?next=/dashboard# sans paramètre code.
+      if (await hasSession()) {
+        goNext();
+        return;
+      }
+
+      const code = searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!mounted) return;
+        if (!error) {
+          goNext();
+          return;
+        }
+        // Code déjà échangé ou course avec detectSessionInUrl : la session peut quand même exister.
+        if (await hasSession()) {
+          goNext();
+          return;
+        }
         setMessage(error.message || t.failed);
         return;
       }
-      router.replace(next);
-    });
+
+      // Petit délai : la session hash/implicit peut arriver juste après le mount.
+      await new Promise((r) => window.setTimeout(r, 250));
+      if (!mounted) return;
+      if (await hasSession()) {
+        goNext();
+        return;
+      }
+
+      setMessage(t.failed);
+    })();
 
     return () => {
       mounted = false;

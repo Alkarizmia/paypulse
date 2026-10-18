@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { getAdminUserFromRequest } from "@/lib/admin-auth";
 import { isWaitlistMode } from "@/lib/waitlist-mode";
 
 /**
  * Mode waitlist (NEXT_PUBLIC_WAITLIST_MODE=true) :
  * - pages produit / auth → redirect /
- * - /api/* bloqué sauf waitlist + crons/webhooks
+ * - /api/* bloqué sauf waitlist + track + admin + crons/webhooks
  * Pages légales, marketing, assets : laissées passer.
+ * /admin et /api/admin/* : exemptés du redirect waitlist ; APIs admin → 404 si non autorisé.
  */
 
 const ALLOWED_PAGE_PREFIXES = [
@@ -19,11 +21,16 @@ const ALLOWED_PAGE_PREFIXES = [
   "/droits-securite-donnees",
   "/free",
   "/gratuit",
+  "/admin",
+  "/login",
+  "/auth",
 ] as const;
 
-/** APIs autorisées en waitlist (collecte + automatismes secret-gated). */
+/** APIs autorisées en waitlist (collecte + automatismes secret-gated + admin). */
 const ALLOWED_API_PREFIXES = [
   "/api/waitlist",
+  "/api/track",
+  "/api/admin",
   "/api/stripe/webhook",
   "/api/reminders/run",
 ] as const;
@@ -37,12 +44,29 @@ function isAllowedApi(pathname: string): boolean {
   return ALLOWED_API_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-export function middleware(request: NextRequest) {
-  if (!isWaitlistMode()) {
+function notFoundResponse(): NextResponse {
+  return new NextResponse("Not Found", { status: 404 });
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Routes admin API : toujours vérifier côté serveur (même hors waitlist).
+  if (pathname.startsWith("/api/admin")) {
+    // /api/admin/session POST : vérifie le Bearer dans la route elle-même.
+    if (pathname === "/api/admin/session") {
+      return NextResponse.next();
+    }
+    const admin = await getAdminUserFromRequest(request);
+    if (!admin) {
+      return notFoundResponse();
+    }
     return NextResponse.next();
   }
 
-  const { pathname } = request.nextUrl;
+  if (!isWaitlistMode()) {
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/api/")) {
     if (isAllowedApi(pathname)) {

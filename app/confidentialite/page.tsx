@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ConfidentialitePage() {
   const e = LEGAL_ENTITY;
   return (
-    <LegalLayout title="Politique de confidentialité" updated="5 octobre 2026">
+    <LegalLayout title="Politique de confidentialité" updated="18 octobre 2026">
       <p>
         La présente politique décrit comment <strong>{e.productBrand}</strong> (ci-après « nous », « le service »),
         édité par <strong>{e.denomination}</strong>, traite les données personnelles dans le cadre du logiciel en ligne
@@ -210,10 +210,35 @@ export default function ConfidentialitePage() {
 
       <h2>8. Cookies et traceurs</h2>
       <p>
-        L&apos;application peut utiliser des cookies ou stockages locaux <strong>strictement nécessaires</strong>{" "}
-        au fonctionnement (par exemple session, préférences de langue). Si vous ajoutez des outils d&apos;analyse ou de
-        publicité non essentiels, vous devrez mettre en place un mécanisme de consentement conforme (bandeau,
-        politique cookies dédiée) et mettre à jour la présente politique.
+        L&apos;application utilise des cookies ou stockages locaux <strong>strictement nécessaires</strong> au
+        fonctionnement (par exemple session d&apos;authentification, préférences de langue, choix de consentement
+        cookies). Ces éléments sont indispensables ou purement techniques ; ils ne nécessitent pas de consentement
+        préalable au sens de la réglementation applicable.
+      </p>
+      <p>
+        <strong>Mesure d&apos;audience (optionnelle) :</strong> si vous acceptez via le bandeau cookies, nous
+        activons <strong>Google Analytics 4</strong> (Google Ireland Ltd / Google LLC), identifiant de mesure{" "}
+        <code>G-JJ2FRKBE3L</code>. Finalité : statistiques de fréquentation du site (pages vues, provenance
+        approximative), afin d&apos;améliorer le service. Base légale : votre consentement. Vous pouvez refuser ou
+        modifier votre choix en effaçant le stockage local du site (clé{" "}
+        <code>paypulss_cookie_consent</code>) puis en rechargeant la page. Aucune publicité ciblée n&apos;est
+        activée via cet outil sur {e.productBrand}.
+      </p>
+      <p>
+        Tant que vous refusez ou n&apos;avez pas choisi, les cookies analytics Google ne sont pas déposés (Consent
+        Mode : stockage analytics refusé par défaut). Un refus n&apos;empêche pas la navigation sur le site.
+      </p>
+      <p>
+        Pour plus d&apos;informations sur Google Analytics :{" "}
+        <a
+          href="https://policies.google.com/privacy"
+          className="text-blue-700 underline hover:text-blue-800"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          policies.google.com/privacy
+        </a>
+        .
       </p>
 
       <h2>9. Sécurité</h2>

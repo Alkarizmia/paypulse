@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
@@ -27,8 +26,8 @@ import {
   type PlanId,
 } from "@/lib/plans";
 import { buildManualReminderDraftFields } from "@/lib/manual-reminder-draft";
-import { getProfile, updateProfileAutoReminders } from "@/lib/profile";
-import { intlLocaleFor, type AppLocale } from "@/lib/app-locale";
+import { getProfile } from "@/lib/profile";
+import { intlLocaleFor } from "@/lib/app-locale";
 import { getDashboardViewCopy, withName } from "@/lib/messages/dashboard-view-copy";
 import { pickQuad } from "@/lib/messages/pick";
 import {
@@ -42,9 +41,7 @@ import {
 import { getSupabaseBrowserClient, getSupabaseEnvHint, isSupabaseReady } from "@/lib/supabase";
 import { AddClientModal } from "./add-client-modal";
 import { ClientList } from "./client-list";
-import { DashboardAnalytics } from "./dashboard-analytics";
 import { DashboardShell, type DashboardNavId } from "./dashboard-shell";
-import { DashboardAddonTierPanels, DashboardRelancePanel } from "./dashboard-tier-panels";
 import type { Client } from "./types";
 import { useLocale } from "@/app/locale-context";
 import { useMoney } from "@/app/display-currency-context";
@@ -62,12 +59,9 @@ import { buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-b
 import { createMemberActionNotifications } from "@/lib/notifications";
 import { markClientReminderSent, countClientRemindersSent } from "@/lib/client-reminder-track";
 import { getDashboardHomeCopy } from "@/lib/messages/dashboard-home-copy";
-import { IntegrationsBanner } from "./integrations-banner";
 import { DashboardHomeKpi } from "./dashboard-home-kpi";
-import { CollectionPipeline } from "./collection-pipeline";
+import { DashboardHomeCashChart } from "./dashboard-home-cash-chart";
 import { PriorityRemindTable } from "./priority-remind-table";
-import { DashboardHomeAside } from "./dashboard-home-aside";
-import { OnboardingTasks } from "./onboarding-tasks";
 
 const ReminderSendModal = dynamic(
   () => import("./reminder-send-modal").then((m) => ({ default: m.ReminderSendModal })),
@@ -127,11 +121,6 @@ export function DashboardView() {
   const overviewRef = useRef<HTMLDivElement>(null);
   const invoicesRef = useRef<HTMLDivElement>(null);
   const [addClientModalOpen, setAddClientModalOpen] = useState(false);
-  const [showFoldersHint, setShowFoldersHint] = useState(false);
-  const relancesRef = useRef<HTMLDivElement>(null);
-  const paiementsRef = useRef<HTMLDivElement>(null);
-  const [profileCompany, setProfileCompany] = useState("");
-  const [profileCountry, setProfileCountry] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [trashedClients, setTrashedClients] = useState<Client[]>([]);
   const [autoRemindersUserEnabled, setAutoRemindersUserEnabled] = useState(true);
@@ -199,13 +188,6 @@ export function DashboardView() {
     if (!ws.activeWorkspaceId) return;
     queueMicrotask(() => setAddTargetWorkspaceId(ws.activeWorkspaceId));
   }, [ws.activeWorkspaceId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!window.localStorage.getItem("paypulss_folders_hint_seen_v1")) {
-      setShowFoldersHint(true);
-    }
-  }, []);
 
   useEffect(() => {
     if (!reminderToast && !reminderMailHardError) return;
@@ -302,8 +284,6 @@ export function DashboardView() {
           setUiThemePref(p.uiTheme);
           writeStoredUiThemePreference(p.uiTheme);
           setInvoiceListCompact(p.invoiceListCompact);
-          setProfileCompany(p.companyName);
-          setProfileCountry(p.country);
         }
       } catch {
         /* colonne absente tant que migration SQL non appliquée */
@@ -318,17 +298,7 @@ export function DashboardView() {
 
   const money = useMoney();
 
-  const { totalAmountDue, paidCount, clientCount, paymentRate } = useMemo(() => {
-    let total = 0;
-    let paid = 0;
-    for (const c of clients) {
-      total += c.amountDue;
-      if (c.status === "paid") paid += 1;
-    }
-    const count = clients.length;
-    const rate = count === 0 ? 0 : Math.round((paid / count) * 100);
-    return { totalAmountDue: total, paidCount: paid, clientCount: count, paymentRate: rate };
-  }, [clients]);
+  const clientCount = clients.length;
 
   const currentPlanId = plan?.planId ?? "free";
   const isFreePlan = currentPlanId === "free";
@@ -357,8 +327,6 @@ export function DashboardView() {
     [clients],
   );
 
-  const hasSentReminder = remindersSentCount > 0;
-
   const homeCopy = getDashboardHomeCopy(locale);
 
   const closeAddClientModal = useCallback(() => {
@@ -375,7 +343,21 @@ export function DashboardView() {
 
   useEffect(() => {
     const syncFromHash = () => {
-      if (window.location.hash === "#add-client") openAddClientModal();
+      const hash = window.location.hash;
+      if (hash === "#add-client") {
+        openAddClientModal();
+        return;
+      }
+      if (hash === "#clients") {
+        setActiveNav("invoices");
+        window.requestAnimationFrame(() => {
+          invoicesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        return;
+      }
+      if (!hash || hash === "#overview") {
+        setActiveNav("overview");
+      }
     };
     syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
@@ -383,26 +365,39 @@ export function DashboardView() {
   }, [openAddClientModal]);
 
   const scrollToSection = useCallback((id: DashboardNavId) => {
-    const map: Record<DashboardNavId, RefObject<HTMLDivElement | null>> = {
+    const map: Partial<Record<DashboardNavId, RefObject<HTMLDivElement | null>>> = {
       overview: overviewRef,
       invoices: invoicesRef,
       clients: invoicesRef,
-      relances: relancesRef,
-      paiements: paiementsRef,
     };
-    map[id].current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    map[id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   const handleNav = useCallback(
     (id: DashboardNavId) => {
+      if (id === "relances") {
+        router.push("/dashboard/modeles-relance");
+        return;
+      }
       if (id === "clients") {
         openAddClientModal();
         return;
       }
+      if (id === "invoices") {
+        setActiveNav("invoices");
+        if (typeof window !== "undefined") {
+          window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#clients`);
+        }
+        scrollToSection("invoices");
+        return;
+      }
       setActiveNav(id);
+      if (typeof window !== "undefined" && window.location.hash) {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      }
       scrollToSection(id);
     },
-    [scrollToSection, openAddClientModal],
+    [scrollToSection, openAddClientModal, router],
   );
 
   const copy = getDashboardViewCopy(locale);
@@ -1043,13 +1038,13 @@ export function DashboardView() {
           </div>
         ) : null}
 
-        <div ref={overviewRef} className="min-w-0 scroll-mt-28 space-y-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+        <div ref={overviewRef} id="overview" className="min-w-0 scroll-mt-28 space-y-6">
+          <div className="pp-dash-blur-in flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className={`text-lg font-bold tracking-tight sm:text-xl ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
+              <h2 className="text-xl font-semibold tracking-tight text-[var(--pp-dash-ink)] sm:text-2xl">
                 {homeCopy.navHome}
               </h2>
-              <p className={`mt-1 text-sm ${shellAppearance === "light" ? "text-slate-600" : "text-slate-400"}`}>
+              <p className="mt-1 text-sm text-[var(--pp-dash-muted)]">
                 {homeCopy.homeGreeting}
                 {user?.email ? ` · ${user.email.split("@")[0]}` : ""}
               </p>
@@ -1059,21 +1054,19 @@ export function DashboardView() {
                 type="button"
                 onClick={openAddClientModal}
                 disabled={memberReadOnly}
-                className="pp-btn-primary px-4 py-2 text-sm disabled:opacity-50"
+                className="pp-dash-btn-ink inline-flex px-4 py-2.5 text-sm disabled:opacity-50"
               >
                 {homeCopy.newClient}
               </button>
               <button
                 type="button"
                 onClick={() => handleNav("relances")}
-                className="pp-btn-secondary px-4 py-2 text-sm"
+                className="pp-dash-btn-ghost inline-flex px-4 py-2.5 text-sm"
               >
                 {homeCopy.sendReminder}
               </button>
             </div>
           </div>
-
-          <IntegrationsBanner locale={locale} appearance={shellAppearance} />
 
           <DashboardHomeKpi
             clients={clients}
@@ -1084,154 +1077,35 @@ export function DashboardView() {
             onReminders={() => handleNav("relances")}
           />
 
-          {showFoldersHint ? (
-            <div
-              className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
-                shellAppearance === "light" ? "border-border bg-bg" : "border-white/10 bg-bg-dark"
-              }`}
-            >
-              <p className={`text-xs font-medium ${shellAppearance === "light" ? "text-text" : "text-text-dark"}`}>
-                {homeCopy.foldersHintTitle}
-              </p>
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/dashboard/dossiers"
-                  className="pp-btn-secondary px-3 py-1 text-xs"
-                  onClick={() => {
-                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
-                    setShowFoldersHint(false);
-                  }}
-                >
-                  {homeCopy.foldersHintCta}
-                </Link>
-                <button
-                  type="button"
-                  className="pp-btn-secondary px-3 py-1 text-xs"
-                  onClick={() => {
-                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
-                    setShowFoldersHint(false);
-                  }}
-                >
-                  {homeCopy.foldersHintClose}
-                </button>
-              </div>
-            </div>
-          ) : null}
+          <DashboardHomeCashChart clients={clients} locale={locale} appearance={shellAppearance} />
 
-          <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_min(17.5rem,300px)] xl:items-start">
-            <div className="min-w-0 space-y-6">
-              <DashboardAnalytics
-                clients={clients}
-                locale={locale}
-                fullCharts={caps.fullDashboardCharts}
-                advancedStats={caps.advancedStats}
-                appearance={shellAppearance}
-                skipSummaryCards
-                treasuryInSidebar={caps.fullDashboardCharts}
-                onAddClient={openAddClientModal}
-              />
-              <CollectionPipeline
-                clients={clients}
-                locale={locale}
-                appearance={shellAppearance}
-                variant="preview"
-                onClientClick={(c) => {
-                  if (c.status === "unpaid") handleRequestSendReminder(c);
-                }}
-              />
-              <PriorityRemindTable
-                clients={clients}
-                locale={locale}
-                appearance={shellAppearance}
-                onRemind={handleRequestSendReminder}
-                remindCooldownUntil={remindCooldownUntil}
-                invoiceActionsDisabled={invoiceReadOnly}
-              />
-              <DashboardAddonTierPanels
-                locale={locale}
-                caps={caps}
-                appearance={shellAppearance}
-                workspaces={supabase && ws.ready ? ws.workspaces.map((w) => ({ id: w.id, name: w.name })) : undefined}
-              />
-            </div>
-
-            <div className="hidden min-w-0 xl:block">
-              <div className="sticky top-24">
-                <DashboardHomeAside
-                  locale={locale}
-                  appearance={shellAppearance}
-                  clients={clients}
-                  fullCharts={caps.fullDashboardCharts}
-                  profile={{ companyName: profileCompany, country: profileCountry }}
-                  clientCount={clientCount}
-                  hasSentReminder={hasSentReminder}
-                  autoRemindersEnabled={autoRemindersUserEnabled}
-                  googleClientIdConfigured={Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim())}
-                  userEmail={user?.email}
-                  onOpenAddClient={openAddClientModal}
-                  memberReadOnly={memberReadOnly}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="xl:hidden">
-            <OnboardingTasks
-              layout="floating"
-              locale={locale}
-              appearance={shellAppearance}
-              profile={{ companyName: profileCompany, country: profileCountry }}
-              clientCount={clientCount}
-              hasSentReminder={hasSentReminder}
-              autoRemindersEnabled={autoRemindersUserEnabled}
-              googleClientIdConfigured={Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim())}
-            />
-          </div>
-        </div>
-
-        <div ref={relancesRef} id="relances" className="min-w-0 scroll-mt-28 mt-10 space-y-6">
-          <DashboardRelancePanel
+          <PriorityRemindTable
+            clients={clients}
             locale={locale}
-            caps={caps}
             appearance={shellAppearance}
-            autoRemindersUserEnabled={autoRemindersUserEnabled}
-            onAutoRemindersUserEnabledChange={async (enabled) => {
-              setAutoRemindersUserEnabled(enabled);
-              writeAutoRemindersEnabled(enabled);
-              if (supabase && user?.id) {
-                try {
-                  await updateProfileAutoReminders(supabase, user.id, enabled);
-                } catch {
-                  /* profil / colonne manquante */
-                }
-              }
-            }}
+            onRemind={handleRequestSendReminder}
+            remindCooldownUntil={remindCooldownUntil}
+            invoiceActionsDisabled={invoiceReadOnly}
           />
         </div>
 
-        <div ref={invoicesRef} className="min-w-0 scroll-mt-28 mt-12 space-y-6">
+        <div ref={invoicesRef} id="clients" className="min-w-0 scroll-mt-28 mt-12 space-y-6">
           {tableLoading ? (
-            <div
-              className={`pp-dashboard-card-interactive rounded-2xl border px-6 py-12 text-center text-sm hover:border-slate-300 ${
-                shellAppearance === "light"
-                  ? "border-slate-200 bg-white text-slate-600"
-                  : "border-white/[0.08] bg-[#14141c] text-slate-400 hover:border-white/12"
-              }`}
-            >
+            <div className="pp-dash-panel px-6 py-12 text-center text-sm text-[var(--pp-dash-muted)]">
               {copy.loadingInvoices}
             </div>
           ) : (
-              <ClientList
-                appearance={shellAppearance}
-                clients={clients}
-                compact={invoiceListCompact}
-                formatLocale={intlLocaleFor(locale)}
-                onSendReminder={handleRequestSendReminder}
-                remindCooldownUntil={remindCooldownUntil}
-                onDelete={handleMoveToTrash}
-                onMarkPaid={handleMarkPaid}
-                onAdvanceNextCycle={memberReadOnly ? undefined : openAdvanceCycleModal}
-                hideDelete={memberReadOnly}
+            <ClientList
+              appearance={shellAppearance}
+              clients={clients}
+              compact={invoiceListCompact}
+              formatLocale={intlLocaleFor(locale)}
+              onSendReminder={handleRequestSendReminder}
+              remindCooldownUntil={remindCooldownUntil}
+              onDelete={handleMoveToTrash}
+              onMarkPaid={handleMarkPaid}
+              onAdvanceNextCycle={memberReadOnly ? undefined : openAdvanceCycleModal}
+              hideDelete={memberReadOnly}
               labels={{
                 title: copy.invoicesAndCasesTitle,
                 subtitle: copy.clientsSubtitle,
@@ -1247,91 +1121,6 @@ export function DashboardView() {
               }}
             />
           )}
-        </div>
-
-        <div ref={paiementsRef} className="min-w-0 scroll-mt-28 mt-12">
-          <section
-            className={`pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-6 ${
-              shellAppearance === "light"
-                ? "border-slate-200 bg-white hover:border-violet-300/60"
-                : "border-white/[0.08] bg-[#14141c] hover:border-violet-500/35"
-            }`}
-          >
-            <h2 className={`text-base sm:text-lg font-semibold ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
-              {copy.paiementsTitle}
-            </h2>
-            <p className={`mt-1 text-xs sm:text-sm ${shellAppearance === "light" ? "text-slate-600" : "text-slate-400"}`}>
-              {copy.paiementsSub}
-            </p>
-            <dl className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 sm:grid-cols-3">
-              <div
-                className={`rounded-xl border px-4 py-3 ${
-                  shellAppearance === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"
-                }`}
-              >
-                <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
-                  {copy.totalOutstandingLabel}
-                </dt>
-                <dd className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${shellAppearance === "light" ? "text-slate-900" : "text-white"}`}>
-                  {money.format(totalAmountDue)}
-                </dd>
-              </div>
-              <div
-                className={`rounded-xl border px-4 py-3 ${
-                  shellAppearance === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"
-                }`}
-              >
-                <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
-                  {copy.paidInvoicesLabel}
-                </dt>
-                <dd
-                  className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${
-                    shellAppearance === "light" ? "text-emerald-700" : "text-emerald-300"
-                  }`}
-                >
-                  {paidCount}
-                </dd>
-              </div>
-              <div
-                className={`rounded-xl border px-4 py-3 ${
-                  shellAppearance === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/30"
-                }`}
-              >
-                <dt className={`text-xs font-medium uppercase tracking-wide ${shellAppearance === "light" ? "text-slate-500" : "text-slate-400"}`}>
-                  {copy.paymentRateLabel}
-                </dt>
-                <dd
-                  className={`mt-1 text-lg sm:text-xl font-semibold tabular-nums ${
-                    shellAppearance === "light" ? "text-violet-700" : "text-violet-300"
-                  }`}
-                >
-                  {paymentRate}%
-                </dd>
-              </div>
-            </dl>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/#pricing"
-                className={`inline-flex rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                  shellAppearance === "light"
-                    ? "border-violet-200 bg-violet-50 text-violet-800 hover:bg-violet-100"
-                    : "border-violet-500/40 bg-violet-950/40 text-violet-200 hover:bg-violet-950/60"
-                }`}
-              >
-                {copy.upgrade}
-              </Link>
-              <Link
-                href="/settings"
-                className={`inline-flex rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                  shellAppearance === "light"
-                    ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    : "border-white/15 bg-black/30 text-slate-200 hover:bg-white/10"
-                }`}
-              >
-                {copy.accountSettingsLink}
-              </Link>
-            </div>
-          </section>
         </div>
       </DashboardShell>
       {advanceModal ? (

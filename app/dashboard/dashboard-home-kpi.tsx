@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type { Client } from "./types";
 import { averagePaymentDelayDays, eachRecognizedPayment } from "@/lib/dashboard-metrics";
 import type { UiResolvedAppearance } from "@/lib/ui-theme";
@@ -27,6 +27,8 @@ type DashboardHomeKpiProps = {
   onReminders: () => void;
 };
 
+type Tone = "danger" | "success" | "warning" | "accent";
+
 export function DashboardHomeKpi({
   clients,
   locale,
@@ -35,7 +37,7 @@ export function DashboardHomeKpi({
   onAddClient,
   onReminders,
 }: DashboardHomeKpiProps) {
-  const light = appearance === "light";
+  void appearance;
   const t = getDashboardHomeCopy(locale);
   const money = useMoney();
   const emptyAccount = clients.length === 0;
@@ -52,82 +54,105 @@ export function DashboardHomeKpi({
 
   const avgDelay = useMemo(() => averagePaymentDelayDays(clients), [clients]);
 
-  const card = (accent: "danger" | "success" | "warning" | "accent") => {
-    const bar = {
-      danger: "border-l-[3px] border-l-danger",
-      success: "border-l-[3px] border-l-success",
-      warning: "border-l-[3px] border-l-warning",
-      accent: "border-l-[3px] border-l-accent",
-    };
-    return `pp-rise pp-dashboard-card-interactive rounded-2xl border p-4 sm:p-5 ${bar[accent]} ${
-      light ? "border-border bg-bg shadow-sm" : "border-white/[0.08] bg-bg-dark"
-    }`;
-  };
+  const labelClass = "text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pp-dash-muted)]";
+  const valueClass = "mt-2 text-2xl font-semibold tracking-tight tabular-nums text-[var(--pp-dash-ink)] sm:text-[1.65rem]";
+  const hintClass = "mt-2 text-sm font-medium leading-snug text-[var(--pp-dash-ink)]";
 
-  const emptyAction = (onClick: () => void, label: string) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="mt-2 text-left text-sm font-medium text-accent underline-offset-2 hover:underline"
-    >
-      {label}
-    </button>
-  );
+  function onEmptyKeyDown(e: KeyboardEvent<HTMLDivElement>, action: () => void) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      action();
+    }
+  }
+
+  function renderCard(opts: {
+    tone: Tone;
+    delay: string;
+    title: string;
+    emptyHint: string;
+    onEmptyClick: () => void;
+    filled: ReactNode;
+  }) {
+    const className = `pp-dash-kpi pp-dash-blur-in${emptyAccount ? " is-empty" : ""}`;
+    const style = { "--pp-rise-delay": opts.delay } as CSSProperties;
+
+    if (emptyAccount) {
+      return (
+        <div
+          className={className}
+          data-tone={opts.tone}
+          style={style}
+          role="button"
+          tabIndex={0}
+          onClick={opts.onEmptyClick}
+          onKeyDown={(e) => onEmptyKeyDown(e, opts.onEmptyClick)}
+        >
+          <p className={labelClass}>{opts.title}</p>
+          <p className={hintClass}>{opts.emptyHint}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={className} data-tone={opts.tone} style={style}>
+        <p className={labelClass}>{opts.title}</p>
+        {opts.filled}
+      </div>
+    );
+  }
 
   return (
-    <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
-      <div className={card("danger")} style={{ "--pp-rise-delay": "0.04s" } as CSSProperties}>
-        <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>
-          {t.kpiUnpaid}
-        </p>
-        {emptyAccount ? (
-          emptyAction(onAddClient, t.kpiEmptyCta)
-        ) : (
-          <p className={`mt-2 text-xl font-semibold tabular-nums sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>
-            {money.format(unpaidTotal)}
-          </p>
-        )}
-      </div>
-      <div className={card("success")} style={{ "--pp-rise-delay": "0.08s" } as CSSProperties}>
-        <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>
-          {t.kpiReceivedMonth}
-        </p>
-        {emptyAccount ? (
-          emptyAction(onAddClient, t.kpiEmptyCta)
-        ) : (
-          <p className={`mt-2 text-xl font-semibold tabular-nums sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>
-            {money.format(receivedThisMonth)}
-          </p>
-        )}
-      </div>
-      <div className={card("warning")} style={{ "--pp-rise-delay": "0.12s" } as CSSProperties}>
-        <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>
-          {t.kpiAvgDelay}
-        </p>
-        {emptyAccount || avgDelay === null ? (
-          emptyAccount ? (
-            emptyAction(onAddClient, t.kpiEmptyCta)
+    <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+      {renderCard({
+        tone: "danger",
+        delay: "0.04s",
+        title: t.kpiUnpaid,
+        emptyHint: t.kpiHintUnpaid,
+        onEmptyClick: onAddClient,
+        filled: <p className={valueClass}>{money.format(unpaidTotal)}</p>,
+      })}
+      {renderCard({
+        tone: "success",
+        delay: "0.1s",
+        title: t.kpiReceivedMonth,
+        emptyHint: t.kpiHintReceived,
+        onEmptyClick: onAddClient,
+        filled: <p className={valueClass}>{money.format(receivedThisMonth)}</p>,
+      })}
+      {renderCard({
+        tone: "warning",
+        delay: "0.16s",
+        title: t.kpiAvgDelay,
+        emptyHint: t.kpiHintDelay,
+        onEmptyClick: onAddClient,
+        filled:
+          avgDelay === null ? (
+            <p className="mt-2 text-base font-medium text-[var(--pp-dash-muted)]">{t.kpiNoHistory}</p>
           ) : (
-            <p className={`mt-2 text-base font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{t.kpiNoHistory}</p>
-          )
-        ) : (
-          <p className={`mt-2 text-xl font-semibold sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>
-            {avgDelay} <span className={`text-base font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{t.kpiDays}</span>
-          </p>
-        )}
-      </div>
-      <div className={card("accent")} style={{ "--pp-rise-delay": "0.16s" } as CSSProperties}>
-        <p className={`text-xs font-medium uppercase tracking-wide ${light ? "text-slate-600" : "text-slate-400"}`}>
-          {t.kpiRemindersSent}
-        </p>
-        {emptyAccount || remindersSentCount === 0 ? (
-          emptyAction(onReminders, t.kpiEmptyReminders)
-        ) : (
-          <p className={`mt-2 text-xl font-semibold tabular-nums sm:text-2xl ${light ? "text-slate-900" : "text-white"}`}>
-            {remindersSentCount}
-          </p>
-        )}
-      </div>
+            <p className={valueClass}>
+              {avgDelay} <span className="text-base font-medium text-[var(--pp-dash-muted)]">{t.kpiDays}</span>
+            </p>
+          ),
+      })}
+      {renderCard({
+        tone: "accent",
+        delay: "0.22s",
+        title: t.kpiRemindersSent,
+        emptyHint: t.kpiHintReminders,
+        onEmptyClick: onAddClient,
+        filled:
+          remindersSentCount === 0 ? (
+            <button
+              type="button"
+              onClick={onReminders}
+              className="mt-2 text-left text-sm font-medium text-[var(--pp-dash-ink)]"
+            >
+              {t.kpiHintReminders}
+            </button>
+          ) : (
+            <p className={valueClass}>{remindersSentCount}</p>
+          ),
+      })}
     </div>
   );
 }

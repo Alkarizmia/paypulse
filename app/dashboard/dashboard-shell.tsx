@@ -1,18 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "@/app/auth-context";
-import { useLocale } from "@/app/locale-context";
 import { PayPulseLogo } from "./pay-pulse-logo";
-import {
-  canAccessTeamPage,
-  getMaxWorkspaces,
-  hasReminderTemplatesEditor,
-  usesAgencyWorkspaceUi,
-  type PlanId,
-} from "@/lib/plans";
+import { getMaxWorkspaces, type PlanId } from "@/lib/plans";
 import { useWorkspaceOptional } from "@/app/workspace-context";
 import {
   readStoredUiThemePreference,
@@ -28,8 +21,6 @@ import { getDashboardHomeCopy } from "@/lib/messages/dashboard-home-copy";
 
 export type DashboardNavId = "overview" | "invoices" | "relances" | "paiements" | "clients";
 
-type NavItem = { id: DashboardNavId; label: string; icon: ReactNode };
-
 function SidebarIcon({ d, extra }: { d: string; extra?: string }) {
   return (
     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -39,58 +30,16 @@ function SidebarIcon({ d, extra }: { d: string; extra?: string }) {
   );
 }
 
-function navItems(locale: AppLocale): NavItem[] {
-  const t = getDashboardHomeCopy(locale);
-  return [
-    {
-      id: "overview",
-      label: t.navHome,
-      icon: (
-        <SidebarIcon d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-      ),
-    },
-    {
-      id: "invoices",
-      label: t.navClients,
-      icon: (
-        <SidebarIcon d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-      ),
-    },
-    {
-      id: "relances",
-      label: t.navRelances,
-      icon: (
-        <SidebarIcon d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-      ),
-    },
-    {
-      id: "paiements",
-      label: t.navTreasury,
-      icon: (
-        <SidebarIcon d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-      ),
-    },
-  ];
-}
-
-const pipelineIcon = (
-  <SidebarIcon d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+const homeNavIcon = (
+  <SidebarIcon d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
 );
 
-const foldersNavIcon = (
-  <SidebarIcon d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+const clientsNavIcon = (
+  <SidebarIcon d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
 );
 
-const orgNavIcon = (
-  <SidebarIcon d="M3.75 21h16.5M4.5 3h15M6 3v18m12-18v18M9 9h1.5m-1.5 4.5h1.5m-1.5 4.5h1.5m4.5-9H15m-1.5 4.5H15m-1.5 4.5H15" />
-);
-
-const integrationsNavIcon = (
-  <SidebarIcon d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v2.25A2.25 2.25 0 006 10.5zm0 9.75h2.25A2.25 2.25 0 0010.5 18v-2.25a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25V18A2.25 2.25 0 006 20.25zm9.75-9.75H18a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0018 3.75h-2.25A2.25 2.25 0 0013.5 6v2.25a2.25 2.25 0 002.25 2.25z" />
-);
-
-const teamNavIcon = (
-  <SidebarIcon d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l-.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-2.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
+const relancesNavIcon = (
+  <SidebarIcon d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
 );
 
 const settingsNavIcon = (
@@ -99,30 +48,6 @@ const settingsNavIcon = (
     extra="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
   />
 );
-
-const bilanIcon = (
-  <SidebarIcon d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6zM13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
-);
-
-const trashNavIcon = (
-  <SidebarIcon d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-);
-
-const templatesNavIcon = (
-  <SidebarIcon d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-);
-
-const TEMPLATES_SUB_NAV_KEY = "paypulss_templates_sub_nav_open_v1";
-
-function readTemplatesSubNavOpen(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.localStorage.getItem(TEMPLATES_SUB_NAV_KEY) !== "0";
-}
-
-function persistTemplatesSubNavOpen(open: boolean): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(TEMPLATES_SUB_NAV_KEY, open ? "1" : "0");
-}
 
 type DashboardShellProps = {
   locale: AppLocale;
@@ -140,30 +65,8 @@ type DashboardShellProps = {
   children: ReactNode;
 };
 
-function shellNavBtn(active: boolean, light: boolean) {
-  if (light) {
-    return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-      active
-        ? "bg-violet-50 text-primary shadow-[inset_0_0_0_1px_var(--color-accent)]"
-        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-    }`;
-  }
-  return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-    active ? "bg-accent/20 text-text-dark shadow-[inset_0_0_0_1px_var(--color-accent)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
-  }`;
-}
-
-function shellNavLink(active: boolean, light: boolean) {
-  if (light) {
-    return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-      active
-        ? "bg-violet-50 text-primary shadow-[inset_0_0_0_1px_var(--color-accent)]"
-        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-    }`;
-  }
-  return `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
-    active ? "bg-accent/20 text-text-dark shadow-[inset_0_0_0_1px_var(--color-accent)]" : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
-  }`;
+function shellNavLink(active: boolean) {
+  return `pp-dash-nav-link${active ? " is-active" : ""}`;
 }
 
 function DashboardWorkspaceSelect({ locale, light }: { locale: AppLocale; light: boolean }) {
@@ -262,14 +165,17 @@ export function DashboardShell({
   locale,
   planId,
   activeNav,
-  onNav,
-  navScrollMode = true,
+  onNav: _onNav,
+  navScrollMode: _navScrollMode = true,
   userEmail,
   onLogout,
-  hideTrashNav = false,
+  hideTrashNav: _hideTrashNav = false,
   appearance,
   children,
 }: DashboardShellProps) {
+  void _onNav;
+  void _navScrollMode;
+  void _hideTrashNav;
   const systemDark = usePrefersColorSchemeDark();
   const [storedThemePref, setStoredThemePref] = useState<UiThemePreference>(() => readStoredUiThemePreference() ?? "light");
   const resolvedAppearance = useMemo<"light" | "dark">(() => {
@@ -277,20 +183,19 @@ export function DashboardShell({
     return resolveUiTheme(storedThemePref, systemDark) === "light" ? "light" : "dark";
   }, [appearance, storedThemePref, systemDark]);
   const light = resolvedAppearance === "light";
-  const { setLocale } = useLocale();
   const { user } = useAuth();
   const pathname = usePathname() ?? "";
   const pathnameNorm = pathname.replace(/\/+$/, "") || "/";
-  const onTemplatesHub = pathnameNorm === "/dashboard/modeles-relance";
-  const onTemplatesRegistry = pathnameNorm.startsWith("/dashboard/modeles-relance/enregistrements");
-  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [templatesSubOpen, setTemplatesSubOpen] = useState(true);
+  const [sidebarRail, setSidebarRail] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [showFoldersHint, setShowFoldersHint] = useState(false);
+  const [clientsHashActive, setClientsHashActive] = useState(false);
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
   const { items: notifications, unreadCount, markingAllRead, markOneRead, markAllRead } = useNotifications(user?.id);
   const isDashHome = pathname === "/dashboard" || pathname === "/dashboard/";
+  const onRelances = pathnameNorm.startsWith("/dashboard/modeles-relance");
+  const onSettings = pathnameNorm.startsWith("/settings");
   const t =
     locale === "fr"
       ? {
@@ -304,20 +209,13 @@ export function DashboardShell({
           logout: "Déconnexion",
           upgrade: "Changer de plan",
           notif: "Notifications",
-          bilan: "Bilan",
-          corbeille: "Corbeille",
-          modelesRelance: "Modèles de relance",
-          autoReminderSaved: "Synthèse envois auto",
-          expandTemplatesSub: "Afficher la synthèse envois auto",
-          collapseTemplatesSub: "Masquer la synthèse envois auto",
-          dossiers: "Dossiers",
-          foldersHintTitle: "Nouveau : Dossiers",
-          foldersHintBody: "Organisez vos clients en dossiers, ajoutez des notes et gardez tout au même endroit.",
-          foldersHintCta: "Découvrir",
           closeHint: "Fermer",
           noNotifications: "Aucune notification pour le moment.",
           markAllRead: "Tout marquer comme lu",
           markAllReadBusy: "Mise à jour…",
+          profileAlt: "Photo de profil",
+          collapseSidebar: "Replier le menu",
+          expandSidebar: "Déplier le menu",
         }
       : {
           overview: "Overview",
@@ -330,50 +228,53 @@ export function DashboardShell({
           logout: "Log out",
           upgrade: "Change plan",
           notif: "Notifications",
-          bilan: "Summary",
-          corbeille: "Trash",
-          modelesRelance: "Reminder templates",
-          autoReminderSaved: "Auto-send summary",
-          expandTemplatesSub: "Show auto-send summary",
-          collapseTemplatesSub: "Hide auto-send summary",
-          dossiers: "Folders",
-          foldersHintTitle: "New: Folders",
-          foldersHintBody: "Organize clients in folders, add notes, and keep everything in one place.",
-          foldersHintCta: "Open",
           closeHint: "Dismiss",
           noNotifications: "No notifications yet.",
           markAllRead: "Mark all as read",
           markAllReadBusy: "Updating…",
+          profileAlt: "Profile photo",
+          collapseSidebar: "Collapse menu",
+          expandSidebar: "Expand menu",
         };
 
-  const items = navItems(locale);
   const homeCopy = getDashboardHomeCopy(locale);
   const wsCtx = useWorkspaceOptional();
   const workspaceLabel =
     wsCtx?.workspaces.find((w) => w.id === wsCtx.activeWorkspaceId)?.name ??
     wsCtx?.workspaces[0]?.name ??
     null;
-  const showTeamNav = canAccessTeamPage(planId);
-  const onEquipe = pathnameNorm.startsWith("/dashboard/equipe");
-  const onOrganisation = pathnameNorm.startsWith("/dashboard/organisation");
-  const initial = (userEmail?.[0] ?? "?").toUpperCase();
-  const showTemplatesNav = hasReminderTemplatesEditor(planId);
-  const onIntegrations = pathnameNorm.startsWith("/dashboard/integrations");
-  const onPipeline = pathnameNorm.startsWith("/dashboard/pipeline");
+  const displayEmail = userEmail ?? user?.email ?? null;
+  const initial = (displayEmail?.[0] ?? "?").toUpperCase();
+  const avatarUrl = useMemo(() => {
+    const meta = user?.user_metadata as Record<string, unknown> | undefined;
+    const raw =
+      (typeof meta?.avatar_url === "string" && meta.avatar_url) ||
+      (typeof meta?.picture === "string" && meta.picture) ||
+      null;
+    return raw && /^https?:\/\//i.test(raw) ? raw : null;
+  }, [user?.user_metadata]);
+  const showAvatar = Boolean(avatarUrl) && !avatarBroken;
+  const homeActive = isDashHome && !clientsHashActive && activeNav !== "invoices";
+  const clientsActive = isDashHome && (clientsHashActive || activeNav === "invoices");
 
-  function scrollOrHome(id: DashboardNavId) {
-    if (navScrollMode && isDashHome) {
-      onNav(id);
-      return;
-    }
-    router.push("/dashboard");
-  }
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [avatarUrl]);
 
   useEffect(() => {
     queueMicrotask(() => {
       setMobileMenuOpen(false);
       setNotifOpen(false);
     });
+  }, [pathname]);
+
+  useEffect(() => {
+    const syncHash = () => {
+      setClientsHashActive(window.location.hash === "#clients");
+    };
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
   }, [pathname]);
 
   useEffect(() => {
@@ -406,98 +307,46 @@ export function DashboardShell({
   useEffect(() => subscribeUiThemePreferenceChange((pref) => setStoredThemePref(pref)), []);
 
   useEffect(() => {
-    if (onTemplatesRegistry) {
-      setTemplatesSubOpen(true);
-      return;
+    try {
+      const stored = window.localStorage.getItem("pp-dash-sidebar-rail");
+      if (stored === "1") setSidebarRail(true);
+    } catch {
+      /* ignore */
     }
-    setTemplatesSubOpen(readTemplatesSubNavOpen());
-  }, [onTemplatesRegistry, pathnameNorm]);
+  }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const seen = window.localStorage.getItem("paypulss_folders_hint_seen_v1");
-    if (!seen && !pathname.startsWith("/dashboard/dossiers")) {
-      queueMicrotask(() => setShowFoldersHint(true));
-    }
-  }, [pathname]);
-
-  const navIconActive = light ? "text-accent" : "text-violet-300";
-  const navIconIdle = light ? "text-slate-900" : "text-slate-100";
-
-  function renderScrollableItem(item: NavItem) {
-    const active = isDashHome && activeNav === item.id;
-    if (navScrollMode && isDashHome) {
-      return (
-        <button key={item.id} type="button" onClick={() => onNav(item.id)} className={shellNavBtn(active, light)}>
-          <span className={active ? navIconActive : navIconIdle}>{item.icon}</span>
-          {item.label}
-        </button>
-      );
-    }
-    return (
-      <Link key={item.id} href="/dashboard" className={shellNavLink(false, light)}>
-        <span className={navIconIdle}>{item.icon}</span>
-        {item.label}
-      </Link>
-    );
-  }
-
-  function toggleTemplatesSubNav() {
-    setTemplatesSubOpen((prev) => {
+  function toggleSidebarRail() {
+    setSidebarRail((prev) => {
       const next = !prev;
-      persistTemplatesSubNavOpen(next);
+      try {
+        window.localStorage.setItem("pp-dash-sidebar-rail", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
       return next;
     });
   }
 
-  function renderTemplatesNav(onNavigate?: () => void) {
-    const subToggleClass = light
-      ? "shrink-0 rounded-xl px-2 py-2.5 text-slate-900 transition hover:bg-slate-100 hover:text-black"
-      : "shrink-0 rounded-xl px-2 py-2.5 text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200";
-
+  function renderPrimaryNav(onNavigate?: () => void) {
     return (
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-stretch gap-0.5">
-          <Link
-            href="/dashboard/modeles-relance"
-            onClick={onNavigate}
-            className={`${shellNavLink(onTemplatesHub, light)} min-w-0 flex-1`}
-          >
-            <span className={onTemplatesHub ? navIconActive : navIconIdle}>{templatesNavIcon}</span>
-            <span className="min-w-0 flex-1 leading-snug">{t.modelesRelance}</span>
-          </Link>
-          <button
-            type="button"
-            onClick={toggleTemplatesSubNav}
-            className={subToggleClass}
-            aria-expanded={templatesSubOpen}
-            aria-controls="dashboard-templates-subnav"
-            aria-label={templatesSubOpen ? t.collapseTemplatesSub : t.expandTemplatesSub}
-          >
-            <svg
-              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${templatesSubOpen ? "" : "-rotate-90"}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              aria-hidden
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
-        </div>
-        {templatesSubOpen ? (
-          <Link
-            id="dashboard-templates-subnav"
-            href="/dashboard/modeles-relance/enregistrements"
-            onClick={onNavigate}
-            className={`${shellNavLink(onTemplatesRegistry, light)} pl-9 text-xs font-medium`}
-          >
-            <span className={onTemplatesRegistry ? navIconActive : `${navIconIdle} opacity-80`}>{templatesNavIcon}</span>
-            {t.autoReminderSaved}
-          </Link>
-        ) : null}
-      </div>
+      <>
+        <Link href="/dashboard" onClick={onNavigate} className={shellNavLink(homeActive)} title={homeCopy.navHome}>
+          <span className="pp-dash-nav-ico">{homeNavIcon}</span>
+          <span className="pp-dash-sidebar__label">{homeCopy.navHome}</span>
+        </Link>
+        <Link href="/dashboard#clients" onClick={onNavigate} className={shellNavLink(clientsActive)} title={homeCopy.navClients}>
+          <span className="pp-dash-nav-ico">{clientsNavIcon}</span>
+          <span className="pp-dash-sidebar__label">{homeCopy.navClients}</span>
+        </Link>
+        <Link href="/dashboard/modeles-relance" onClick={onNavigate} className={shellNavLink(onRelances)} title={homeCopy.navRelances}>
+          <span className="pp-dash-nav-ico">{relancesNavIcon}</span>
+          <span className="pp-dash-sidebar__label">{homeCopy.navRelances}</span>
+        </Link>
+        <Link href="/settings" onClick={onNavigate} className={shellNavLink(onSettings)} title={t.settings}>
+          <span className="pp-dash-nav-ico">{settingsNavIcon}</span>
+          <span className="pp-dash-sidebar__label">{t.settings}</span>
+        </Link>
+      </>
     );
   }
 
@@ -523,141 +372,82 @@ export function DashboardShell({
 
   return (
     <div
-      className={
-        light
-          ? "flex min-h-screen overflow-x-hidden bg-bg-alt text-text"
-          : "flex min-h-screen overflow-x-hidden bg-bg-dark text-text-dark"
-      }
+      className={`pp-dash-root flex min-h-screen overflow-x-hidden ${light ? "" : "pp-dash-root--dark"} ${
+        sidebarRail ? "is-sidebar-rail" : ""
+      }`}
     >
-      <aside
-        className={
-          light
-            ? "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-border bg-bg px-3 py-4 lg:flex"
-            : "fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 w-56 flex-col overflow-hidden border-r border-white/[0.06] bg-bg-dark px-3 py-4 lg:flex"
-        }
-      >
+      <aside className="pp-dash-sidebar pp-dash-sidebar--desktop fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 flex-col overflow-hidden px-3 py-4 lg:flex">
         <div className="shrink-0">
-          <div className="flex flex-col gap-1 px-2">
-            <div className="flex items-center gap-2">
-              <PayPulseLogo className="h-8" />
-              <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
+          <div className="flex items-start justify-between gap-1 px-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+                title="PayPulss"
+              >
+                <PayPulseLogo className="h-8 shrink-0" />
+                <span className="pp-dash-sidebar__brand-text text-sm font-bold tracking-tight text-[var(--pp-dash-ink)]">
+                  PayPulss
+                </span>
+              </Link>
+              {workspaceLabel ? (
+                <Link
+                  href="/settings#workspaces"
+                  className="pp-dash-sidebar__workspace truncate pl-10 text-xs font-medium text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+                >
+                  {workspaceLabel}
+                </Link>
+              ) : null}
             </div>
-            {workspaceLabel ? (
-              <p className={`truncate pl-10 text-xs font-medium ${light ? "text-slate-500" : "text-slate-400"}`}>{workspaceLabel}</p>
-            ) : null}
+            <button
+              type="button"
+              onClick={toggleSidebarRail}
+              className="pp-dash-sidebar__fold pp-dash-btn-ghost mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center text-[var(--pp-dash-muted)]"
+              aria-label={sidebarRail ? t.expandSidebar : t.collapseSidebar}
+              aria-pressed={sidebarRail}
+              title={sidebarRail ? t.expandSidebar : t.collapseSidebar}
+            >
+              {/* Icône « panneau pliable » (invention PayPulss) */}
+              <svg className="pp-dash-sidebar__fold-ico h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <rect x="3.5" y="4.5" width="17" height="15" rx="3.5" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M9 5v14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                <path
+                  d="M14.2 9.2L11.4 12l2.8 2.8"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
-          <p
-            className={`mx-2 mt-4 rounded-lg border px-3 py-2 text-xs ${light ? "border-slate-200 bg-slate-50 text-slate-400" : "border-white/[0.06] bg-white/[0.03] text-slate-500"}`}
-            aria-hidden
+          <Link
+            href="/dashboard#clients"
+            className="pp-dash-glass mx-1 mt-4 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+            title={homeCopy.searchPlaceholder}
           >
-            {homeCopy.searchPlaceholder}
-          </p>
+            <svg className="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <span className="pp-dash-sidebar__search-text">{homeCopy.searchPlaceholder}</span>
+          </Link>
         </div>
         <div className="pp-dashboard-sidebar-scroll mt-2 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
-        <nav className="flex flex-col gap-0.5">
-          {items.slice(0, 2).map((item) => renderScrollableItem(item))}
-          <Link href="/dashboard/pipeline" className={shellNavLink(onPipeline, light)}>
-            <span className={onPipeline ? navIconActive : navIconIdle}>{pipelineIcon}</span>
-            {homeCopy.navPipeline}
-          </Link>
-          {items.slice(2).map((item) => renderScrollableItem(item))}
-          <Link
-            href="/dashboard/bilan"
-            className={shellNavLink(pathname.startsWith("/dashboard/bilan"), light)}
-          >
-            <span className={pathname.startsWith("/dashboard/bilan") ? navIconActive : navIconIdle}>{bilanIcon}</span>
-            {t.bilan}
-          </Link>
-          {hideTrashNav ? null : (
-            <Link
-              href="/dashboard/corbeille"
-              className={shellNavLink(pathname.startsWith("/dashboard/corbeille"), light)}
-            >
-              <span className={pathname.startsWith("/dashboard/corbeille") ? navIconActive : navIconIdle}>{trashNavIcon}</span>
-              {t.corbeille}
-            </Link>
-          )}
-          {showTemplatesNav ? renderTemplatesNav() : null}
-          <Link href="/dashboard/dossiers" className={shellNavLink(pathname.startsWith("/dashboard/dossiers"), light)}>
-            <span className={pathname.startsWith("/dashboard/dossiers") ? navIconActive : navIconIdle}>{foldersNavIcon}</span>
-            {t.dossiers}
-          </Link>
-          <p className={`mt-4 px-3 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-400" : "text-slate-500"}`}>
-            {homeCopy.workspaceNav}
-          </p>
-          <Link href="/dashboard/organisation" className={shellNavLink(onOrganisation, light)}>
-            <span className={onOrganisation ? navIconActive : navIconIdle}>{orgNavIcon}</span>
-            {homeCopy.navOrganization}
-          </Link>
-          <Link href="/dashboard/integrations" className={shellNavLink(onIntegrations, light)}>
-            <span className={onIntegrations ? navIconActive : navIconIdle}>{integrationsNavIcon}</span>
-            {homeCopy.navIntegrations}
-          </Link>
-          {showTeamNav ? (
-            <Link href="/dashboard/equipe" className={shellNavLink(onEquipe, light)}>
-              <span className={onEquipe ? navIconActive : navIconIdle}>{teamNavIcon}</span>
-              {homeCopy.navTeam}
-            </Link>
-          ) : null}
-        </nav>
-        <Link
-          href="/settings"
-          className={
-            light
-              ? "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-              : "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
-          }
-        >
-          <span className={navIconIdle}>{settingsNavIcon}</span>
-          {t.settings}
-        </Link>
-        <div
-          className={
-            light
-              ? "mt-5 border-t border-slate-200 pt-4"
-              : "mt-5 border-t border-white/[0.08] pt-4"
-          }
-        >
-          <p
-            className={`mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-500"}`}
-          >
+        <nav className="flex flex-col gap-0.5">{renderPrimaryNav()}</nav>
+        <div className="pp-dash-sidebar__resources mt-5 border-t border-[var(--pp-dash-line)] pt-4">
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">
             {t.sidebarResources}
           </p>
-          <Link
-            href="/"
-            className={
-              light
-                ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
-            }
-          >
-            <span className={navIconIdle} aria-hidden>
-              ↗
-            </span>
-            {t.sitePaypulss}
+          <Link href="/" className="pp-dash-nav-link text-xs" title={t.sitePaypulss}>
+            <span aria-hidden>↗</span>
+            <span className="pp-dash-sidebar__label">{t.sitePaypulss}</span>
           </Link>
-          <Link
-            href="/contact"
-            className={
-              light
-                ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
-            }
-          >
-            <span className={navIconIdle} aria-hidden>
-              ✉
-            </span>
-            {t.contactPage}
+          <Link href="/contact" className="pp-dash-nav-link text-xs" title={t.contactPage}>
+            <span aria-hidden>✉</span>
+            <span className="pp-dash-sidebar__label">{t.contactPage}</span>
           </Link>
-          <Link
-            href="/legal"
-            className={
-              light
-                ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
-            }
-          >
-            <svg className={`h-4 w-4 shrink-0 ${navIconIdle}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+          <Link href="/legal" className="pp-dash-nav-link text-xs" title={t.legalHub}>
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -665,30 +455,22 @@ export function DashboardShell({
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            {t.legalHub}
+            <span className="pp-dash-sidebar__label">{t.legalHub}</span>
           </Link>
         </div>
-        <div
-          className={
-            light
-              ? "mb-1 mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-              : "mb-1 mt-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2"
-          }
+        <Link
+          href="/#pricing"
+          className="pp-dash-sidebar__plan pp-dash-glass mb-1 mt-2 block rounded-xl px-3 py-2 outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+          title={`${t.plan} ${planId.toUpperCase()}`}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t.plan}</p>
-          <p className={`text-xs font-bold ${light ? "text-violet-700" : "text-violet-300"}`}>{planId.toUpperCase()}</p>
-        </div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">{t.plan}</p>
+          <p className="text-xs font-bold tracking-wide text-[var(--pp-dash-ink)]">{planId.toUpperCase()}</p>
+        </Link>
         </div>
       </aside>
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col lg:pl-56">
-        <header
-          className={
-            light
-              ? "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:px-6"
-              : "sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] bg-bg-dark/90 px-3 py-3 backdrop-blur-md sm:px-6"
-          }
-        >
+      <div className="pp-dash-main-col flex min-h-screen min-w-0 flex-1 flex-col">
+        <header className="pp-dash-header sticky top-0 z-20 flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2 lg:hidden">
               <PayPulseLogo className="h-7" />
@@ -696,11 +478,7 @@ export function DashboardShell({
             <button
               type="button"
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className={
-                light
-                  ? "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-                  : "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white lg:hidden"
-              }
+              className="pp-dash-btn-ghost inline-flex h-9 w-9 items-center justify-center text-[var(--pp-dash-muted)] lg:hidden"
               aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-drawer"
@@ -715,27 +493,16 @@ export function DashboardShell({
                 </svg>
               )}
             </button>
-            <h1 className={`truncate text-lg font-semibold ${light ? "text-slate-900" : "text-white"}`}>{t.overview}</h1>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-[var(--pp-dash-ink)]">{t.overview}</h1>
             <DashboardAccountSelect locale={locale} light={light} />
             <DashboardWorkspaceSelect locale={locale} light={light} />
           </div>
           <div className="flex w-full min-w-0 items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
-            <Link
-              href="/#pricing"
-              className="hidden rounded-full border border-violet-500/40 bg-violet-600/20 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-600/30 sm:inline-flex"
-            >
+            <Link href="/#pricing" className="pp-dash-btn-ghost hidden px-3 py-1.5 text-xs sm:inline-flex">
               {t.upgrade}
             </Link>
             {onLogout ? (
-              <button
-                type="button"
-                onClick={onLogout}
-                className={
-                  light
-                    ? "rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
-                    : "rounded-full border border-white/[0.08] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
-                }
-              >
+              <button type="button" onClick={onLogout} className="pp-dash-btn-ghost inline-flex px-3 py-1.5 text-xs">
                 {t.logout}
               </button>
             ) : null}
@@ -743,11 +510,7 @@ export function DashboardShell({
               <button
                 type="button"
                 onClick={() => setNotifOpen((v) => !v)}
-                className={
-                  light
-                    ? "relative rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                    : "relative rounded-full border border-white/[0.08] p-2 text-slate-400 transition hover:bg-white/[0.05] hover:text-white"
-                }
+                className="pp-dash-btn-ghost relative inline-flex p-2 text-[var(--pp-dash-muted)]"
                 aria-label={t.notif}
                 aria-expanded={notifOpen}
               >
@@ -760,7 +523,7 @@ export function DashboardShell({
                   />
                 </svg>
                 {unreadCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-fuchsia-500 px-1.5 text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0b0d12] px-1.5 text-[10px] font-bold text-white">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 ) : null}
@@ -837,62 +600,27 @@ export function DashboardShell({
                 </>
               ) : null}
             </div>
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 text-xs font-bold text-white shadow-lg shadow-violet-900/40"
-              title={userEmail ?? ""}
+            <Link
+              href="/settings"
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#0b0d12] text-xs font-bold text-white ring-1 ring-[var(--pp-dash-line)] transition hover:opacity-90"
+              title={displayEmail ?? t.settings}
+              aria-label={t.profileAlt}
             >
-              {initial}
-            </div>
-            <div
-              className={
-                light
-                  ? "hidden flex-wrap items-center justify-end gap-0.5 overflow-hidden rounded-full border border-slate-200 text-[10px] font-semibold text-slate-600 sm:inline-flex"
-                  : "hidden flex-wrap items-center justify-end gap-0.5 overflow-hidden rounded-full border border-white/10 text-[10px] font-semibold text-slate-300 sm:inline-flex"
-              }
-            >
-              {(["fr", "en", "nl", "es"] as const).map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setLocale(code)}
-                  className={`px-2 py-1 ${locale === code ? "bg-violet-600 text-white" : light ? "hover:bg-slate-100" : "hover:bg-white/5"}`}
-                >
-                  {code.toUpperCase()}
-                </button>
-              ))}
-            </div>
+              {showAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element -- URL Google dynamique
+                <img
+                  src={avatarUrl!}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarBroken(true)}
+                />
+              ) : (
+                initial
+              )}
+            </Link>
           </div>
         </header>
-
-        {showFoldersHint && !isDashHome ? (
-          <div className={light ? "border-b border-border bg-bg-alt px-3 py-2 sm:px-6" : "border-b border-white/[0.06] bg-white/[0.03] px-3 py-2 sm:px-6"}>
-            <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-wrap items-center justify-between gap-2">
-              <p className={`text-xs font-medium ${light ? "text-text" : "text-text-dark"}`}>{t.foldersHintTitle}</p>
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/dashboard/dossiers"
-                  className="pp-btn-secondary px-3 py-1 text-xs"
-                  onClick={() => {
-                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
-                    setShowFoldersHint(false);
-                  }}
-                >
-                  {t.foldersHintCta}
-                </Link>
-                <button
-                  type="button"
-                  className="pp-btn-secondary px-3 py-1 text-xs"
-                  onClick={() => {
-                    if (typeof window !== "undefined") window.localStorage.setItem("paypulss_folders_hint_seen_v1", "1");
-                    setShowFoldersHint(false);
-                  }}
-                >
-                  {t.closeHint}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
 
         {mobileMenuOpen ? (
           <button
@@ -904,26 +632,24 @@ export function DashboardShell({
         ) : null}
         <aside
           id="dashboard-mobile-drawer"
-          className={`fixed inset-y-0 left-0 z-40 flex h-dvh min-h-0 w-72 max-w-[86vw] flex-col overflow-hidden px-3 py-5 shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
-            light
-              ? "border-r border-slate-200 bg-white"
-              : "border-r border-white/[0.08] bg-bg-dark"
-          } ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+          className={`pp-dash-sidebar fixed inset-y-0 left-0 z-40 flex h-dvh min-h-0 w-72 max-w-[86vw] flex-col overflow-hidden px-3 py-5 transition-transform duration-300 ease-out lg:hidden ${
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
           aria-hidden={!mobileMenuOpen}
         >
           <div className="flex shrink-0 items-center justify-between px-1">
-            <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+            >
               <PayPulseLogo className="h-7" />
-              <span className={`text-sm font-bold tracking-tight ${light ? "text-slate-900" : "text-white"}`}>PayPulss</span>
-            </div>
+              <span className="text-sm font-bold tracking-tight text-[var(--pp-dash-ink)]">PayPulss</span>
+            </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                light
-                  ? "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                  : "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
-              }
+              className="pp-dash-btn-ghost inline-flex h-8 w-8 items-center justify-center"
               aria-label="Fermer le menu"
             >
               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -932,158 +658,45 @@ export function DashboardShell({
             </button>
           </div>
           <div className="pp-dashboard-sidebar-scroll mt-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
+          <Link
+            href="/dashboard#clients"
+            onClick={() => setMobileMenuOpen(false)}
+            className="pp-dash-glass mb-3 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+          >
+            <svg className="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <span>{homeCopy.searchPlaceholder}</span>
+          </Link>
           <nav className="flex flex-col gap-1">
-            {items.slice(0, 2).map((item) => {
-              const active = isDashHome && activeNav === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    scrollOrHome(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={shellNavBtn(active, light)}
-                >
-                  <span className={active ? navIconActive : navIconIdle}>{item.icon}</span>
-                  {item.label}
-                </button>
-              );
-            })}
-            <Link
-              href="/dashboard/pipeline"
-              onClick={() => setMobileMenuOpen(false)}
-              className={shellNavLink(onPipeline, light)}
-            >
-              <span className={onPipeline ? navIconActive : navIconIdle}>{pipelineIcon}</span>
-              {homeCopy.navPipeline}
-            </Link>
-            {items.slice(2).map((item) => {
-              const active = isDashHome && activeNav === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    scrollOrHome(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={shellNavBtn(active, light)}
-                >
-                  <span className={active ? navIconActive : navIconIdle}>{item.icon}</span>
-                  {item.label}
-                </button>
-              );
-            })}
-            <Link
-              href="/dashboard/bilan"
-              onClick={() => setMobileMenuOpen(false)}
-              className={shellNavLink(pathname.startsWith("/dashboard/bilan"), light)}
-            >
-              <span className={pathname.startsWith("/dashboard/bilan") ? navIconActive : navIconIdle}>{bilanIcon}</span>
-              {t.bilan}
-            </Link>
-            {hideTrashNav ? null : (
-              <Link
-                href="/dashboard/corbeille"
-                onClick={() => setMobileMenuOpen(false)}
-                className={shellNavLink(pathname.startsWith("/dashboard/corbeille"), light)}
-              >
-                <span className={pathname.startsWith("/dashboard/corbeille") ? navIconActive : navIconIdle}>{trashNavIcon}</span>
-                {t.corbeille}
-              </Link>
-            )}
-            {showTemplatesNav ? renderTemplatesNav(() => setMobileMenuOpen(false)) : null}
-            <Link
-              href="/dashboard/dossiers"
-              onClick={() => setMobileMenuOpen(false)}
-              className={shellNavLink(pathname.startsWith("/dashboard/dossiers"), light)}
-            >
-              <span className={pathname.startsWith("/dashboard/dossiers") ? navIconActive : navIconIdle}>{foldersNavIcon}</span>
-              {t.dossiers}
-            </Link>
-            <p className={`mt-3 px-3 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-400" : "text-slate-500"}`}>
-              {homeCopy.workspaceNav}
-            </p>
-            <Link
-              href="/dashboard/organisation"
-              onClick={() => setMobileMenuOpen(false)}
-              className={shellNavLink(onOrganisation, light)}
-            >
-              <span className={onOrganisation ? navIconActive : navIconIdle}>{orgNavIcon}</span>
-              {homeCopy.navOrganization}
-            </Link>
-            <Link href="/dashboard/integrations" onClick={() => setMobileMenuOpen(false)} className={shellNavLink(onIntegrations, light)}>
-              <span className={onIntegrations ? navIconActive : navIconIdle}>{integrationsNavIcon}</span>
-              {homeCopy.navIntegrations}
-            </Link>
-            {showTeamNav ? (
-              <Link href="/dashboard/equipe" onClick={() => setMobileMenuOpen(false)} className={shellNavLink(onEquipe, light)}>
-                <span className={onEquipe ? navIconActive : navIconIdle}>{teamNavIcon}</span>
-                {homeCopy.navTeam}
-              </Link>
-            ) : null}
-            <Link
-              href="/settings"
-              onClick={() => setMobileMenuOpen(false)}
-              className={
-                light
-                  ? "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                  : "mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
-              }
-            >
-              <span className={navIconIdle}>{settingsNavIcon}</span>
-              {t.settings}
-            </Link>
-            <div
-              className={
-                light ? "mt-4 border-t border-slate-200 pt-4" : "mt-4 border-t border-white/[0.08] pt-4"
-              }
-            >
-              <p
-                className={`mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide ${light ? "text-slate-500" : "text-slate-500"}`}
-              >
+            {renderPrimaryNav(() => setMobileMenuOpen(false))}
+            <div className="mt-4 border-t border-[var(--pp-dash-line)] pt-4">
+              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">
                 {t.sidebarResources}
               </p>
-              <Link
-                href="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={
-                  light
-                    ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                    : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04]"
-                }
-              >
+              <Link href="/" onClick={() => setMobileMenuOpen(false)} className="pp-dash-nav-link text-xs">
                 {t.sitePaypulss}
               </Link>
-              <Link
-                href="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className={
-                  light
-                    ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                    : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04]"
-                }
-              >
+              <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="pp-dash-nav-link text-xs">
                 {t.contactPage}
               </Link>
-              <Link
-                href="/legal"
-                onClick={() => setMobileMenuOpen(false)}
-                className={
-                  light
-                    ? "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
-                    : "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-white/[0.04]"
-                }
-              >
+              <Link href="/legal" onClick={() => setMobileMenuOpen(false)} className="pp-dash-nav-link text-xs">
                 {t.legalHub}
               </Link>
             </div>
+            <Link
+              href="/#pricing"
+              onClick={() => setMobileMenuOpen(false)}
+              className="pp-dash-glass mt-3 block rounded-xl px-3 py-2 outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">{t.plan}</p>
+              <p className="text-xs font-bold tracking-wide text-[var(--pp-dash-ink)]">{planId.toUpperCase()}</p>
+            </Link>
           </nav>
           </div>
         </aside>
 
-        <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</main>
+        <main className="pp-dash-blur-in w-full min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
     </div>
   );

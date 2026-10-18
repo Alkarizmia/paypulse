@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useLocale } from "@/app/locale-context";
 import { getWaitlistCopy } from "@/lib/messages/waitlist-copy";
 import { readWaitlistAttribution } from "@/lib/waitlist-attribution";
+import { track, type TrackLocation } from "@/lib/waitlist-track";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Durée alignée sur le CSS (ms) : sortie douce sans freiner l’UI. */
@@ -14,9 +15,11 @@ type WaitlistModalProps = {
   open: boolean;
   onClose: () => void;
   source: string;
+  /** Emplacement CTA ayant ouvert la modale (entonnoir admin). */
+  trackLocation?: TrackLocation | null;
 };
 
-export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
+export function WaitlistModal({ open, onClose, source, trackLocation = null }: WaitlistModalProps) {
   const { locale } = useLocale();
   const t = getWaitlistCopy(locale);
   const titleId = useId();
@@ -28,6 +31,11 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
   /** Garde le DOM monté pendant l’animation de sortie. */
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  const emailFocusedRef = useRef(false);
+  const trackLocationRef = useRef(trackLocation);
+  const localeRef = useRef(locale);
+  trackLocationRef.current = trackLocation;
+  localeRef.current = locale;
 
   useEffect(() => {
     if (!open) {
@@ -41,6 +49,8 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
     setErrorKey(null);
     setEmail("");
     setHoneypot("");
+    emailFocusedRef.current = false;
+    track("modal_open", trackLocationRef.current, localeRef.current);
     // Double rAF : peindre l’état fermé, puis lancer l’entrée (évite le « pop »).
     let raf2 = 0;
     const raf1 = window.requestAnimationFrame(() => {
@@ -68,12 +78,19 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
     };
   }, [mounted]);
 
+  function onEmailFocus() {
+    if (emailFocusedRef.current) return;
+    emailFocusedRef.current = true;
+    track("email_focus", trackLocation, locale);
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const normalized = email.trim().toLowerCase();
     if (!EMAIL_RE.test(normalized)) {
       setStatus("error");
       setErrorKey("invalid");
+      track("signup_error", trackLocation, locale);
       return;
     }
     setStatus("loading");
@@ -98,22 +115,27 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
       if (res.status === 429 || data.error === "rate_limited") {
         setStatus("error");
         setErrorKey("rate");
+        track("signup_error", trackLocation, locale);
         return;
       }
       if (res.status === 400 || data.error === "invalid_email") {
         setStatus("error");
         setErrorKey("invalid");
+        track("signup_error", trackLocation, locale);
         return;
       }
       if (!res.ok || !data.ok) {
         setStatus("error");
         setErrorKey("server");
+        track("signup_error", trackLocation, locale);
         return;
       }
       setStatus(data.already ? "already" : "success");
+      track("signup_success", trackLocation, locale);
     } catch {
       setStatus("error");
       setErrorKey("server");
+      track("signup_error", trackLocation, locale);
     }
   }
 
@@ -183,6 +205,7 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onFocus={onEmailFocus}
                   placeholder={t.emailPlaceholder}
                   disabled={status === "loading"}
                   className="mt-1.5 w-full rounded-xl border border-border bg-bg-alt px-4 py-3.5 text-base text-text outline-none ring-accent focus:ring-2"

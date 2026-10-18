@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Client } from "./types";
 import {
   chartYAxisTicks,
@@ -16,7 +16,6 @@ import {
   type YearMonth,
 } from "@/lib/dashboard-metrics";
 import type { AppLocale } from "@/lib/app-locale";
-import { intlLocaleFor } from "@/lib/app-locale";
 import { useMoney } from "@/app/display-currency-context";
 import type { DashboardAnalyticsCopy } from "@/lib/messages/dashboard-analytics-copy";
 
@@ -128,9 +127,18 @@ function buildChartPoints(clients: Client[], period: EvolutionChartPeriod, local
   }
 }
 
-function xIndexToSvgX(i: number, n: number, chartW: number): number {
+/** Premier point au rebord gauche, dernier au rebord droit (pas de bande centrée). */
+function xIndexToSvgX(i: number, n: number, chartW: number, padX: number): number {
+  const inner = chartW - padX * 2;
   if (n <= 0) return chartW / 2;
-  return ((i + 0.5) / n) * chartW;
+  if (n === 1) return padX + inner / 2;
+  return padX + (i / (n - 1)) * inner;
+}
+
+function xIndexToPercent(i: number, n: number): number {
+  if (n <= 0) return 50;
+  if (n === 1) return 50;
+  return (i / (n - 1)) * 100;
 }
 
 function sparseXLabels(points: ChartPoint[], maxVisible: number): { text: string; show: boolean }[] {
@@ -150,7 +158,9 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
   const fillPending = `pp-pend-${gradPending}`;
 
   const [period, setPeriod] = useState<EvolutionChartPeriod>("6m");
+  const [periodOpen, setPeriodOpen] = useState(false);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const periodRef = useRef<HTMLDivElement>(null);
 
   const money = useMoney();
   const formatAxis = (amountEur: number) => money.format(amountEur, { compact: true });
@@ -160,7 +170,10 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
   const points = useMemo(() => buildChartPoints(clients, period, locale), [clients, period, locale]);
   const paidSeries = useMemo(() => points.map((p) => p.paid), [points]);
   const pendingSeries = useMemo(() => points.map((p) => p.pending), [points]);
-  const xDisplay = useMemo(() => sparseXLabels(points, period === "this_month" || period === "last_month" ? 7 : 6), [points, period]);
+  const xDisplay = useMemo(
+    () => sparseXLabels(points, period === "this_month" || period === "last_month" ? 7 : 6),
+    [points, period],
+  );
 
   const yMax = useMemo(
     () => niceChartAxisMax(Math.max(...paidSeries, ...pendingSeries, 0)),
@@ -171,53 +184,125 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
     [paidSeries, pendingSeries],
   );
 
-  const chartH = 140;
+  const chartH = 156;
   const chartW = 400;
+  const padT = 14;
+  const padB = 16;
+  // Marge minimale pour que les boules ne soient pas coupées par overflow
+  const padX = 3;
+  const plotBottom = chartH - padB;
   const n = points.length;
-  const chartGridSoft = light ? "var(--color-border)" : "rgba(148,163,184,0.12)";
-  const axisText = light ? "text-slate-500" : "text-slate-400";
+  const chartGridSoft = light ? "rgba(15,23,42,0.06)" : "rgba(148,163,184,0.1)";
+  const axisText = "text-[var(--pp-dash-muted)]";
+  const colorPaid = "#10b981";
+  const colorPending = "#f59e0b";
+  const colorInk = light ? "#0b0d12" : "#f4f6f8";
+  const colorSurface = light ? "rgba(255,255,255,0.92)" : "rgba(14,16,22,0.92)";
 
   const valueToY = (v: number) => {
     const ratio = yMax > 0 ? Math.max(0, Math.min(1, v / yMax)) : 0;
-    return chartH - ratio * (chartH - 20);
+    return padT + (1 - ratio) * (plotBottom - padT);
   };
 
-  const paidPts = paidSeries.map((v, i) => ({ x: xIndexToSvgX(i, n, chartW), y: valueToY(v) }));
-  const pendingPts = pendingSeries.map((v, i) => ({ x: xIndexToSvgX(i, n, chartW), y: valueToY(v) }));
+  const paidPts = paidSeries.map((v, i) => ({ x: xIndexToSvgX(i, n, chartW, padX), y: valueToY(v) }));
+  const pendingPts = pendingSeries.map((v, i) => {
+    const x = xIndexToSvgX(i, n, chartW, padX);
+    let y = valueToY(v);
+    // Si les deux séries tombent au même Y (souvent 0), décale légèrement pour garder les deux boules intactes
+    if (Math.abs(y - valueToY(paidSeries[i] ?? 0)) < 0.6) {
+      y -= 3.2;
+    }
+    return { x, y };
+  });
   const poly = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${p.y}`).join(" ");
-  const area = (pts: { x: number; y: number }[]) => `0,${chartH} ${poly(pts)} ${chartW},${chartH}`;
+  const area = (pts: { x: number; y: number }[]) => {
+    if (pts.length === 0) return "";
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+    return `${first.x},${plotBottom} ${poly(pts)} ${last.x},${plotBottom}`;
+  };
   const gridYs = yTicks.map((tick) => valueToY(tick));
 
   const activeIndex = hoverIndex ?? null;
-  const guideX = activeIndex !== null ? xIndexToSvgX(activeIndex, n, chartW) : null;
+  const guideX = activeIndex !== null ? xIndexToSvgX(activeIndex, n, chartW, padX) : null;
   const activePoint = activeIndex !== null ? points[activeIndex] : null;
 
+  useEffect(() => {
+    if (!periodOpen) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!periodRef.current?.contains(e.target as Node)) setPeriodOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPeriodOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [periodOpen]);
+
   return (
-    <div>
+    <div className="pp-cash-chart">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className={`min-w-0 flex-1 text-[11px] leading-snug ${light ? "text-slate-500" : "text-slate-400"}`}>
-          {copy.evolutionHint}
-        </p>
-        <label className={`flex shrink-0 flex-col gap-0.5 ${light ? "text-slate-600" : "text-slate-300"}`}>
-          <span className="sr-only">{copy.periodSelectLabel}</span>
-          <select
-            value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value as EvolutionChartPeriod);
-              setHoverIndex(null);
-            }}
-            className={`cursor-pointer rounded-lg border py-1.5 pl-2.5 pr-8 text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-              light ? "border-border bg-bg text-slate-800" : "border-white/10 bg-bg-dark text-slate-100"
-            }`}
+        <p className="min-w-0 flex-1 text-[11px] leading-snug text-[var(--pp-dash-muted)]">{copy.evolutionHint}</p>
+        <div className="relative shrink-0" ref={periodRef}>
+          <button
+            type="button"
+            className="pp-dash-btn-ghost inline-flex items-center gap-1.5 py-1.5 pl-2.5 pr-2 text-xs font-semibold text-[var(--pp-dash-ink)] outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/35"
             aria-label={copy.periodSelectLabel}
+            aria-haspopup="listbox"
+            aria-expanded={periodOpen}
+            onClick={() => setPeriodOpen((v) => !v)}
           >
-            {PERIOD_ORDER.map((p) => (
-              <option key={p} value={p}>
-                {periodLabel(p, copy)}
-              </option>
-            ))}
-          </select>
-        </label>
+            {periodLabel(period, copy)}
+            <svg
+              className={`h-3.5 w-3.5 text-[var(--pp-dash-muted)] transition-transform duration-300 ${periodOpen ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {periodOpen ? (
+            <div
+              className="pp-cash-chart__period-menu absolute right-0 top-[calc(100%+0.4rem)] z-20 min-w-[11.5rem] overflow-hidden rounded-xl border border-[var(--pp-dash-line)] py-1 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.55)]"
+              role="listbox"
+              aria-label={copy.periodSelectLabel}
+            >
+              {PERIOD_ORDER.map((p) => {
+                const selected = p === period;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={`flex w-full items-center px-3 py-2 text-left text-xs font-medium transition-colors ${
+                      selected
+                        ? light
+                          ? "bg-emerald-500/12 text-emerald-700"
+                          : "bg-emerald-500/15 text-emerald-300"
+                        : light
+                          ? "text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                          : "text-[var(--pp-dash-ink)] hover:bg-[rgba(255,255,255,0.06)]"
+                    }`}
+                    onClick={() => {
+                      setPeriod(p);
+                      setHoverIndex(null);
+                      setPeriodOpen(false);
+                    }}
+                  >
+                    {periodLabel(p, copy)}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-4 flex gap-2 sm:gap-3">
@@ -232,103 +317,96 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
           ))}
         </div>
 
-        <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-border/80 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-accent)_6%,transparent)_0%,transparent_42%)] px-1 pt-1">
-          <div className="h-40 sm:h-52">
-            <svg viewBox={`0 0 ${chartW} ${chartH}`} className="h-full w-full" preserveAspectRatio="none" aria-hidden>
+        <div className="pp-cash-chart__stage relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-[var(--pp-dash-line)] px-1.5 pt-1.5 pb-1">
+          <div className="pp-cash-chart__glow pp-cash-chart__glow--paid" aria-hidden />
+          <div className="pp-cash-chart__glow pp-cash-chart__glow--pending" aria-hidden />
+          <div className="relative h-40 overflow-visible sm:h-52">
+            <svg
+              viewBox={`0 0 ${chartW} ${chartH}`}
+              className="h-full w-full overflow-visible"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
               <defs>
                 <linearGradient id={fillPaid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={light ? "0.38" : "0.32"} />
-                  <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+                  <stop offset="0%" stopColor={colorPaid} stopOpacity={light ? "0.28" : "0.24"} />
+                  <stop offset="70%" stopColor={colorPaid} stopOpacity={light ? "0.06" : "0.05"} />
+                  <stop offset="100%" stopColor={colorPaid} stopOpacity="0" />
                 </linearGradient>
                 <linearGradient id={fillPending} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={light ? "0.12" : "0.18"} />
-                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
+                  <stop offset="0%" stopColor={colorPending} stopOpacity={light ? "0.18" : "0.14"} />
+                  <stop offset="100%" stopColor={colorPending} stopOpacity="0" />
                 </linearGradient>
-                <filter id={`${fillPaid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="1.6" result="blur" />
+                <filter id={`${fillPaid}-soft`} x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="1.2" result="blur" />
                   <feMerge>
                     <feMergeNode in="blur" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+                <clipPath id={`${fillPaid}-plot`}>
+                  <rect x={0} y={0} width={chartW} height={plotBottom + 2} />
+                </clipPath>
               </defs>
-              {gridYs.map((gy, i) => (
-                <line
-                  key={yTicks[i]}
-                  x1={0}
-                  y1={gy}
-                  x2={chartW}
-                  y2={gy}
-                  stroke={chartGridSoft}
-                  strokeWidth="0.5"
+              <g clipPath={`url(#${fillPaid}-plot)`}>
+                {gridYs.map((gy, i) => (
+                  <line key={yTicks[i]} x1={padX} y1={gy} x2={chartW - padX} y2={gy} stroke={chartGridSoft} strokeWidth="0.6" />
+                ))}
+                {guideX !== null ? (
+                  <line
+                    x1={guideX}
+                    y1={padT}
+                    x2={guideX}
+                    y2={plotBottom}
+                    stroke={colorInk}
+                    strokeOpacity="0.16"
+                    strokeWidth="1.1"
+                  />
+                ) : null}
+                {/* Surfaces empilées en douceur : ambre puis vert, sans coupure nette */}
+                <polygon fill={`url(#${fillPending})`} points={area(pendingPts)} opacity="0.85" />
+                <polygon fill={`url(#${fillPaid})`} points={area(paidPts)} opacity="0.9" style={{ mixBlendMode: light ? "multiply" : "screen" }} />
+                <polyline
+                  fill="none"
+                  stroke={colorPending}
+                  strokeWidth="1.75"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  strokeDasharray="4 5"
+                  strokeOpacity="0.92"
+                  points={poly(pendingPts)}
                 />
-              ))}
-              {paidPts.map((p, i) => (
-                <line
-                  key={`vx-${i}`}
-                  x1={p.x}
-                  y1={0}
-                  x2={p.x}
-                  y2={chartH}
-                  stroke={chartGridSoft}
-                  strokeWidth="0.4"
-                  strokeDasharray="2 6"
+                <polyline
+                  fill="none"
+                  stroke={colorPaid}
+                  strokeWidth="2.55"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  filter={`url(#${fillPaid}-soft)`}
+                  points={poly(paidPts)}
                 />
-              ))}
-              {guideX !== null ? (
-                <line
-                  x1={guideX}
-                  y1={0}
-                  x2={guideX}
-                  y2={chartH}
-                  stroke="var(--color-accent)"
-                  strokeOpacity="0.35"
-                  strokeWidth="1.25"
-                />
-              ) : null}
-              <polygon fill={`url(#${fillPending})`} points={area(pendingPts)} />
-              <polygon fill={`url(#${fillPaid})`} points={area(paidPts)} />
-              <polyline
-                fill="none"
-                stroke="var(--color-primary)"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                strokeDasharray="5 4"
-                points={poly(pendingPts)}
-              />
-              <polyline
-                fill="none"
-                stroke="var(--color-accent)"
-                strokeWidth="2.5"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                filter={`url(#${fillPaid}-glow)`}
-                points={poly(paidPts)}
-              />
+              </g>
+              {/* Boules hors clip pour rester intactes en bas */}
               {pendingPts.map((p, i) => (
-                <rect
+                <circle
                   key={`p-${i}`}
-                  x={p.x - (activeIndex === i ? 2.5 : 1.75)}
-                  y={p.y - (activeIndex === i ? 2.5 : 1.75)}
-                  width={activeIndex === i ? 5 : 3.5}
-                  height={activeIndex === i ? 5 : 3.5}
-                  fill={light ? "#fff" : "var(--color-bg-dark)"}
-                  stroke="var(--color-primary)"
-                  strokeWidth="1.25"
+                  cx={p.x}
+                  cy={p.y}
+                  r={activeIndex === i ? 3.6 : 2.7}
+                  fill={colorSurface}
+                  stroke={colorPending}
+                  strokeWidth="1.5"
                 />
               ))}
               {paidPts.map((p, i) => (
-                <rect
+                <circle
                   key={`c-${i}`}
-                  x={p.x - (activeIndex === i ? 3 : 2)}
-                  y={p.y - (activeIndex === i ? 3 : 2)}
-                  width={activeIndex === i ? 6 : 4}
-                  height={activeIndex === i ? 6 : 4}
-                  rx="0.6"
-                  fill="var(--color-accent)"
-                  stroke={light ? "#fff" : "var(--color-bg-dark)"}
-                  strokeWidth="1.25"
+                  cx={p.x}
+                  cy={p.y}
+                  r={activeIndex === i ? 4 : 2.9}
+                  fill={colorPaid}
+                  stroke={light ? "#ffffff" : "#0b0d12"}
+                  strokeWidth="1.45"
                 />
               ))}
             </svg>
@@ -336,17 +414,21 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
 
           {n > 0 ? (
             <div
-              className="absolute inset-0 grid"
-              style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
+              className="absolute inset-0 cursor-crosshair"
               onMouseLeave={() => setHoverIndex(null)}
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const ratio = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
+                const idx = n <= 1 ? 0 : Math.round(ratio * (n - 1));
+                setHoverIndex(Math.max(0, Math.min(n - 1, idx)));
+              }}
             >
               {points.map((_, i) => (
                 <button
                   key={i}
                   type="button"
-                  className="h-full w-full cursor-crosshair border-0 bg-transparent p-0"
+                  className="sr-only"
                   aria-label={`${points[i].label}: ${copy.evolutionPaid} ${formatTooltip(points[i].paid)}, ${copy.evolutionPending} ${formatTooltip(points[i].pending)}`}
-                  onMouseEnter={() => setHoverIndex(i)}
                   onFocus={() => setHoverIndex(i)}
                   onBlur={() => setHoverIndex(null)}
                 />
@@ -356,56 +438,64 @@ export function CollectionEvolutionChart({ clients, locale, light, copy }: Colle
 
           {activePoint && activeIndex !== null && guideX !== null ? (
             <div
-              className={`pointer-events-none absolute top-2 z-10 min-w-[9.5rem] rounded-lg border px-3 py-2 text-xs shadow-lg ${
-                light ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-bg-dark text-slate-100"
-              }`}
+              className="pp-cash-chart__tooltip pointer-events-none absolute top-2 z-10 min-w-[10rem] rounded-xl border border-[var(--pp-dash-line)] px-3 py-2 text-xs text-[var(--pp-dash-ink)] shadow-[0_12px_28px_-18px_rgba(15,23,42,0.45)]"
               style={{
-                left: `${((activeIndex + 0.5) / n) * 100}%`,
+                left: `${xIndexToPercent(activeIndex, n)}%`,
                 transform: activeIndex >= n / 2 ? "translateX(-100%)" : "translateX(0)",
               }}
             >
-              <p className={`mb-1.5 font-semibold ${light ? "text-slate-900" : "text-white"}`}>{activePoint.label}</p>
+              <p className="mb-1.5 font-semibold tracking-tight">{activePoint.label}</p>
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-flex h-1.5 w-4 rounded-sm bg-accent" aria-hidden />
+                    <span className="inline-flex h-2 w-2 rounded-full" style={{ background: colorPaid }} aria-hidden />
                     {copy.evolutionPaid}
                   </span>
-                  <span className="tabular-nums font-medium">{formatTooltip(activePoint.paid)}</span>
+                  <span className="tabular-nums font-semibold text-emerald-600">{formatTooltip(activePoint.paid)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-flex h-1.5 w-4 rounded-sm bg-primary" aria-hidden />
+                    <span className="inline-flex h-2 w-2 rounded-full" style={{ background: colorPending }} aria-hidden />
                     {copy.evolutionPending}
                   </span>
-                  <span className="tabular-nums font-medium">{formatTooltip(activePoint.pending)}</span>
+                  <span className="tabular-nums font-semibold text-amber-600">{formatTooltip(activePoint.pending)}</span>
                 </div>
               </div>
             </div>
           ) : null}
 
           <div
-            className={`mt-1.5 grid text-[9px] font-medium uppercase tracking-wide sm:text-[10px] ${axisText}`}
-            style={{ gridTemplateColumns: `repeat(${Math.max(n, 1)}, minmax(0, 1fr))` }}
+            className={`relative z-[1] mt-1.5 h-4 text-[9px] font-medium uppercase tracking-[0.06em] sm:text-[10px] ${axisText}`}
           >
-            {xDisplay.map((item, i) => (
-              <span key={`${item.text}-${i}`} className={`text-center ${item.show ? "" : "invisible"}`}>
-                {item.text}
-              </span>
-            ))}
+            {xDisplay.map((item, i) => {
+              if (!item.show) return null;
+              const atStart = i === 0;
+              const atEnd = i === n - 1 && n > 1;
+              return (
+                <span
+                  key={`${item.text}-${i}`}
+                  className="absolute top-0 whitespace-nowrap"
+                  style={{
+                    left: `${xIndexToPercent(i, n)}%`,
+                    transform: atStart ? "none" : atEnd ? "translateX(-100%)" : "translateX(-50%)",
+                    textAlign: atStart ? "left" : atEnd ? "right" : "center",
+                  }}
+                >
+                  {item.text}
+                </span>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      <div
-        className={`mt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-medium ${light ? "text-slate-600" : "text-slate-300"}`}
-      >
-        <span className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 ${light ? "border-border bg-bg" : "border-white/10 bg-white/[0.04]"}`}>
-          <span className="h-1.5 w-4 rounded-sm bg-accent" aria-hidden />
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-[var(--pp-dash-muted)]">
+        <span className="pp-dash-glass inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[var(--pp-dash-ink)]">
+          <span className="h-2 w-2 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.55)]" style={{ background: colorPaid }} aria-hidden />
           {copy.evolutionPaid}
         </span>
-        <span className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 ${light ? "border-border bg-bg" : "border-white/10 bg-white/[0.04]"}`}>
-          <span className="h-1.5 w-4 rounded-sm bg-primary" aria-hidden />
+        <span className="pp-dash-glass inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[var(--pp-dash-ink)]">
+          <span className="h-2 w-2 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.45)]" style={{ background: colorPending }} aria-hidden />
           {copy.evolutionPending}
         </span>
       </div>

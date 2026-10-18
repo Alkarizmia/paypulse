@@ -722,6 +722,10 @@ export default function SettingsPage() {
                 <a href="#organization" className="font-semibold text-violet-700 hover:underline">
                   Profil
                 </a>
+                {" · "}
+                <Link href="/dashboard/integrations" className="font-semibold text-violet-700 hover:underline">
+                  Intégrations
+                </Link>
                 {canAccessTeamPage((subscription?.planId ?? "free") as PlanId) ? (
                   <>
                     {" · "}
@@ -740,6 +744,10 @@ export default function SettingsPage() {
                 <a href="#organization" className="font-semibold text-violet-700 hover:underline">
                   Profile
                 </a>
+                {" · "}
+                <Link href="/dashboard/integrations" className="font-semibold text-violet-700 hover:underline">
+                  Integrations
+                </Link>
               </>
             )}
           </p>
@@ -749,6 +757,22 @@ export default function SettingsPage() {
             planId={(subscription?.planId ?? "free") as PlanId}
             locale={locale}
           />
+          <section className="rounded-2xl border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {locale === "fr" ? "Intégrations" : "Integrations"}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {locale === "fr"
+                ? "Connecte Google Calendar et les autres outils depuis la page Intégrations."
+                : "Connect Google Calendar and other tools from the Integrations page."}
+            </p>
+            <Link
+              href="/dashboard/integrations"
+              className="mt-4 inline-flex rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+            >
+              {locale === "fr" ? "Ouvrir les intégrations" : "Open integrations"}
+            </Link>
+          </section>
           {canAccessTeamPage((subscription?.planId ?? "free") as PlanId) ? (
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
               <h2 className="text-lg font-semibold text-slate-900">

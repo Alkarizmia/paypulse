@@ -10,6 +10,7 @@ import { AuthProvider } from "./auth-context";
 import { PwaInstallProvider } from "./pwa-install-provider";
 import { PwaRegister } from "./pwa-register";
 import { GoogleAnalytics } from "./google-analytics";
+import { CookieConsentBanner } from "./cookie-consent-banner";
 import { LowPerformanceHtmlAttrs } from "@/lib/low-performance";
 import { getSiteUrl } from "@/lib/site-url";
 import { PageVisibilityHtmlAttrs } from "./page-visibility-html-attrs";
@@ -76,6 +77,7 @@ export default function RootLayout({
               <div className="flex-1">{children}</div>
               <ConditionalFooter />
             </div>
+            <CookieConsentBanner />
             </DisplayCurrencyProvider>
           </LocaleProvider>
         </AuthProvider>

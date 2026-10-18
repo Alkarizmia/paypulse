@@ -80,12 +80,15 @@ export function ClientList({
         dueVal: "text-[11px] sm:text-xs",
         amount: "mt-0.5 text-sm font-semibold tabular-nums sm:text-base",
         btnRow: "flex w-full flex-col items-stretch gap-1.5 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-1",
-        markPaid: "inline-flex h-8 w-full items-center justify-center rounded-lg border border-emerald-300 bg-emerald-100 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200 sm:h-7 sm:w-7",
-        remind: "inline-flex w-full items-center justify-center rounded-lg bg-violet-600 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:shadow-none sm:w-auto",
+        markPaid:
+          "inline-flex h-8 w-full items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-700 transition hover:bg-emerald-500/15 sm:h-7 sm:w-7",
+        remind:
+          "pp-dash-btn-ink inline-flex w-full items-center justify-center px-2.5 py-1.5 text-[11px] disabled:cursor-not-allowed sm:w-auto",
         trash:
-          "inline-flex w-full items-center justify-center rounded-lg border border-red-300 bg-red-100 px-2.5 py-1.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-200 sm:w-auto",
+          "pp-dash-btn-ghost inline-flex w-full items-center justify-center px-2.5 py-1.5 text-[11px] text-red-600 sm:w-auto",
         badgePad: "px-2 py-0.5 text-[11px]",
-        uturnWrap: "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-sky-300 bg-sky-100 text-sky-700 transition hover:border-sky-400 hover:bg-sky-200 hover:text-sky-800",
+        uturnWrap:
+          "pp-dash-btn-ghost inline-flex h-6 w-6 shrink-0 items-center justify-center text-[var(--pp-dash-ink)]",
         uturnIcon: "h-3 w-3",
       }
     : {
@@ -106,30 +109,24 @@ export function ClientList({
         amount: "mt-1 text-base font-semibold tabular-nums sm:text-lg",
         btnRow: "flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-1.5",
         markPaid:
-          "inline-flex h-9 w-full items-center justify-center rounded-lg border border-emerald-300 bg-emerald-100 text-sm font-bold text-emerald-700 transition hover:bg-emerald-200 sm:h-8 sm:w-8",
+          "inline-flex h-9 w-full items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-sm font-bold text-emerald-700 transition hover:bg-emerald-500/15 sm:h-8 sm:w-8",
         remind:
-          "inline-flex w-full items-center justify-center rounded-lg bg-violet-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:shadow-none sm:w-auto",
+          "pp-dash-btn-ink inline-flex w-full items-center justify-center px-3.5 py-2 text-xs disabled:cursor-not-allowed sm:w-auto",
         trash:
-          "inline-flex w-full items-center justify-center rounded-lg border border-red-300 bg-red-100 px-3.5 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-200 sm:w-auto",
+          "pp-dash-btn-ghost inline-flex w-full items-center justify-center px-3.5 py-2 text-xs text-red-600 sm:w-auto",
         badgePad: "px-2.5 py-1 text-xs",
         uturnWrap:
-          "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-sky-300 bg-sky-100 text-sky-700 transition hover:border-sky-400 hover:bg-sky-200 hover:text-sky-800",
+          "pp-dash-btn-ghost inline-flex h-7 w-7 shrink-0 items-center justify-center text-[var(--pp-dash-ink)]",
         uturnIcon: "h-3.5 w-3.5",
       };
 
   if (clients.length === 0) {
     return (
-      <div
-        className={`pp-dashboard-card-interactive rounded-2xl border border-dashed p-7 text-center sm:p-12 ${
-          light
-            ? "border-slate-300 bg-white hover:border-slate-400"
-            : "border-white/20 bg-[#14141c] hover:border-white/30"
-        }`}
-      >
-        <p className={`text-sm font-medium sm:text-base ${light ? "text-slate-900" : "text-white"}`}>
+      <div className="pp-dash-panel pp-dashboard-card-interactive border-dashed p-7 text-center sm:p-12">
+        <p className="text-sm font-medium tracking-tight text-[var(--pp-dash-ink)] sm:text-base">
           {labels?.emptyTitle ?? "Aucun client pour le moment, ajoute ton premier client"}
         </p>
-        <p className={`mt-2 text-sm ${light ? "text-slate-600" : "text-slate-400"}`}>
+        <p className="mt-2 text-sm text-[var(--pp-dash-muted)]">
           {labels?.emptyBody ?? "Ajoute ta première fiche client pour démarrer le suivi des paiements."}
         </p>
       </div>
@@ -137,16 +134,10 @@ export function ClientList({
   }
 
   return (
-    <section
-      className={`pp-dashboard-card-interactive min-w-0 rounded-2xl border ${d.wrap} ${
-        light ? "border-slate-200 bg-white hover:border-slate-300" : "border-white/[0.08] bg-[#14141c] hover:border-white/12"
-      }`}
-    >
+    <section className={`pp-dash-panel pp-dash-blur-in min-w-0 ${d.wrap}`} style={{ ["--pp-rise-delay" as string]: "0.34s" }}>
       <div className={d.headMb}>
-        <h2 className={`${d.title} ${light ? "text-slate-900" : "text-white"}`}>
-          {labels?.title ?? "Vos clients"}
-        </h2>
-        <p className={`${d.subtitle} ${light ? "text-slate-600" : "text-slate-400"}`}>
+        <h2 className={`${d.title} text-[var(--pp-dash-ink)]`}>{labels?.title ?? "Vos clients"}</h2>
+        <p className={`${d.subtitle} text-[var(--pp-dash-muted)]`}>
           {labels?.subtitle ?? "Statut des montants et relances, relance via votre messagerie (mailto)."}
         </p>
       </div>
@@ -159,26 +150,22 @@ export function ClientList({
           return (
           <article
             key={client.id}
-            className={`pp-dashboard-card-interactive min-w-0 border ${d.card} ${
-              light
-                ? "border-slate-200 bg-slate-50 hover:border-violet-300/60"
-                : "border-white/10 bg-black/25 hover:border-violet-500/40"
-            }`}
+            className={`pp-dashboard-card-interactive pp-dash-glass min-w-0 ${d.card}`}
           >
             <div className={`flex min-w-0 flex-col ${d.topRow}`}>
               <div className="min-w-0">
-                <h3 className={`${d.h3} ${light ? "text-slate-900" : "text-white"}`}>{client.name}</h3>
+                <h3 className={`${d.h3} tracking-tight text-[var(--pp-dash-ink)]`}>{client.name}</h3>
                 {client.companyName && (
-                  <p className={`${d.company} ${light ? "text-slate-500" : "text-slate-500"}`}>{client.companyName}</p>
+                  <p className={`${d.company} text-[var(--pp-dash-muted)]`}>{client.companyName}</p>
                 )}
-                <p className={`${d.email} ${light ? "text-slate-600" : "text-slate-300"}`}>{client.email}</p>
+                <p className={`${d.email} text-[var(--pp-dash-muted)]`}>{client.email}</p>
               </div>
               {client.status === "paid" ? (
                 <span className="inline-flex items-center gap-1.5 self-start sm:self-auto">
                   <span
-                    className={`${d.badgePad} inline-flex items-center rounded-full font-semibold ring-1 ring-inset ${
+                    className={`${d.badgePad} inline-flex items-center rounded-lg font-semibold ring-1 ring-inset ${
                       light
-                        ? "bg-emerald-100 text-emerald-800 ring-emerald-200"
+                        ? "bg-emerald-500/10 text-emerald-800 ring-emerald-500/20"
                         : "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30"
                     }`}
                   >
@@ -198,9 +185,9 @@ export function ClientList({
                 </span>
               ) : (
                 <span
-                  className={`${d.badgePad} inline-flex items-center self-start rounded-full font-semibold ring-1 ring-inset sm:self-auto ${
+                  className={`${d.badgePad} inline-flex items-center self-start rounded-lg font-semibold ring-1 ring-inset sm:self-auto ${
                     light
-                      ? "bg-orange-100 text-orange-700 ring-orange-300"
+                      ? "bg-orange-500/10 text-orange-700 ring-orange-500/25"
                       : "bg-orange-500/15 text-orange-300 ring-orange-500/35"
                   }`}
                 >
@@ -208,13 +195,13 @@ export function ClientList({
                 </span>
               )}
             </div>
-            <div className={`${d.lower} ${light ? "border-slate-200" : "border-white/10"}`}>
+            <div className={`${d.lower} border-[var(--pp-dash-line)]`}>
               <div className="min-w-0">
-                <p className={`${d.dueLab} ${light ? "text-slate-500" : "text-slate-500"}`}>{labels?.due ?? "Échéance"}</p>
-                <p className={`${d.dueVal} ${light ? "text-slate-600" : "text-slate-300"}`}>
+                <p className={`${d.dueLab} text-[var(--pp-dash-muted)]`}>{labels?.due ?? "Échéance"}</p>
+                <p className={`${d.dueVal} text-[var(--pp-dash-muted)]`}>
                   {dateFmt.format(new Date(client.dueDate + "T12:00:00"))}
                 </p>
-                <p className={`${d.amount} ${light ? "text-slate-900" : "text-white"}`}>{money.format(client.amountDue)}</p>
+                <p className={`${d.amount} tracking-tight text-[var(--pp-dash-ink)]`}>{money.format(client.amountDue)}</p>
               </div>
               <div className={d.btnRow}>
                 {client.status === "unpaid" ? (
@@ -234,9 +221,7 @@ export function ClientList({
                   onClick={() => {
                     if (!remindLocked) onSendReminder(client);
                   }}
-                  className={`${d.remind} ${
-                    light ? "shadow-sm shadow-violet-200 disabled:bg-slate-200 disabled:text-slate-500" : "shadow-md shadow-black/30 disabled:bg-white/10 disabled:text-slate-500"
-                  }`}
+                  className={d.remind}
                 >
                   {labels?.remind ?? "Envoyer relance"}
                 </button>

@@ -12,6 +12,10 @@ export type DashboardHomeCopy = {
   kpiNoHistory: string;
   kpiEmptyCta: string;
   kpiEmptyReminders: string;
+  kpiHintUnpaid: string;
+  kpiHintReceived: string;
+  kpiHintDelay: string;
+  kpiHintReminders: string;
   foldersHintTitle: string;
   foldersHintCta: string;
   foldersHintClose: string;
@@ -101,6 +105,10 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiNoHistory: "Pas encore de données",
       kpiEmptyCta: "Ajoute ton premier client pour voir tes stats ici",
       kpiEmptyReminders: "Envoie une première relance pour suivre tes envois ici",
+      kpiHintUnpaid: "Montant total encore dû",
+      kpiHintReceived: "Somme encaissée ce mois",
+      kpiHintDelay: "Temps moyen avant paiement",
+      kpiHintReminders: "Relances déjà envoyées",
       foldersHintTitle: "Nouveau : Dossiers",
       foldersHintCta: "Découvrir",
       foldersHintClose: "Fermer",
@@ -190,6 +198,10 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiNoHistory: "No data yet",
       kpiEmptyCta: "Add your first client to see stats here",
       kpiEmptyReminders: "Send a first reminder to track sends here",
+      kpiHintUnpaid: "Total amount still due",
+      kpiHintReceived: "Cash collected this month",
+      kpiHintDelay: "Average time to get paid",
+      kpiHintReminders: "Reminders already sent",
       foldersHintTitle: "New: Folders",
       foldersHintCta: "Open",
       foldersHintClose: "Close",
@@ -279,6 +291,10 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiNoHistory: "Nog geen gegevens",
       kpiEmptyCta: "Voeg je eerste klant toe om hier stats te zien",
       kpiEmptyReminders: "Stuur een eerste herinnering om verzendingen te volgen",
+      kpiHintUnpaid: "Totaal nog openstaand",
+      kpiHintReceived: "Ontvangen deze maand",
+      kpiHintDelay: "Gemiddelde betaaltijd",
+      kpiHintReminders: "Al verstuurde herinneringen",
       foldersHintTitle: "Nieuw: Mappen",
       foldersHintCta: "Ontdekken",
       foldersHintClose: "Sluiten",
@@ -368,6 +384,10 @@ export function getDashboardHomeCopy(locale: AppLocale): DashboardHomeCopy {
       kpiNoHistory: "Sin datos aún",
       kpiEmptyCta: "Añade tu primer cliente para ver las estadísticas aquí",
       kpiEmptyReminders: "Envía un primer recordatorio para seguir los envíos aquí",
+      kpiHintUnpaid: "Total aún por cobrar",
+      kpiHintReceived: "Cobrado este mes",
+      kpiHintDelay: "Tiempo medio de pago",
+      kpiHintReminders: "Recordatorios ya enviados",
       foldersHintTitle: "Nuevo: Carpetas",
       foldersHintCta: "Descubrir",
       foldersHintClose: "Cerrar",
