@@ -500,3 +500,67 @@
     font-size: 1rem;
   }
 }
+
+/* Modale waitlist : fade + léger blur (GPU), sans Framer, sans lag */
+.pp-wl-backdrop {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.42);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+}
+
+.pp-wl-root--open .pp-wl-backdrop {
+  opacity: 1;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition:
+    opacity 0.28s ease,
+    -webkit-backdrop-filter 0.28s ease,
+    backdrop-filter 0.28s ease;
+}
+
+.pp-wl-panel {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0) scale(0.98);
+  transition:
+    opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pp-wl-root--open .pp-wl-panel {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-wl-backdrop,
+  .pp-wl-root--open .pp-wl-backdrop,
+  .pp-wl-panel,
+  .pp-wl-root--open .pp-wl-panel {
+    transition: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+  }
+
+  .pp-wl-root--open .pp-wl-backdrop {
+    opacity: 1;
+  }
+
+  .pp-wl-root--open .pp-wl-panel {
+    opacity: 1;
+  }
+}
+
+/* Appareils low-perf : flou allégé (moins de coût GPU) */
+html[data-low-performance] .pp-wl-root--open .pp-wl-backdrop {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}

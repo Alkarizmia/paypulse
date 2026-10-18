@@ -7,6 +7,8 @@ import { getWaitlistCopy } from "@/lib/messages/waitlist-copy";
 import { readWaitlistAttribution } from "@/lib/waitlist-attribution";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Durée alignée sur le CSS (ms) : sortie douce sans freiner l’UI. */
+const EXIT_MS = 220;
 
 type WaitlistModalProps = {
   open: boolean;
@@ -23,26 +25,48 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
   const [errorKey, setErrorKey] = useState<"invalid" | "server" | "rate" | null>(null);
+  /** Garde le DOM monté pendant l’animation de sortie. */
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setVisible(false);
+      const exitId = window.setTimeout(() => setMounted(false), EXIT_MS);
+      return () => window.clearTimeout(exitId);
+    }
+
+    setMounted(true);
     setStatus("idle");
     setErrorKey(null);
     setEmail("");
     setHoneypot("");
-    const id = window.setTimeout(() => emailRef.current?.focus(), 40);
+    // Double rAF : peindre l’état fermé, puis lancer l’entrée (évite le « pop »).
+    let raf2 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => setVisible(true));
+    });
+    const focusId = window.setTimeout(() => emailRef.current?.focus(), 180);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      window.clearTimeout(focusId);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!mounted) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      window.clearTimeout(id);
-      window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [mounted]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -102,16 +126,26 @@ export function WaitlistModal({ open, onClose, source }: WaitlistModalProps) {
           ? t.errorServer
           : null;
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center">
-      <button type="button" className="absolute inset-0 bg-black/45" aria-label={t.close} onClick={onClose} />
+    <div
+      className={`pp-wl-root fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center ${
+        visible ? "pp-wl-root--open" : ""
+      }`}
+      aria-hidden={!visible}
+    >
+      <button
+        type="button"
+        className="pp-wl-backdrop absolute inset-0"
+        aria-label={t.close}
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[1] w-full max-w-md rounded-2xl border border-border bg-bg p-6 sm:p-8"
+        className="pp-wl-panel relative z-[1] w-full max-w-md rounded-2xl border border-border bg-bg p-6 sm:p-8"
       >
         <button
           type="button"
