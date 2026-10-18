@@ -53,8 +53,9 @@ export default function ConfidentialitePage() {
       <ul>
         <li>
           <strong>Liste d&apos;attente (période actuelle)</strong> : adresse e-mail, date d&apos;inscription, langue
-          d&apos;interface et source du formulaire (ex. page d&apos;accueil). Aucun mot de passe n&apos;est demandé
-          pour cette inscription.
+          d&apos;interface et source d&apos;attribution (ex. paramètre <code>?src=</code> d&apos;une vidéo, ou
+          emplacement du formulaire). Aucun mot de passe n&apos;est demandé pour cette inscription. Aucun e-mail
+          n&apos;est envoyé automatiquement au moment de l&apos;inscription.
         </li>
         <li>
           <strong>Données de compte</strong> : adresse e-mail, mot de passe (haché par notre prestataire

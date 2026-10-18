@@ -52,10 +52,10 @@ export function getWaitlistCopy(locale: AppLocale) {
       es: "Un solo email en el lanzamiento. Sin spam.",
     }),
     consent: pickQuad(locale, {
-      fr: "Votre email sert uniquement à vous prévenir du lancement (via Resend, stocké dans notre base).",
-      en: "Your email is only used to notify you at launch (via Resend, stored in our database).",
-      nl: "Je e-mail gebruiken we alleen om je te verwittigen bij de lancering (via Resend, opgeslagen in onze database).",
-      es: "Tu email solo se usa para avisarte del lanzamiento (vía Resend, guardado en nuestra base).",
+      fr: "Nous stockons votre email, votre langue d'interface et la source d'inscription (ex. lien vidéo) pour vous prévenir du lancement uniquement.",
+      en: "We store your email, interface language, and signup source (e.g. video link) only to notify you at launch.",
+      nl: "We bewaren je e-mail, interfacetaal en aanmeldbron (bv. videolink) alleen om je te verwittigen bij de lancering.",
+      es: "Guardamos tu email, idioma de interfaz y origen del registro (p. ej. enlace de vídeo) solo para avisarte del lanzamiento.",
     }),
     privacyLink: pickQuad(locale, {
       fr: "Politique de confidentialité",
@@ -64,16 +64,22 @@ export function getWaitlistCopy(locale: AppLocale) {
       es: "Política de privacidad",
     }),
     unsubscribe: pickQuad(locale, {
-      fr: "Pour vous désinscrire : contact@paypulss.com, ou répondez à l'email de lancement.",
-      en: "To unsubscribe: contact@paypulss.com, or reply to the launch email.",
-      nl: "Uitschrijven: contact@paypulss.com, of beantwoord de lanceer-e-mail.",
-      es: "Para darte de baja: contact@paypulss.com, o responde al email de lanzamiento.",
+      fr: "Pour vous désinscrire : contact@paypulss.com.",
+      en: "To unsubscribe: contact@paypulss.com.",
+      nl: "Uitschrijven: contact@paypulss.com.",
+      es: "Para darte de baja: contact@paypulss.com.",
     }),
     success: pickQuad(locale, {
-      fr: "C'est noté. On vous écrit dès l'ouverture.",
+      fr: "C'est noté, on vous écrit dès l'ouverture.",
       en: "Got it. We'll email you when we open.",
       nl: "Genoteerd. We mailen je zodra we openen.",
       es: "Anotado. Te escribimos en cuanto abramos.",
+    }),
+    already: pickQuad(locale, {
+      fr: "Vous êtes déjà inscrit. On vous écrit dès l'ouverture.",
+      en: "You're already on the list. We'll email you when we open.",
+      nl: "Je staat al op de lijst. We mailen je zodra we openen.",
+      es: "Ya estás inscrito. Te escribimos en cuanto abramos.",
     }),
     errorInvalid: pickQuad(locale, {
       fr: "Adresse email invalide.",
@@ -102,7 +108,7 @@ export function getWaitlistCopy(locale: AppLocale) {
     pricingNote: pickQuad(locale, {
       fr: "Tarifs prévus au lancement",
       en: "Pricing planned for launch",
-      nl: "Prijzen gepland bij lancering",
+      nl: "Prijzen gepland bij de lancering",
       es: "Tarifas previstas para el lanzamiento",
     }),
     trustEarly: pickQuad(locale, {

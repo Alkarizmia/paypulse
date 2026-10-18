@@ -8,7 +8,7 @@ import { isWaitlistMode } from "@/lib/waitlist-mode";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LEN = 254;
-const MAX_SOURCE_LEN = 64;
+const MAX_SOURCE_LEN = 96;
 
 type WaitlistBody = {
   email?: unknown;
@@ -26,9 +26,8 @@ function isValidEmail(email: string): boolean {
   return email.length > 0 && email.length <= MAX_EMAIL_LEN && EMAIL_RE.test(email);
 }
 
-/** Réponse succès unique (nouvel email ou déjà inscrit) — pas d'énumération. */
-function successResponse() {
-  return NextResponse.json({ ok: true });
+function successResponse(already = false) {
+  return NextResponse.json({ ok: true, already });
 }
 
 export async function POST(request: Request) {
@@ -49,10 +48,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
   }
 
-  // Honeypot : bots qui remplissent le champ caché → succès silencieux
   if (typeof body.company === "string" && body.company.trim() !== "") {
     serverStructuredLog("api_waitlist_honeypot");
-    return successResponse();
+    return successResponse(false);
   }
 
   const email = typeof body.email === "string" ? normalizeEmail(body.email) : "";
@@ -63,7 +61,7 @@ export async function POST(request: Request) {
   const sourceRaw = typeof body.source === "string" ? body.source.trim().slice(0, MAX_SOURCE_LEN) : "";
   const source = sourceRaw || "landing";
   const langueRaw = typeof body.langue === "string" ? body.langue.trim().toLowerCase() : "";
-  const langue: AppLocale = isAppLocale(langueRaw) ? langueRaw : "en";
+  const langue: AppLocale = isAppLocale(langueRaw) ? langueRaw : "fr";
 
   const supabase = getSupabaseServerClient();
   if (!supabase.ok) {
@@ -71,19 +69,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });
   }
 
-  // Schéma prod : email + provider (check: "email") + status défaut en_attente.
   const { error } = await supabase.client.from("waitlist").insert({
     email,
     provider: "email",
+    source,
+    langue,
   });
 
   if (error) {
-    // Unique violation (email déjà inscrit) → même succès
     const code = typeof error.code === "string" ? error.code : "";
     const msg = (error.message ?? "").toLowerCase();
     if (code === "23505" || msg.includes("duplicate") || msg.includes("unique")) {
       serverStructuredLog("api_waitlist_duplicate", { source, langue });
-      return successResponse();
+      return successResponse(true);
     }
     serverStructuredLog("api_waitlist_insert_error", {
       code: code || "unknown",
@@ -93,5 +91,5 @@ export async function POST(request: Request) {
   }
 
   serverStructuredLog("api_waitlist_ok", { source, langue });
-  return successResponse();
+  return successResponse(false);
 }
