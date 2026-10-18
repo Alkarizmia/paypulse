@@ -9,6 +9,7 @@ import { ConditionalFooter } from "./conditional-footer";
 import { AuthProvider } from "./auth-context";
 import { PwaInstallProvider } from "./pwa-install-provider";
 import { PwaRegister } from "./pwa-register";
+import { GoogleAnalytics } from "./google-analytics";
 import { LowPerformanceHtmlAttrs } from "@/lib/low-performance";
 import { getSiteUrl } from "@/lib/site-url";
 import { PageVisibilityHtmlAttrs } from "./page-visibility-html-attrs";
@@ -80,6 +81,7 @@ export default function RootLayout({
         </AuthProvider>
         </PwaInstallProvider>
         <Analytics />
+        <GoogleAnalytics />
       </body>
     </html>
   );
