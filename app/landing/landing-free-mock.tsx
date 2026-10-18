@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import type { AppLocale } from "@/lib/app-locale";
-import { getLandingLossCopy, getLandingMockHint } from "@/lib/messages/landing-loss-copy";
+import { getLandingLossCopy } from "@/lib/messages/landing-loss-copy";
 
 type Status = "wait" | "remind" | "paid";
+type MockTheme = "dark" | "light";
 
 type Row = {
   id: string;
@@ -15,27 +16,9 @@ type Row = {
 };
 
 const INITIAL: Row[] = [
-  {
-    id: "lumen",
-    name: "Studio Lumen",
-    amount: 1200,
-    detail: "12 jours de retard",
-    status: "wait",
-  },
-  {
-    id: "nord",
-    name: "Atelier Nord",
-    amount: 480,
-    detail: "Relance envoyée",
-    status: "remind",
-  },
-  {
-    id: "marc",
-    name: "Marc D.",
-    amount: 900,
-    detail: "Réglé aujourd'hui",
-    status: "paid",
-  },
+  { id: "lumen", name: "Studio Lumen", amount: 1200, detail: "12 jours de retard", status: "wait" },
+  { id: "nord", name: "Atelier Nord", amount: 480, detail: "Relance envoyée", status: "remind" },
+  { id: "marc", name: "Marc D.", amount: 900, detail: "Réglé aujourd'hui", status: "paid" },
 ];
 
 function nextStatus(s: Status): Status {
@@ -56,13 +39,13 @@ function formatEuro(value: number): string {
   }
 }
 
-/** Maquette Free interactive : tap = En attente → Relancé → Payé. État local uniquement. */
+/** Maquette Free interactive + thème sombre/clair local uniquement. */
 export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
   const t = getLandingLossCopy(locale);
-  const hint = getLandingMockHint(locale);
   const [rows, setRows] = useState<Row[]>(INITIAL);
-  const [hintVisible, setHintVisible] = useState(true);
+  const [nudge, setNudge] = useState(true);
   const [pulse, setPulse] = useState(false);
+  const [theme, setTheme] = useState<MockTheme>("dark");
 
   const { total, openCount } = useMemo(() => {
     let total = 0;
@@ -80,7 +63,7 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
     s === "wait" ? t.statusWait : s === "remind" ? t.statusRemind : t.statusPaid;
 
   function onRowActivate(id: string) {
-    setHintVisible(false);
+    setNudge(false);
     setRows((prev) =>
       prev.map((row) => {
         if (row.id !== id) return row;
@@ -88,12 +71,7 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
         return {
           ...row,
           status,
-          detail:
-            status === "wait"
-              ? "En attente"
-              : status === "remind"
-                ? "Relance envoyée"
-                : "Réglé",
+          detail: status === "wait" ? "En attente" : status === "remind" ? "Relance envoyée" : "Réglé",
         };
       }),
     );
@@ -102,21 +80,46 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
   }
 
   return (
-    <div className="pp-free-mock" id="apercu">
+    <div
+      className={`pp-free-mock pp-glass pp-reveal ${theme === "light" ? "pp-free-mock--light" : ""}`}
+      id="apercu"
+      data-theme={theme}
+    >
       <div className="pp-free-mock-chrome">
         <span className="pp-free-mock-dot" />
         <span className="pp-free-mock-dot" />
         <span className="pp-free-mock-dot" />
         <span className="pp-free-mock-title">PayPulss · Accueil</span>
+        <button
+          type="button"
+          className="pp-free-mock-theme"
+          aria-label={theme === "dark" ? "Passer la maquette en mode clair" : "Passer la maquette en mode sombre"}
+          onClick={() => setTheme((th) => (th === "dark" ? "light" : "dark"))}
+        >
+          {theme === "dark" ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+              <path
+                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5Z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
       </div>
 
       <div className="pp-free-mock-body">
-        {hintVisible ? (
-          <p className="pp-free-mock-hint" role="status">
-            {hint}
-          </p>
-        ) : null}
-
         <div className={`pp-free-mock-total ${pulse ? "pp-free-mock-total--pulse" : ""}`}>
           <p className="pp-free-mock-total-label">À récupérer</p>
           <p className="pp-free-mock-total-value">{formatEuro(total)}</p>
@@ -126,13 +129,15 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
         </div>
 
         <ul className="pp-free-mock-list">
-          {rows.map((row) => (
+          {rows.map((row, index) => (
             <li key={row.id}>
               <button
                 type="button"
-                className="pp-free-mock-row pp-free-mock-row--btn"
+                className={`pp-free-mock-row pp-free-mock-row--btn ${
+                  nudge && index === 0 ? "pp-affordance-pulse" : ""
+                }`}
                 onClick={() => onRowActivate(row.id)}
-                aria-label={`${row.name}, ${statusLabel(row.status)}. Activer pour changer le statut.`}
+                aria-label={`${row.name}, ${statusLabel(row.status)}`}
               >
                 <div className="pp-free-mock-row-main">
                   <span className="pp-free-mock-name">{row.name}</span>
@@ -148,8 +153,6 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
             </li>
           ))}
         </ul>
-
-        <p className="pp-free-mock-foot">Totaux et liste de dossiers, sans tableur.</p>
       </div>
     </div>
   );

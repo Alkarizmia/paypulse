@@ -27,7 +27,7 @@ export function LandingHero({
 
   return (
     <section className="relative isolate px-4 pb-6 pt-10 sm:px-6 sm:pt-16 lg:pt-20">
-      <div className="pp-lp-enter relative mx-auto max-w-3xl text-center">
+      <div className="pp-reveal relative mx-auto max-w-3xl text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-muted">{c.badge}</p>
         <h1 className="mt-6 text-[2.2rem] font-semibold leading-[1.1] tracking-[-0.038em] text-text sm:text-5xl lg:text-[3.4rem]">
           {c.titleLine1}

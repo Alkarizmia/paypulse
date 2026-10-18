@@ -63,11 +63,24 @@ export function getLandingPremiumCopy(locale: AppLocale) {
       nl: "Gemaakt voor freelancers",
       es: "Pensado para autónomos",
     }),
-    trustLine: pickQuad(locale, {
-      fr: "Aperçu produit : totaux et liste de dossiers, lisible sur mobile.",
-      en: "Product preview: totals and case list, readable on mobile.",
-      nl: "Productvoorbeeld: totalen en lijst, leesbaar op mobiel.",
-      es: "Vista previa: totales y lista de dossiers, legible en móvil.",
+    /** Trust affichés en mode liste d'attente (promesses vraies). */
+    waitlistTrust1: pickQuad(locale, {
+      fr: "Gratuit pour rejoindre la liste d'attente",
+      en: "Free to join the waitlist",
+      nl: "Gratis om je in te schrijven",
+      es: "Gratis para unirte a la lista",
+    }),
+    waitlistTrust2: pickQuad(locale, {
+      fr: "Un seul email au lancement",
+      en: "One email at launch",
+      nl: "Eén e-mail bij de lancering",
+      es: "Un solo email al lanzamiento",
+    }),
+    waitlistTrust3: pickQuad(locale, {
+      fr: "Pensé pour les freelances",
+      en: "Made for freelancers",
+      nl: "Gemaakt voor freelancers",
+      es: "Pensado para autónomos",
     }),
     pricingTeaserTitle: pickQuad(locale, {
       fr: "Tarifs dévoilés au lancement",

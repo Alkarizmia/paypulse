@@ -135,14 +135,43 @@
   height: auto;
 }
 
-/* Maquette Free (capture vidéo mobile) */
+/* Maquette Free (capture vidéo mobile) — verre (2/3) */
 .pp-free-mock {
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 1.1rem;
-  background: #0f172a;
+  background: rgba(15, 23, 42, 0.88);
   color: #f8fafc;
   overflow: hidden;
-  box-shadow: 0 24px 64px -40px rgba(15, 23, 42, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 64px -40px rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.pp-free-mock--light {
+  background: rgba(255, 255, 255, 0.86);
+  color: #0f172a;
+  border-color: rgba(226, 232, 240, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 20px 50px -36px rgba(15, 23, 42, 0.2);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pp-free-mock {
+    background: #0f172a;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .pp-free-mock--light {
+    background: #ffffff;
+  }
 }
 
 .pp-free-mock-chrome {
@@ -151,7 +180,13 @@
   gap: 0.4rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-  background: #111827;
+  background: rgba(17, 24, 39, 0.65);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.pp-free-mock--light .pp-free-mock-chrome {
+  background: rgba(248, 250, 252, 0.9);
+  border-bottom-color: rgba(226, 232, 240, 0.95);
 }
 
 .pp-free-mock-dot {
@@ -163,9 +198,43 @@
 
 .pp-free-mock-title {
   margin-left: 0.5rem;
+  margin-right: auto;
   font-size: 0.8rem;
   font-weight: 600;
   color: #94a3b8;
+}
+
+.pp-free-mock--light .pp-free-mock-title {
+  color: #64748b;
+}
+
+.pp-free-mock-theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.pp-free-mock-theme:hover {
+  color: #fff;
+  border-color: rgba(165, 180, 252, 0.6);
+}
+
+.pp-free-mock--light .pp-free-mock-theme {
+  color: #475569;
+  border-color: rgba(203, 213, 225, 0.9);
+}
+
+.pp-free-mock--light .pp-free-mock-theme:hover {
+  color: #0f172a;
+  background: rgba(241, 245, 249, 0.9);
 }
 
 .pp-free-mock-body {
@@ -177,6 +246,31 @@
   border-radius: 0.85rem;
   background: rgba(99, 102, 241, 0.14);
   border: 1px solid rgba(99, 102, 241, 0.35);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.pp-free-mock--light .pp-free-mock-total {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.28);
+}
+
+.pp-free-mock--light .pp-free-mock-total-value {
+  color: #0f172a;
+}
+
+.pp-free-mock--light .pp-free-mock-total-hint,
+.pp-free-mock--light .pp-free-mock-detail {
+  color: #64748b;
+}
+
+.pp-free-mock--light .pp-free-mock-row {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.pp-free-mock--light .pp-free-mock-name,
+.pp-free-mock--light .pp-free-mock-amount {
+  color: #0f172a;
 }
 
 .pp-free-mock-total-label {
@@ -273,10 +367,7 @@
 }
 
 .pp-free-mock-foot {
-  margin-top: 0.85rem;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  color: #64748b;
+  display: none;
 }
 
 .pp-lp-nav-shell {
@@ -297,26 +388,37 @@
   height: 3.5rem;
   margin-inline: auto;
   padding-inline: 1.05rem 0.7rem;
-  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
   transform: translateZ(0);
+  /* Verre (1/3) : nav */
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 8px 28px rgba(15, 23, 42, 0.05);
   transition:
     background-color 0.3s ease,
     border-color 0.3s ease,
-    -webkit-backdrop-filter 0.3s ease,
-    backdrop-filter 0.3s ease;
+    box-shadow 0.3s ease;
 }
 
 .pp-lp-nav-capsule.is-scrolled {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.82);
   border-color: rgba(226, 232, 240, 0.95);
-  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 10px 32px rgba(15, 23, 42, 0.07);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pp-lp-nav-capsule,
+  .pp-lp-nav-capsule.is-scrolled {
+    background: rgba(255, 255, 255, 0.94);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .pp-lp-nav-brand {
@@ -502,16 +604,6 @@
 }
 
 /* Maquette hero interactive */
-.pp-free-mock-hint {
-  margin: 0 0 0.75rem;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #a5b4fc;
-}
-
 .pp-free-mock-row--btn {
   display: block;
   width: 100%;
@@ -530,6 +622,10 @@
 
 .pp-free-mock-row--btn:active {
   background: #243044;
+}
+
+.pp-free-mock--light .pp-free-mock-row--btn:active {
+  background: #eef2ff;
 }
 
 .pp-free-mock-total--pulse {
@@ -554,6 +650,135 @@
   }
 }
 
+/* Transitions douces clair ↔ sombre */
+.pp-blend {
+  pointer-events: none;
+  height: 160px;
+  width: 100%;
+  position: relative;
+}
+
+.pp-blend--to-dark {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 28%, #1e293b 72%, #0b1220 100%);
+}
+
+.pp-blend--to-dark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: min(70%, 28rem);
+  height: 4.5rem;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.22), transparent 70%);
+  filter: blur(18px);
+}
+
+.pp-blend--to-light {
+  background: linear-gradient(180deg, #0b1220 0%, #1e293b 28%, #f8fafc 72%, #ffffff 100%);
+}
+
+.pp-blend--to-light::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: min(70%, 28rem);
+  height: 4.5rem;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.18), transparent 70%);
+  filter: blur(18px);
+}
+
+/* Entrée blur (une fois) */
+@keyframes pp-reveal-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.pp-reveal {
+  animation: pp-reveal-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-reveal {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .pp-blend--to-dark::after,
+  .pp-blend--to-light::after {
+    filter: none;
+    opacity: 0.5;
+  }
+}
+
+/* Affordance : halo / pulsation (s'arrête à l'interaction) */
+@keyframes pp-affordance {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.12);
+  }
+}
+
+.pp-affordance-pulse {
+  animation: pp-affordance 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-affordance-pulse {
+    animation: none;
+    outline: 1px solid rgba(99, 102, 241, 0.45);
+  }
+}
+
+/* Ambiance photo */
+.pp-ambiance-frame {
+  position: relative;
+  background: #e2e8f0;
+  min-height: 14rem;
+}
+
+.pp-ambiance-img {
+  display: block;
+}
+
+.pp-ambiance-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16rem;
+  background: linear-gradient(145deg, #e2e8f0, #f8fafc 55%, #eef2ff);
+}
+
+.pp-ambiance-placeholder-mark {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  border: 1px dashed #94a3b8;
+  opacity: 0.55;
+}
+
+.pp-ambiance-veil {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(255, 255, 255, 0.55) 100%);
+}
+
 /* Section calculateurs « Combien tu perds » */
 .pp-loss {
   background: #0b1220;
@@ -562,6 +787,44 @@
 
 .pp-loss-pulse .pp-pulse-line {
   stroke: #818cf8;
+}
+
+/* Verre (3/3) : carte résultat calculateur */
+.pp-loss-result.pp-glass {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pp-loss-result.pp-glass {
+    background: rgba(30, 41, 59, 0.92);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.pp-loss-cta-in {
+  animation: pp-loss-cta-fade 0.55s ease both;
+}
+
+@keyframes pp-loss-cta-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-loss-cta-in {
+    animation: none;
+  }
 }
 
 .pp-loss-range {

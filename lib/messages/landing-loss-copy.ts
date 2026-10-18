@@ -9,12 +9,6 @@ export function getLandingLossCopy(locale: AppLocale) {
       nl: "Hoeveel geld blijft bij je klanten hangen?",
       es: "¿Cuánto dinero se queda en tus clientes?",
     }),
-    subtitle: pickQuad(locale, {
-      fr: "Bouge les curseurs. Pas besoin d'écrire.",
-      en: "Move the sliders. No typing needed.",
-      nl: "Beweeg de schuifregelaars. Geen typen nodig.",
-      es: "Mueve los cursores. Sin escribir.",
-    }),
     invoicesLabel: pickQuad(locale, {
       fr: "Factures en retard",
       en: "Overdue invoices",
@@ -63,12 +57,6 @@ export function getLandingLossCopy(locale: AppLocale) {
       nl: "Schatting op basis van jouw antwoorden, geen statistieken.",
       es: "Estimación según tus respuestas, no estadísticas.",
     }),
-    seeDifference: pickQuad(locale, {
-      fr: "Voir la différence",
-      en: "See the difference",
-      nl: "Zie het verschil",
-      es: "Ver la diferencia",
-    }),
     finalMessage: pickQuad(locale, {
       fr: "Avec PayPulss, tu vois tout et tu relances en deux clics.",
       en: "With PayPulss, you see everything and follow up in two clicks.",
@@ -115,11 +103,3 @@ export function getLandingLossCopy(locale: AppLocale) {
   };
 }
 
-export function getLandingMockHint(locale: AppLocale) {
-  return pickQuad(locale, {
-    fr: "Touche un dossier",
-    en: "Tap a file",
-    nl: "Tik op een dossier",
-    es: "Toca un dossier",
-  });
-}

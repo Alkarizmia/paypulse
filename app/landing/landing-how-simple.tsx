@@ -23,10 +23,9 @@ export function LandingHowSimple() {
   return (
     <section id="how" className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-24">
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">
+        <h2 className="pp-reveal text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">
           Comment ça marche
         </h2>
-        <p className="mt-3 text-text-muted">Trois étapes. Pas de jargon.</p>
         <PaypulssPulseDivider className="mx-auto mt-8" />
       </div>
 

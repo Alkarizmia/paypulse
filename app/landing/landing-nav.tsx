@@ -6,6 +6,7 @@ import { useAuth } from "@/app/auth-context";
 import { useLocale } from "@/app/locale-context";
 import { APP_LOCALES } from "@/lib/app-locale";
 import { getGlobalTopBarCopy } from "@/lib/messages/global-topbar-copy";
+import { isShowPricing } from "@/lib/show-pricing";
 
 export function LandingNav({
   waitlistMode = false,
@@ -22,6 +23,7 @@ export function LandingNav({
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuId = useId();
+  const showPricing = isShowPricing();
   const ctaHref = isAuthenticated ? "/dashboard" : "/signup";
   const ctaLabel = waitlistMode
     ? (waitlistCtaLabel ?? t.cta)
@@ -51,12 +53,12 @@ export function LandingNav({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const links = [
+  const links: { href: string; label: string }[] = [
     { href: "#features", label: t.features },
     { href: "#apercu", label: t.preview },
-    { href: "#pricing", label: t.pricing },
+    ...(showPricing ? [{ href: "#pricing", label: t.pricing }] : []),
     { href: "#faq", label: t.faq },
-  ] as const;
+  ];
 
   const ctaClassName = "pp-lp-btn hidden bg-primary px-4 py-1.5 text-white md:inline-flex";
   const ctaMobileClassName = "pp-lp-btn bg-primary px-5 py-3 text-white";

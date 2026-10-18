@@ -10,6 +10,7 @@ const DEFAULT_AMOUNT = 800;
 const DEFAULT_MINUTES = 10;
 const RELANCES_PER_INVOICE = 3;
 const MAX_DEMO_ROWS = 5;
+const DEBOUNCE_MS = 800;
 
 type Status = "wait" | "remind" | "paid";
 
@@ -55,7 +56,6 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-/** Compteur doux vers une cible (désactivé si reduced-motion). */
 function useAnimatedNumber(target: number, reduced: boolean): number {
   const [display, setDisplay] = useState(target);
   const displayRef = useRef(target);
@@ -96,42 +96,71 @@ export function LandingLossCalculator({
 }: Props) {
   const t = getLandingLossCopy(locale);
   const reduced = usePrefersReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
   const [invoices, setInvoices] = useState(DEFAULT_INVOICES);
   const [amount, setAmount] = useState(DEFAULT_AMOUNT);
   const [minutes, setMinutes] = useState(DEFAULT_MINUTES);
+  const [sliderNudge, setSliderNudge] = useState(true);
   const [demoRunning, setDemoRunning] = useState(false);
   const [demoDone, setDemoDone] = useState(false);
+  const [showCta, setShowCta] = useState(false);
   const [demoStatuses, setDemoStatuses] = useState<Status[]>([]);
   const [demoBlocked, setDemoBlocked] = useState<number | null>(null);
   const timersRef = useRef<number[]>([]);
+  const debounceRef = useRef<number | null>(null);
+  const hasAutoPlayed = useRef(false);
+  const invoicesRef = useRef(invoices);
+  const amountRef = useRef(amount);
+  const demoRunningRef = useRef(false);
+
+  invoicesRef.current = invoices;
+  amountRef.current = amount;
+  demoRunningRef.current = demoRunning;
 
   const blocked = invoices * amount;
   const timeMinutes = invoices * RELANCES_PER_INVOICE * minutes;
   const shownBlocked = demoBlocked !== null ? demoBlocked : blocked;
 
   const animBlocked = useAnimatedNumber(shownBlocked, reduced);
-  const animTime = useAnimatedNumber(demoRunning || demoDone ? 0 : timeMinutes, reduced);
+  const animTime = useAnimatedNumber(demoRunning || demoDone ? timeMinutes * 0.15 : timeMinutes, reduced);
 
   const clearTimers = useCallback(() => {
     for (const id of timersRef.current) window.clearTimeout(id);
     timersRef.current = [];
   }, []);
 
-  useEffect(() => () => clearTimers(), [clearTimers]);
-
   const runDemo = useCallback(() => {
-    if (demoRunning) return;
+    if (demoRunningRef.current) return;
     clearTimers();
-    const n = Math.min(Math.max(invoices, 1), MAX_DEMO_ROWS);
-    const startBlocked = invoices * amount;
+    const inv = invoicesRef.current;
+    const amt = amountRef.current;
+    if (inv <= 0) {
+      setDemoStatuses([]);
+      setDemoBlocked(0);
+      setDemoDone(true);
+      setShowCta(true);
+      return;
+    }
+    const n = Math.min(Math.max(inv, 1), MAX_DEMO_ROWS);
+    const startBlocked = inv * amt;
+    setShowCta(false);
     setDemoDone(false);
     setDemoRunning(true);
     setDemoBlocked(startBlocked);
     setDemoStatuses(Array.from({ length: n }, () => "wait" as Status));
 
-    const stepMs = reduced ? 0 : 380;
+    if (reduced) {
+      setDemoStatuses(Array.from({ length: n }, () => "paid" as Status));
+      setDemoBlocked(0);
+      setDemoRunning(false);
+      setDemoDone(true);
+      setShowCta(true);
+      return;
+    }
+
+    const stepMs = 380;
     const timers: number[] = [];
-    let delay = reduced ? 0 : 200;
+    let delay = 200;
 
     for (let i = 0; i < n; i++) {
       timers.push(
@@ -162,29 +191,70 @@ export function LandingLossCalculator({
         setDemoBlocked(0);
         setDemoRunning(false);
         setDemoDone(true);
-      }, delay + (reduced ? 0 : 120)),
+        setShowCta(true);
+      }, delay + 120),
     );
     timersRef.current = timers;
-  }, [amount, clearTimers, demoRunning, invoices, reduced]);
+  }, [clearTimers, reduced]);
 
-  const onSliderInteract = () => {
-    if (!demoDone && !demoRunning) {
-      /* Premier mouvement : ne lance pas auto la démo, seulement recalcule.
-         La démo reste sur le bouton pour rester contrôlée sur mobile. */
-    }
-  };
+  useEffect(() => () => clearTimers(), [clearTimers]);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.35);
+        if (!hit || hasAutoPlayed.current) return;
+        hasAutoPlayed.current = true;
+        runDemo();
+      },
+      { threshold: [0.35] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [runDemo]);
+
+  function scheduleReplay() {
+    hasAutoPlayed.current = true;
+    setSliderNudge(false);
+    clearTimers();
+    demoRunningRef.current = false;
+    setDemoRunning(false);
+    setDemoStatuses([]);
+    setDemoBlocked(null);
+    setDemoDone(false);
+    setShowCta(false);
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
+      runDemo();
+    }, DEBOUNCE_MS);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const statusLabel = (s: Status) =>
     s === "wait" ? t.statusWait : s === "remind" ? t.statusRemind : t.statusPaid;
 
   return (
-    <section id="perte" className="pp-loss scroll-mt-28 px-4 py-16 sm:px-6 sm:py-20" aria-labelledby="pp-loss-title">
+    <section
+      ref={sectionRef}
+      id="perte"
+      className="pp-loss scroll-mt-28 px-4 py-16 sm:px-6 sm:py-20"
+      aria-labelledby="pp-loss-title"
+    >
       <div className="mx-auto max-w-lg">
         <PaypulssPulseDivider className="pp-loss-pulse mx-auto mb-8" />
-        <h2 id="pp-loss-title" className="text-center text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
+        <h2
+          id="pp-loss-title"
+          className="pp-reveal text-center text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl"
+        >
           {t.title}
         </h2>
-        <p className="mt-3 text-center text-[15px] text-slate-400">{t.subtitle}</p>
 
         <div className="mt-10 space-y-8">
           <RangeField
@@ -195,12 +265,10 @@ export function LandingLossCalculator({
             step={1}
             value={invoices}
             display={`${invoices}`}
+            affordance={sliderNudge}
             onChange={(v) => {
-              onSliderInteract();
               setInvoices(v);
-              setDemoDone(false);
-              setDemoBlocked(null);
-              setDemoStatuses([]);
+              scheduleReplay();
             }}
           />
           <RangeField
@@ -212,11 +280,8 @@ export function LandingLossCalculator({
             value={amount}
             display={formatEuro(amount, locale)}
             onChange={(v) => {
-              onSliderInteract();
               setAmount(v);
-              setDemoDone(false);
-              setDemoBlocked(null);
-              setDemoStatuses([]);
+              scheduleReplay();
             }}
           />
           <RangeField
@@ -228,18 +293,15 @@ export function LandingLossCalculator({
             value={minutes}
             display={`${minutes} ${t.minutesShort}`}
             onChange={(v) => {
-              onSliderInteract();
               setMinutes(v);
-              setDemoDone(false);
-              setDemoBlocked(null);
-              setDemoStatuses([]);
+              scheduleReplay();
             }}
           />
         </div>
 
         <p className="mt-4 text-center text-xs text-slate-500">{t.assumption}</p>
 
-        <div className="pp-loss-result mt-8 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-6 text-center">
+        <div className="pp-loss-result pp-glass pp-reveal mt-8 rounded-2xl px-5 py-6 text-center">
           <p className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {formatEuro(animBlocked, locale)}
           </p>
@@ -250,17 +312,6 @@ export function LandingLossCalculator({
           <p className="mt-1 text-sm text-slate-400">{t.timeSuffix}</p>
           <p className="mt-4 text-[11px] leading-relaxed text-slate-500">{t.disclaimer}</p>
         </div>
-
-        {!demoDone ? (
-          <button
-            type="button"
-            className="pp-lp-btn mt-8 w-full bg-white px-6 py-3.5 text-base text-slate-900 disabled:opacity-60"
-            onClick={runDemo}
-            disabled={demoRunning || invoices === 0}
-          >
-            {t.seeDifference}
-          </button>
-        ) : null}
 
         {(demoRunning || demoDone) && demoStatuses.length > 0 ? (
           <div className="mt-8 space-y-3" aria-live="polite">
@@ -276,8 +327,8 @@ export function LandingLossCalculator({
           </div>
         ) : null}
 
-        {demoDone ? (
-          <div className="mt-8 text-center">
+        {showCta ? (
+          <div className="pp-loss-cta-in mt-8 text-center">
             <p className="text-base font-medium leading-relaxed text-white sm:text-lg">{t.finalMessage}</p>
             {waitlistMode ? (
               <button
@@ -288,7 +339,10 @@ export function LandingLossCalculator({
                 {ctaLabel}
               </button>
             ) : (
-              <a href={primaryHref} className="pp-lp-btn mt-6 inline-flex w-full bg-indigo-500 px-6 py-3.5 text-base text-white">
+              <a
+                href={primaryHref}
+                className="pp-lp-btn mt-6 inline-flex w-full bg-indigo-500 px-6 py-3.5 text-base text-white"
+              >
                 {ctaLabel}
               </a>
             )}
@@ -307,6 +361,7 @@ function RangeField({
   step,
   value,
   display,
+  affordance,
   onChange,
 }: {
   id: string;
@@ -316,6 +371,7 @@ function RangeField({
   step: number;
   value: number;
   display: string;
+  affordance?: boolean;
   onChange: (v: number) => void;
 }) {
   return (
@@ -336,7 +392,7 @@ function RangeField({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="pp-loss-range"
+        className={`pp-loss-range ${affordance ? "pp-affordance-pulse" : ""}`}
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={value}

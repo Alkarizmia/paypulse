@@ -19,6 +19,7 @@ import { LandingProductShowcase } from "@/app/landing/landing-product-showcase";
 import { LandingEditorialFeatures } from "@/app/landing/landing-editorial-features";
 import { LandingHowSimple } from "@/app/landing/landing-how-simple";
 import { LandingLossCalculator } from "@/app/landing/landing-loss-calculator";
+import { LandingAmbiance } from "@/app/landing/landing-ambiance";
 import { WaitlistModal } from "@/app/landing/waitlist-modal";
 import { PaypulssPulseDivider } from "@/app/landing/paypulss-pulse";
 import "./landing-premium.css";
@@ -48,6 +49,7 @@ export function LandingPage() {
   const primaryHref = isAuthenticated ? "/dashboard" : "/signup";
   const primaryLabel = waitlist ? w.cta : isAuthenticated ? t.ctaDashboard : p.ctaPrimary;
   const pricingSub = waitlist ? w.pricingNote : t.pricingSub;
+  const waitlistTrust = [p.waitlistTrust1, p.waitlistTrust2, p.waitlistTrust3];
 
   useEffect(() => {
     captureWaitlistAttribution();
@@ -86,9 +88,10 @@ export function LandingPage() {
             primaryLabel={primaryLabel}
             waitlistMode={waitlist}
             onWaitlistClick={() => openWaitlist("landing-hero")}
-            trustOverride={waitlist ? [w.trustEarly, p.trust3] : undefined}
+            trustOverride={waitlist ? waitlistTrust : undefined}
           />
           <LandingProductShowcase locale={locale} />
+          <div className="pp-blend pp-blend--to-dark" aria-hidden />
         </div>
 
         <LandingLossCalculator
@@ -99,7 +102,10 @@ export function LandingPage() {
           primaryHref={primaryHref}
         />
 
+        <div className="pp-blend pp-blend--to-light" aria-hidden />
+
         <LandingHowSimple />
+        <LandingAmbiance />
         <LandingEditorialFeatures locale={locale} />
 
         <section id="pricing" className="scroll-mt-28 px-4 py-24 sm:px-6">
@@ -198,11 +204,13 @@ export function LandingPage() {
                     {t.footerLinks.footerHowLink}
                   </a>
                 </li>
-                <li>
-                  <a href="#pricing" className="hover:text-text">
-                    {t.footerLinks.pricing}
-                  </a>
-                </li>
+                {showPricing ? (
+                  <li>
+                    <a href="#pricing" className="hover:text-text">
+                      {t.footerLinks.pricing}
+                    </a>
+                  </li>
+                ) : null}
                 <li>
                   <a href="#faq" className="hover:text-text">
                     {t.footerLinks.faq}
