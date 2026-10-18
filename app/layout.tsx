@@ -9,6 +9,7 @@ import { AuthProvider } from "./auth-context";
 import { PwaInstallProvider } from "./pwa-install-provider";
 import { PwaRegister } from "./pwa-register";
 import { LowPerformanceHtmlAttrs } from "@/lib/low-performance";
+import { getSiteUrl } from "@/lib/site-url";
 import { PageVisibilityHtmlAttrs } from "./page-visibility-html-attrs";
 
 const font = Inter({
@@ -18,12 +19,7 @@ const font = Inter({
 });
 
 function metadataBaseUrl(): URL {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (raw) return new URL(raw.endsWith("/") ? raw : `${raw}/`);
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("NEXT_PUBLIC_SITE_URL is required in production");
-  }
-  return new URL("http://localhost:3000");
+  return new URL(`${getSiteUrl()}/`);
 }
 
 export const metadata: Metadata = {

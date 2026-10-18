@@ -1,14 +1,22 @@
 /**
  * URL absolue du site pour metadata, sitemap, robots, OG.
- * En production, NEXT_PUBLIC_SITE_URL est obligatoire.
+ * Priorité : NEXT_PUBLIC_SITE_URL → URL Vercel → localhost (dev).
  */
 export function getSiteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? "";
-  if (raw) {
-    return raw.replace(/\/$/, "");
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? "";
+  if (fromEnv) {
+    return fromEnv.replace(/\/$/, "");
   }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("NEXT_PUBLIC_SITE_URL is required in production");
+
+  const vercelProd = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ?? "";
+  if (vercelProd) {
+    return `https://${vercelProd.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
   }
+
+  const vercelUrl = process.env.VERCEL_URL?.trim() ?? "";
+  if (vercelUrl) {
+    return `https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
+
   return "http://localhost:3000";
 }
