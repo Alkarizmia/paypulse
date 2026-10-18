@@ -76,12 +76,8 @@ const PACKS = { fr, en, nl, es } as const;
 
 export type ScrollPinCopy = (typeof PACKS)["fr"];
 
-export const HERO_FACE_SRCS = [
-  "/landing/hero-face-1.png",
-  "/landing/hero-face-2.png",
-  "/landing/hero-face-3.png",
-  "/landing/hero-face-4.png",
-] as const;
+/** Assets hero-face supprimés (perf landing). Tableau vide volontaire. */
+export const HERO_FACE_SRCS = [] as const;
 
 export function getScrollPinCopy(locale: AppLocale): ScrollPinCopy {
   return PACKS[locale] as ScrollPinCopy;
