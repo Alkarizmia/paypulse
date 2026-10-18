@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Contact | PayPulss",
   description: "Contacter l'équipe PayPulss.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {

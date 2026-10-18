@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Politique de confidentialité | PayPulss",
   description:
     "Politique de confidentialité PayPulss : données personnelles, finalités, sous-traitants, droits RGPD.",
+  alternates: { canonical: "/confidentialite" },
 };
 
 export default function ConfidentialitePage() {

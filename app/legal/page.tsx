@@ -5,6 +5,7 @@ import { LEGAL_ENTITY } from "@/lib/legal-entity";
 export const metadata: Metadata = {
   title: "Informations légales | PayPulss",
   description: "Index des pages légales PayPulss : confidentialité, CGU, sécurité, mentions légales.",
+  alternates: { canonical: "/legal" },
 };
 
 const links = [

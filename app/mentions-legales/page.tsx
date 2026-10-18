@@ -5,6 +5,7 @@ import { LEGAL_ENTITY } from "@/lib/legal-entity";
 export const metadata: Metadata = {
   title: "Mentions légales | PayPulss",
   description: "Mentions légales PayPulss : éditeur Alkarizmia (Belgique), hébergeur, contact.",
+  alternates: { canonical: "/mentions-legales" },
 };
 
 export default function MentionsLegalesPage() {

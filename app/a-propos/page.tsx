@@ -4,6 +4,7 @@ import { LEGAL_ENTITY } from "@/lib/legal-entity";
 export const metadata: Metadata = {
   title: "À propos | PayPulss",
   description: "Informations de contact et de responsabilité pour PayPulss (Alkarizmia).",
+  alternates: { canonical: "/a-propos" },
 };
 
 export default function AProposPage() {

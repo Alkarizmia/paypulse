@@ -17,28 +17,33 @@ const font = Inter({
   display: "swap",
 });
 
+function metadataBaseUrl(): URL {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (raw) return new URL(raw.endsWith("/") ? raw : `${raw}/`);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_SITE_URL is required in production");
+  }
+  return new URL("http://localhost:3000");
+}
+
 export const metadata: Metadata = {
-  title: "PayPulss · Invoices and reminders for freelancers",
+  title: "PayPulss · Relance facture impayée pour freelances",
   description:
-    "SaaS for freelancers: invoice tracking, automatic reminders, a simple dashboard. PayPulss.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  alternates: {
-    canonical: "/",
-  },
+    "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
+  metadataBase: metadataBaseUrl(),
   openGraph: {
-    title: "PayPulss · Invoices and reminders for freelancers",
+    title: "PayPulss · Relance facture impayée pour freelances",
     description:
-      "SaaS for freelancers: invoice tracking, automatic reminders, a simple dashboard. PayPulss.",
-    url: "/",
+      "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
     siteName: "PayPulss",
-    locale: "en_US",
+    locale: "fr_FR",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PayPulss · Invoices and reminders for freelancers",
+    title: "PayPulss · Relance facture impayée pour freelances",
     description:
-      "SaaS for freelancers: invoice tracking, automatic reminders, a simple dashboard. PayPulss.",
+      "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
   },
   robots: {
     index: true,
@@ -59,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={font.variable} suppressHydrationWarning>
+    <html lang="fr" className={font.variable} suppressHydrationWarning>
       <body className={`${font.className} min-h-screen antialiased`} suppressHydrationWarning>
         <LowPerformanceHtmlAttrs />
         <PageVisibilityHtmlAttrs />

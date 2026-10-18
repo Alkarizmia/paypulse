@@ -5,6 +5,7 @@ import { LEGAL_ENTITY } from "@/lib/legal-entity";
 export const metadata: Metadata = {
   title: "Conditions générales d'utilisation | PayPulss",
   description: "CGU PayPulss : usage du service, comptes, limites, responsabilité.",
+  alternates: { canonical: "/conditions-utilisation" },
 };
 
 export default function ConditionsPage() {

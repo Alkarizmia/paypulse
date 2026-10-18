@@ -4,6 +4,7 @@ import { LegalLayout } from "@/app/legal/legal-layout";
 export const metadata: Metadata = {
   title: "Sécurité des données | PayPulss",
   description: "Mesures de sécurité PayPulss : authentification, isolation des données, bonnes pratiques.",
+  alternates: { canonical: "/droits-securite-donnees" },
 };
 
 export default function DataRightsPage() {
