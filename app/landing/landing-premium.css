@@ -501,6 +501,176 @@
   }
 }
 
+/* Maquette hero interactive */
+.pp-free-mock-hint {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.pp-free-mock-row--btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.pp-free-mock-row--btn:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+
+.pp-free-mock-row--btn:active {
+  background: #243044;
+}
+
+.pp-free-mock-total--pulse {
+  animation: pp-free-total-pulse 0.42s ease;
+}
+
+@keyframes pp-free-total-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-free-mock-total--pulse {
+    animation: none;
+  }
+}
+
+/* Section calculateurs « Combien tu perds » */
+.pp-loss {
+  background: #0b1220;
+  color: #f8fafc;
+}
+
+.pp-loss-pulse .pp-pulse-line {
+  stroke: #818cf8;
+}
+
+.pp-loss-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2.75rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pp-loss-range:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.pp-loss-range::-webkit-slider-runnable-track {
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: #334155;
+}
+
+.pp-loss-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.675rem;
+  border-radius: 9999px;
+  border: 2px solid #0b1220;
+  background: #6366f1;
+  box-shadow: 0 0 0 1px #a5b4fc;
+}
+
+.pp-loss-range::-moz-range-track {
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: #334155;
+}
+
+.pp-loss-range::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  border: 2px solid #0b1220;
+  background: #6366f1;
+}
+
+.pp-loss-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+  background: #111827;
+}
+
+.pp-loss-badge {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pp-loss-badge--wait {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.pp-loss-badge--remind {
+  background: rgba(99, 102, 241, 0.22);
+  color: #a5b4fc;
+}
+
+.pp-loss-badge--paid {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.pp-loss-demo-pulse {
+  opacity: 0.85;
+}
+
+.pp-loss-demo-pulse--active .pp-pulse-line {
+  stroke-dasharray: 40 200;
+  animation: pp-loss-pulse-draw 1.2s ease-in-out infinite;
+}
+
+@keyframes pp-loss-pulse-draw {
+  0% {
+    stroke-dashoffset: 120;
+  }
+  100% {
+    stroke-dashoffset: -120;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-loss-demo-pulse--active .pp-pulse-line {
+    animation: none;
+  }
+}
+
 /* Modale waitlist : fade + léger blur (GPU), sans Framer, sans lag */
 .pp-wl-backdrop {
   border: 0;

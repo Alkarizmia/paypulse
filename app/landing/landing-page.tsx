@@ -18,6 +18,7 @@ import { LandingHero } from "@/app/landing/landing-hero";
 import { LandingProductShowcase } from "@/app/landing/landing-product-showcase";
 import { LandingEditorialFeatures } from "@/app/landing/landing-editorial-features";
 import { LandingHowSimple } from "@/app/landing/landing-how-simple";
+import { LandingLossCalculator } from "@/app/landing/landing-loss-calculator";
 import { WaitlistModal } from "@/app/landing/waitlist-modal";
 import { PaypulssPulseDivider } from "@/app/landing/paypulss-pulse";
 import "./landing-premium.css";
@@ -89,6 +90,14 @@ export function LandingPage() {
           />
           <LandingProductShowcase locale={locale} />
         </div>
+
+        <LandingLossCalculator
+          locale={locale}
+          ctaLabel={primaryLabel}
+          waitlistMode={waitlist}
+          onWaitlistClick={() => openWaitlist("landing-loss")}
+          primaryHref={primaryHref}
+        />
 
         <LandingHowSimple />
         <LandingEditorialFeatures locale={locale} />
