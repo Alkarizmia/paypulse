@@ -19,7 +19,6 @@ import { LandingProductShowcase } from "@/app/landing/landing-product-showcase";
 import { LandingEditorialFeatures } from "@/app/landing/landing-editorial-features";
 import { LandingHowSimple } from "@/app/landing/landing-how-simple";
 import { LandingLossCalculator } from "@/app/landing/landing-loss-calculator";
-import { LandingAmbiance } from "@/app/landing/landing-ambiance";
 import { WaitlistModal } from "@/app/landing/waitlist-modal";
 import { PaypulssPulseDivider } from "@/app/landing/paypulss-pulse";
 import "./landing-premium.css";
@@ -105,7 +104,6 @@ export function LandingPage() {
         <div className="pp-blend pp-blend--to-light" aria-hidden />
 
         <LandingHowSimple />
-        <LandingAmbiance />
         <LandingEditorialFeatures locale={locale} />
 
         <section id="pricing" className="scroll-mt-28 px-4 py-24 sm:px-6">

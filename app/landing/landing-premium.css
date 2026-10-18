@@ -745,40 +745,6 @@
   }
 }
 
-/* Ambiance photo */
-.pp-ambiance-frame {
-  position: relative;
-  background: #e2e8f0;
-  min-height: 14rem;
-}
-
-.pp-ambiance-img {
-  display: block;
-}
-
-.pp-ambiance-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 16rem;
-  background: linear-gradient(145deg, #e2e8f0, #f8fafc 55%, #eef2ff);
-}
-
-.pp-ambiance-placeholder-mark {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 9999px;
-  border: 1px dashed #94a3b8;
-  opacity: 0.55;
-}
-
-.pp-ambiance-veil {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 45%, rgba(255, 255, 255, 0.55) 100%);
-}
-
 /* Section calculateurs « Combien tu perds » */
 .pp-loss {
   background: #0b1220;
