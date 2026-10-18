@@ -4,9 +4,8 @@ import { pickQuad } from "@/lib/messages/pick";
 /**
  * Copy landing premium (hero + 3 features + CTA final).
  *
- * TODO(relances-auto-plan): vérité produit actuelle = relances auto dès Starter
- * (`getPlanCapabilities` / lib/plans.ts). Si tu tranches « dès Pro », mets à jour
- * FAQ + features + cette note, et n’utilise jamais « automatique » pour le Free.
+ * TODO(relances-auto-plan): ne pas promettre « relances automatiques » tant que
+ * le plan (Starter vs Pro) n’est pas tranché. Voir aussi FAQ dans landing-copy.ts.
  */
 export function getLandingPremiumCopy(locale: AppLocale) {
   return {
@@ -65,10 +64,22 @@ export function getLandingPremiumCopy(locale: AppLocale) {
       es: "Pensado para autónomos",
     }),
     trustLine: pickQuad(locale, {
-      fr: "La vue réelle du plan Gratuit : totaux et liste, sans graphiques avancés.",
-      en: "The real Free plan view: totals and list, without advanced charts.",
-      nl: "De echte Gratis-weergave: totalen en lijst, zonder geavanceerde grafieken.",
-      es: "La vista real del plan Gratis: totales y lista, sin gráficos avanzados.",
+      fr: "Aperçu produit : totaux et liste de dossiers, lisible sur mobile.",
+      en: "Product preview: totals and case list, readable on mobile.",
+      nl: "Productvoorbeeld: totalen en lijst, leesbaar op mobiel.",
+      es: "Vista previa: totales y lista de dossiers, legible en móvil.",
+    }),
+    pricingTeaserTitle: pickQuad(locale, {
+      fr: "Tarifs dévoilés au lancement",
+      en: "Pricing revealed at launch",
+      nl: "Prijzen bij de lancering",
+      es: "Tarifas al lanzamiento",
+    }),
+    pricingTeaserBody: pickQuad(locale, {
+      fr: "Une offre gratuite pour tester, des plans simples pensés pour les freelances. Inscris-toi à la liste d'attente pour être prévenu en premier.",
+      en: "A free offer to try, and simple plans built for freelancers. Join the waitlist to hear first.",
+      nl: "Een gratis aanbod om te testen, eenvoudige plannen voor freelancers. Schrijf je in om als eerste te horen.",
+      es: "Una oferta gratuita para probar, planes simples para freelancers. Únete a la lista para enterarte primero.",
     }),
     feature1Title: pickQuad(locale, {
       fr: "Voyez tout ce qu'on vous doit",
@@ -89,11 +100,12 @@ export function getLandingPremiumCopy(locale: AppLocale) {
       es: "Reclama sin perder una hora",
     }),
     feature2Body: pickQuad(locale, {
-      // TODO(relances-auto-plan): Free = prévisualisation + messagerie. Auto dès Starter.
-      fr: "Un message prêt à relire, envoyé depuis votre messagerie. Les relances planifiées arrivent dès Starter.",
-      en: "A message ready to review, sent from your mailbox. Scheduled reminders from Starter.",
-      nl: "Een bericht klaar om te herlezen, via uw mailbox. Geplande herinneringen vanaf Starter.",
-      es: "Un mensaje listo para revisar, desde tu correo. Recordatorios programados desde Starter.",
+      // TODO(relances-auto-plan): quand le plan est tranché, préciser ici si les
+      // relances planifiées / automatiques arrivent dès Starter ou dès Pro.
+      fr: "Un message prêt à relire, envoyé depuis votre messagerie. Clair, pro, sans y passer une heure.",
+      en: "A message ready to review, sent from your mailbox. Clear, professional, without losing an hour.",
+      nl: "Een bericht klaar om te herlezen, via uw mailbox. Duidelijk, professioneel, zonder een uur te verliezen.",
+      es: "Un mensaje listo para revisar, desde tu correo. Claro, profesional, sin perder una hora.",
     }),
     feature3Title: pickQuad(locale, {
       fr: "Sachez ce qui rentre ce mois-ci",

@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
-import { MARKETING_PLANS, type PlanId } from "@/lib/plans";
+import type { PlanId } from "@/lib/plans";
 import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
-import { getLandingCopy, getLocalizedPlanCard, pricingAnnualPeriodLabel } from "@/lib/messages/landing-copy";
-import { pickQuad } from "@/lib/messages/pick";
+import { getLandingCopy } from "@/lib/messages/landing-copy";
 import { getLandingPremiumCopy } from "@/lib/messages/landing-premium-copy";
 import { getWaitlistCopy } from "@/lib/messages/waitlist-copy";
 import { isWaitlistMode } from "@/lib/waitlist-mode";
+import { isShowPricing } from "@/lib/show-pricing";
 import { captureWaitlistAttribution } from "@/lib/waitlist-attribution";
 import { LandingNav } from "@/app/landing/landing-nav";
 import { LandingHero } from "@/app/landing/landing-hero";
@@ -23,21 +24,20 @@ import "./landing-premium.css";
 
 type BillingCycle = "monthly" | "annual";
 
-type AnnualPricing = {
-  annual: string;
-  oldAnnual: string;
-};
-
-const ANNUAL_PRICING: Partial<Record<PlanId, AnnualPricing>> = {
-  starter: { annual: "86.40€", oldAnnual: "108€" },
-  pro: { annual: "182.40€", oldAnnual: "228€" },
-  agency: { annual: "374.40€", oldAnnual: "468€" },
-};
+/** Chargé seulement si NEXT_PUBLIC_SHOW_PRICING=true (évite les prix dans le HTML sinon). */
+const LandingPricingGrid = dynamic(
+  () =>
+    import("@/app/landing/landing-pricing-grid").then((m) => ({
+      default: m.LandingPricingGrid,
+    })),
+  { ssr: true },
+);
 
 export function LandingPage() {
   const { locale } = useLocale();
   const { isAuthenticated } = useAuth();
   const waitlist = isWaitlistMode();
+  const showPricing = isShowPricing();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [waitlistSource, setWaitlistSource] = useState("landing");
@@ -94,122 +94,39 @@ export function LandingPage() {
         <LandingEditorialFeatures locale={locale} />
 
         <section id="pricing" className="scroll-mt-28 px-4 py-24 sm:px-6">
-          <div className="mx-auto max-w-6xl">
+          {showPricing ? (
+            <LandingPricingGrid
+              locale={locale}
+              billingCycle={billingCycle}
+              onBillingCycleChange={setBillingCycle}
+              pricingSub={pricingSub}
+              waitlist={waitlist}
+              primaryLabel={primaryLabel}
+              onWaitlistPlan={(planId) => openWaitlist(`landing-pricing-${planId}`)}
+              resolvePlanCtaHref={resolvePlanCtaHref}
+            />
+          ) : (
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">{t.pricingTitle}</h2>
-              <p className="mt-4 text-text-muted">{pricingSub}</p>
+              <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">
+                {p.pricingTeaserTitle}
+              </h2>
               <PaypulssPulseDivider className="mx-auto mt-8" />
-              <div
-                role="tablist"
-                aria-label={pickQuad(locale, {
-                  fr: "Choix de facturation mensuelle ou annuelle",
-                  en: "Choose monthly or yearly billing",
-                  nl: "Kies maandelijkse of jaarlijkse facturatie",
-                  es: "Elige facturación mensual o anual",
-                })}
-                className="mx-auto mt-8 flex h-11 w-[min(100%,18rem)] rounded-full border border-border bg-white p-1"
-              >
-                {(["monthly", "annual"] as const).map((cycle) => (
-                  <button
-                    key={cycle}
-                    type="button"
-                    role="tab"
-                    aria-selected={billingCycle === cycle}
-                    onClick={() => setBillingCycle(cycle)}
-                    className={`flex-1 rounded-full text-sm font-medium transition-colors ${
-                      billingCycle === cycle ? "bg-primary text-white" : "text-text-muted"
-                    }`}
-                  >
-                    {cycle === "monthly" ? t.pricingBillingMonthly : t.pricingBillingAnnual}
-                  </button>
-                ))}
-              </div>
-              {billingCycle === "annual" ? (
-                <p className="mt-3 text-xs text-text-muted">{t.pricingAnnualSavingsNote}</p>
-              ) : null}
+              <p className="mt-6 text-base leading-relaxed text-text-muted sm:text-lg">{p.pricingTeaserBody}</p>
+              {waitlist ? (
+                <button
+                  type="button"
+                  onClick={() => openWaitlist("landing-pricing-teaser")}
+                  className="pp-lp-btn mt-8 bg-primary px-8 py-3.5 text-base text-white"
+                >
+                  {primaryLabel}
+                </button>
+              ) : (
+                <Link href={primaryHref} className="pp-lp-btn mt-8 bg-primary px-8 py-3.5 text-base text-white">
+                  {primaryLabel}
+                </Link>
+              )}
             </div>
-
-            <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {MARKETING_PLANS.map((plan) => {
-                const localized = getLocalizedPlanCard(locale, plan.id);
-                const name = localized?.name ?? plan.name;
-                const description = localized?.description ?? plan.description;
-                const features = localized?.features ?? plan.features;
-                const annualPricing = ANNUAL_PRICING[plan.id];
-                const showAnnual = billingCycle === "annual" && Boolean(annualPricing);
-                const shownPrice = showAnnual ? annualPricing!.annual : plan.price;
-                const period = showAnnual
-                  ? pricingAnnualPeriodLabel(locale)
-                  : localized?.periodLabel ??
-                    (plan.period === "forever"
-                      ? pickQuad(locale, { fr: "gratuit", en: "free", nl: "gratis", es: "gratis" })
-                      : plan.period);
-                const cta = waitlist
-                  ? primaryLabel
-                  : localized?.cta ??
-                    (plan.id === "free"
-                      ? pickQuad(locale, {
-                          fr: "Tester gratuitement",
-                          en: "Start free",
-                          nl: "Gratis proberen",
-                          es: "Probar gratis",
-                        })
-                      : t.planCtaEnFallback);
-                const highlight = Boolean(plan.highlighted);
-
-                return (
-                  <article
-                    key={plan.id}
-                    className={`flex flex-col rounded-2xl border p-6 ${
-                      highlight ? "border-accent/35 bg-white" : "border-border bg-white"
-                    }`}
-                  >
-                    {highlight ? (
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">{t.popular}</p>
-                    ) : (
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-transparent">.</p>
-                    )}
-                    <h3 className="mt-3 text-lg font-semibold text-text">{name}</h3>
-                    <p className="mt-1 min-h-[2.75rem] text-sm leading-relaxed text-text-muted">{description}</p>
-                    <p className="mt-6 flex items-baseline gap-1">
-                      <span className="text-3xl font-semibold tracking-tight text-text">{shownPrice}</span>
-                      <span className="text-sm text-text-muted">{period}</span>
-                    </p>
-                    {showAnnual ? (
-                      <p className="mt-2 text-xs text-text-muted">
-                        {t.pricingAnnualOldLabel} <span className="line-through">{annualPricing!.oldAnnual}</span>
-                      </p>
-                    ) : null}
-                    <ul className="mt-6 flex-1 space-y-2 text-sm text-text-muted">
-                      {features.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                    {waitlist ? (
-                      <button
-                        type="button"
-                        onClick={() => openWaitlist(`landing-pricing-${plan.id}`)}
-                        className={`pp-lp-btn mt-8 w-full py-2.5 ${
-                          highlight ? "bg-primary text-white" : "border border-border text-text"
-                        }`}
-                      >
-                        {cta}
-                      </button>
-                    ) : (
-                      <Link
-                        href={resolvePlanCtaHref(plan.id)}
-                        className={`pp-lp-btn mt-8 w-full py-2.5 ${
-                          highlight ? "bg-primary text-white" : "border border-border text-text"
-                        }`}
-                      >
-                        {cta}
-                      </Link>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          </div>
+          )}
         </section>
 
         <section id="faq" className="scroll-mt-28 border-t border-border px-4 py-24 sm:px-6">

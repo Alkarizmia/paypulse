@@ -40,7 +40,7 @@ export function LandingFreeMock() {
         <div className="pp-free-mock-total">
           <p className="pp-free-mock-total-label">À récupérer</p>
           <p className="pp-free-mock-total-value">1 680 €</p>
-          <p className="pp-free-mock-total-hint">2 dossiers ouverts · plan Gratuit</p>
+          <p className="pp-free-mock-total-hint">2 dossiers ouverts</p>
         </div>
 
         <ul className="pp-free-mock-list">
@@ -60,7 +60,7 @@ export function LandingFreeMock() {
           ))}
         </ul>
 
-        <p className="pp-free-mock-foot">Totaux et liste. Les graphiques d&apos;évolution arrivent avec Starter.</p>
+        <p className="pp-free-mock-foot">Totaux et liste de dossiers, sans tableur.</p>
       </div>
     </div>
   );

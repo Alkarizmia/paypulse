@@ -98,21 +98,21 @@ const fr = {
           faqSub: "Réponses courtes, contactez-nous pour un cas particulier.",
           faqItems: [
             {
+              q: "Combien ça coûte ?",
+              a: "Nous dévoilons les tarifs au lancement, avec une offre gratuite pour tester.",
+            },
+            {
               q: "Où sont stockées mes données ?",
               a: "Sur votre compte sécurisé (hébergement cloud). Vous contrôlez ce que vous saisissez : clients, montants, échéances.",
             },
             {
               q: "Puis-je essayer sans carte bancaire ?",
-              a: "Oui. L’offre gratuite suffit pour tester la liste d’impayés et les relances depuis votre messagerie.",
+              a: "Oui. Vous pourrez tester sans carte lorsque le produit ouvrira, avec une offre gratuite.",
             },
             {
-              // TODO(relances-auto-plan): aligné sur Starter (lib/plans.ts). Changer ici si « dès Pro ».
-              q: "Les relances partent-elles toutes seules ?",
-              a: "Sur le plan Gratuit, vous prévisualisez le message et l’envoyez depuis votre messagerie. Les relances planifiées (envoi automatique selon vos règles) sont disponibles dès Starter.",
-            },
-            {
-              q: "La maquette du site montre-t-elle le plan Gratuit ?",
-              a: "Oui. La démo reprend la vue Free : totaux et liste de dossiers. Les graphiques d’évolution et de répartition arrivent avec Starter.",
+              // TODO(relances-auto-plan): ne pas promettre d’envoi auto tant que le plan n’est pas tranché.
+              q: "Comment partent les relances ?",
+              a: "Vous prévisualisez le message (objet et contenu), puis vous l’envoyez depuis votre messagerie.",
             },
             {
               q: "C’est quoi la différence avec un tableur ?",
@@ -432,21 +432,21 @@ const en = {
           faqSub: "Short answers, reach out for edge cases.",
           faqItems: [
             {
+              q: "How much does it cost?",
+              a: "We reveal pricing at launch, with a free offer to try.",
+            },
+            {
               q: "Where is my data stored?",
               a: "In your secured cloud account. You control what you enter: clients, amounts, due dates.",
             },
             {
               q: "Can I try without a credit card?",
-              a: "Yes. The free plan is enough to try the unpaid list and reminders from your mailbox.",
+              a: "Yes. When we open, you can try without a card, with a free offer.",
             },
             {
-              // TODO(relances-auto-plan): aligned with Starter (lib/plans.ts).
-              q: "Do reminders send automatically?",
-              a: "On Free, you preview the message and send from your mailbox. Scheduled automatic reminders are available from Starter.",
-            },
-            {
-              q: "Does the homepage mock show the Free plan?",
-              a: "Yes. The demo matches Free: totals and a case list. Evolution and breakdown charts unlock with Starter.",
+              // TODO(relances-auto-plan): do not promise auto-send until plan is decided.
+              q: "How do reminders work?",
+              a: "You preview the message (subject and body), then send it from your mailbox.",
             },
             {
               q: "How is this better than a spreadsheet?",
@@ -760,24 +760,25 @@ const nl = {
           faqSub: "Korte antwoorden; mail ons voor uitzonderingen.",
           faqItems: [
             {
+              q: "Wat kost het?",
+              a: "We onthullen de prijzen bij de lancering, met een gratis aanbod om te testen.",
+            },
+            {
               q: "Waar worden mijn gegevens opgeslagen?",
-              a: "Zonder Supabase blijven gegevens in je browser (lokale modus). Met Supabase staan ze in je cloudproject, beschermd door de toegangsregels die je uitrolt.",
+              a: "In je beveiligde cloudaccount. Jij bepaalt wat je invult: klanten, bedragen, vervaldata.",
             },
             {
               q: "Kan ik het proberen zonder creditcard?",
-              a: "Ja. Het gratis niveau volstaat om flows en de limieten op het dashboard te testen.",
+              a: "Ja. Bij opening kun je zonder kaart testen, met een gratis aanbod.",
             },
             {
-              q: "Worden herinneringen automatisch verstuurd?",
-              a: "De eerste versie opent een voorbeeld (onderwerp plus tekst) zodat je verzenden bevestigt vanuit je mailprogramma. Volledig automatisch hangt af van plan en instellingen.",
-            },
-            {
-              q: "Waarom zie ik niet dezelfde grafieken als op jullie homepage?",
-              a: "De screenshot op de site is een demo (voorbeeldcijfers) van het volledige dashboard. In de app toont het gratis plan de hoofdtotalen maar niet de evolutiegrafiek of de donut; die ontgrendelen vanaf Starter (zie plannen).",
+              // TODO(relances-auto-plan): geen auto beloven tot het plan vastligt.
+              q: "Hoe werken herinneringen?",
+              a: "Je bekijkt het bericht (onderwerp en tekst) en stuurt het vanuit je mailbox.",
             },
             {
               q: "Hoe is dit beter dan een spreadsheet?",
-              a: "Minder knippen en plakken: een dossierlijst, consistente statussen en contextuele herinneringen in plaats van handmatig filteren.",
+              a: "Minder knippen en plakken: een dossierlijst, duidelijke statussen en herinneringen klaar om te versturen.",
             },
           ],
           personaTitle: "Lucas, freelance designer",
@@ -1087,24 +1088,25 @@ const es = {
           faqSub: "Respuestas breves; escríbenos para casos especiales.",
           faqItems: [
             {
+              q: "¿Cuánto cuesta?",
+              a: "Revelamos las tarifas en el lanzamiento, con una oferta gratuita para probar.",
+            },
+            {
               q: "¿Dónde se almacenan mis datos?",
-              a: "Sin Supabase, los datos permanecen en tu navegador (modo local). Con Supabase, viven en tu proyecto en la nube, protegidos por las reglas de acceso que despliegas.",
+              a: "En tu cuenta cloud segura. Tú controlas lo que introduces: clientes, importes, vencimientos.",
             },
             {
               q: "¿Puedo probar sin tarjeta?",
-              a: "Sí. El nivel gratuito basta para probar flujos y los límites que ves en el panel.",
+              a: "Sí. Al abrir el producto podrás probar sin tarjeta, con una oferta gratuita.",
             },
             {
-              q: "¿Los recordatorios se envían solos?",
-              a: "El MVP abre una vista previa (asunto y cuerpo) para que confirmes el envío desde tu correo. El envío automático completo depende del plan y la configuración.",
-            },
-            {
-              q: "¿Por qué no veo los mismos gráficos que en vuestra web?",
-              a: "La captura del sitio es una demo (números de ejemplo) del panel completo. En la app, el plan gratuito muestra los totales clave pero no el gráfico de evolución ni el donut; se desbloquean desde Starter (ver planes).",
+              // TODO(relances-auto-plan): no prometer envío auto hasta decidir el plan.
+              q: "¿Cómo funcionan los recordatorios?",
+              a: "Previsualizas el mensaje (asunto y cuerpo) y lo envías desde tu correo.",
             },
             {
               q: "¿Qué ventaja tiene frente a una hoja de cálculo?",
-              a: "Menos copiar y pegar: lista de expedientes, estados coherentes y recordatorios contextuales en lugar de filtrar filas a mano.",
+              a: "Menos copiar y pegar: lista clara, estados y recordatorios listos para enviar.",
             },
           ],
           personaTitle: "Lucas, diseñador freelance",
