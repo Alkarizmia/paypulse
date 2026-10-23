@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Connexion | PayPulss",
+  title: "Log In | PayPulss",
+  description: "Log in to PayPulss to manage invoices, clients, and payment reminders.",
   robots: { index: false, follow: false },
 };
 

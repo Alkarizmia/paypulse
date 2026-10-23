@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { EquipeView } from "./equipe-view";
 
 export const metadata: Metadata = {
-  title: "Équipe | PayPulss",
-  description: "Invitations et rôles des collaborateurs (Pro et Agency).",
+  title: "Team | PayPulss",
+  description: "Invite teammates and manage roles on Pro and Agency plans.",
 };
 
 export default function EquipePage() {

@@ -12,15 +12,21 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
+const STORAGE_KEY = "paypulss_locale";
+const LEGACY_STORAGE_KEY = "paypulse_locale";
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  /** Always "en" on first render (server + hydration), then stored locale after mount. */
+  /** Always "en" on first render (server + hydration), then stored locale after mount (app use). */
   const [locale, setLocale] = useState<Locale>("en");
 
   useEffect(() => {
     try {
-      const stored = window.localStorage.getItem("paypulse_locale");
+      const stored = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
       if (isAppLocale(stored)) {
         setLocale(stored);
+        if (!window.localStorage.getItem(STORAGE_KEY)) {
+          window.localStorage.setItem(STORAGE_KEY, stored);
+        }
       }
     } catch {
       // ignore
@@ -34,7 +40,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   function setAndPersist(next: Locale) {
     setLocale(next);
     try {
-      window.localStorage.setItem("paypulse_locale", next);
+      window.localStorage.setItem(STORAGE_KEY, next);
+      window.localStorage.setItem(LEGACY_STORAGE_KEY, next);
     } catch {
       // ignore
     }

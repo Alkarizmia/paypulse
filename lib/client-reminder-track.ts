@@ -26,3 +26,19 @@ export function getClientReminderSentAt(clientId: string): string | null {
 export function countClientRemindersSent(clientIds: string[]): number {
   return clientIds.filter((id) => wasClientReminderSent(id)).length;
 }
+
+/** Reminders marked sent in the current calendar month (local timezone). */
+export function countClientRemindersSentThisMonth(clientIds: string[]): number {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  let n = 0;
+  for (const id of clientIds) {
+    const raw = getClientReminderSentAt(id);
+    if (!raw) continue;
+    const at = new Date(raw);
+    if (Number.isNaN(at.getTime())) continue;
+    if (at.getFullYear() === y && at.getMonth() === m) n += 1;
+  }
+  return n;
+}

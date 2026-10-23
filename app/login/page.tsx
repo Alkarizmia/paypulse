@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { useLocale } from "@/app/locale-context";
 import type { AppLocale } from "@/lib/app-locale";
 import { pickQuad } from "@/lib/messages/pick";
 import { AuthPageShell } from "@/app/auth/auth-page-shell";
@@ -91,7 +90,8 @@ function loginCopy(locale: AppLocale) {
 }
 
 function LoginPageInner() {
-  const { locale } = useLocale();
+  /** Public auth page: English only. */
+  const locale = "en" as const;
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = getSupabaseBrowserClient();

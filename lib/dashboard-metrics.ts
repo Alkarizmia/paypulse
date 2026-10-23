@@ -297,6 +297,37 @@ export function rolling30dPaidComparison(clients: Client[]): { current: number; 
 }
 
 /** Délai moyen (jours) entre création et chaque encaissement reconnu. */
+/** Calendar days from today to due date: negative = overdue, 0 = due today, positive = future. */
+export function daysFromTodayToDue(dueDate: string): number | null {
+  const d = parseISODate(dueDate.includes("T") ? dueDate : `${dueDate}T12:00:00`);
+  if (!d) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+export type UnpaidDueBucket = "overdue" | "dueSoon" | "notDue";
+
+/** overdue = past due; dueSoon = due within next 7 days (incl. today); notDue = later. */
+export function unpaidDueBucket(dueDate: string): UnpaidDueBucket | null {
+  const days = daysFromTodayToDue(dueDate);
+  if (days === null) return null;
+  if (days < 0) return "overdue";
+  if (days <= 7) return "dueSoon";
+  return "notDue";
+}
+
+export function formatInvoiceDueDate(dueDate: string, locale: AppLocale): string {
+  const d = parseISODate(dueDate.includes("T") ? dueDate : `${dueDate}T12:00:00`);
+  if (!d) return dueDate;
+  return new Intl.DateTimeFormat(intlLocaleFor(locale), {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(d);
+}
+
 export function averagePaymentDelayDays(clients: Client[]): number | null {
   const deltas: number[] = [];
   for (const c of clients) {

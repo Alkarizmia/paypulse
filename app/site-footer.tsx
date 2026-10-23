@@ -12,33 +12,33 @@ type FooterColumn = {
 
 const columns: FooterColumn[] = [
   {
-    title: "Produit",
+    title: "Product",
     links: [
-      { label: "Fonctionnalités", href: "/#features" },
-      { label: "Aperçu", href: "/#demo" },
-      { label: "Tarifs", href: "/#pricing" },
+      { label: "Features", href: "/#features" },
+      { label: "Preview", href: "/#demo" },
+      { label: "Pricing", href: "/#pricing" },
       { label: "FAQ", href: "/#faq" },
-      { label: "À propos", href: "/a-propos" },
-      { label: "Le produit en images", href: "/#product-tour" },
-      { label: "Comment ça marche", href: "/#how" },
+      { label: "About", href: "/a-propos" },
+      { label: "Product tour", href: "/#product-tour" },
+      { label: "How it works", href: "/#how" },
     ],
   },
   {
-    title: "Société",
+    title: "Company",
     links: [
-      { label: "Fondateur", href: "/a-propos" },
+      { label: "Founder", href: "/a-propos" },
       { label: "Contact", href: "/contact" },
-      { label: "Écrire par e-mail", href: "mailto:contact@paypulss.com?subject=Contact%20PayPulss", external: true },
+      { label: "Email us", href: "mailto:contact@paypulss.com?subject=Contact%20PayPulss", external: true },
     ],
   },
   {
-    title: "Mentions",
+    title: "Legal",
     links: [
-      { label: "Informations légales", href: "/legal" },
-      { label: "Mentions légales", href: "/mentions-legales" },
-      { label: "Sécurité des données", href: "/droits-securite-donnees" },
-      { label: "Confidentialité", href: "/confidentialite" },
-      { label: "CGU", href: "/conditions-utilisation" },
+      { label: "Legal information", href: "/legal" },
+      { label: "Legal notice", href: "/mentions-legales" },
+      { label: "Data security", href: "/droits-securite-donnees" },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms of use", href: "/terms" },
     ],
   },
 ];
@@ -47,7 +47,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-slate-200/80 bg-slate-50 px-4 py-12 text-sm text-slate-600 sm:px-6">
       <div className="mx-auto w-full max-w-7xl">
-        <nav aria-label="Pied de page" className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-14">
+        <nav aria-label="Footer" className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-14">
           {columns.map((col) => (
             <div key={col.title}>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{col.title}</h3>
@@ -65,10 +65,10 @@ export function SiteFooter() {
                     )}
                   </li>
                 ))}
-                {col.title === "Société" ? (
+                {col.title === "Company" ? (
                   <li>
-                    <span className="text-slate-400" title="Page dédiée à venir">
-                      Carrières <span className="sr-only">(bientôt disponible)</span>
+                    <span className="text-slate-400" title="Page coming soon">
+                      Careers <span className="sr-only">(coming soon)</span>
                     </span>
                   </li>
                 ) : null}
@@ -79,10 +79,10 @@ export function SiteFooter() {
 
         <div className="mt-12 border-t border-slate-200 pt-8">
           <p className="text-center text-xs leading-relaxed text-slate-500 sm:text-left">
-            © {YEAR} Alkarizmia, entreprise enregistrée sous le numéro {KBO} (BCE/KBO).
+            © {YEAR} Alkarizmia, company registered under number {KBO} (BCE/KBO).
           </p>
           <p className="mt-2 text-center text-xs text-slate-500 sm:text-left">
-            PayPulss est une marque et un service proposé par Alkarizmia.
+            PayPulss is a brand and service offered by Alkarizmia.
           </p>
         </div>
       </div>

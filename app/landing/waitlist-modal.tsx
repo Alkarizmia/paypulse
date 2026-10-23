@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { useLocale } from "@/app/locale-context";
 import { getWaitlistCopy } from "@/lib/messages/waitlist-copy";
 import { readWaitlistAttribution } from "@/lib/waitlist-attribution";
 import { track, type TrackLocation } from "@/lib/waitlist-track";
@@ -20,7 +19,8 @@ type WaitlistModalProps = {
 };
 
 export function WaitlistModal({ open, onClose, source, trackLocation = null }: WaitlistModalProps) {
-  const { locale } = useLocale();
+  /** Public marketing is English-only. */
+  const locale = "en" as const;
   const t = getWaitlistCopy(locale);
   const titleId = useId();
   const emailRef = useRef<HTMLInputElement>(null);
@@ -227,7 +227,7 @@ export function WaitlistModal({ open, onClose, source, trackLocation = null }: W
 
               <p className="text-xs leading-relaxed text-text-muted">
                 {t.consent}{" "}
-                <Link href="/confidentialite" className="underline underline-offset-2 hover:text-text">
+                <Link href="/privacy" className="underline underline-offset-2 hover:text-text">
                   {t.privacyLink}
                 </Link>
                 . {t.unsubscribe}

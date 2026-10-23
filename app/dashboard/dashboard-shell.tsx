@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useAuth } from "@/app/auth-context";
 import { PayPulseLogo } from "./pay-pulse-logo";
 import { getMaxWorkspaces, type PlanId } from "@/lib/plans";
@@ -18,6 +25,8 @@ import { formatDashboardNotificationCopy } from "@/lib/notification-display";
 import { useNotifications } from "./use-notifications";
 import type { AppLocale } from "@/lib/app-locale";
 import { getDashboardHomeCopy } from "@/lib/messages/dashboard-home-copy";
+import { writeSidebarRailCookie } from "@/lib/dashboard-sidebar-cookie";
+import { useInitialSidebarRail } from "./sidebar-rail-provider";
 
 export type DashboardNavId = "overview" | "invoices" | "relances" | "paiements" | "clients";
 
@@ -26,6 +35,28 @@ function SidebarIcon({ d, extra }: { d: string; extra?: string }) {
     <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
       <path strokeLinecap="round" strokeLinejoin="round" d={d} />
       {extra ? <path strokeLinecap="round" strokeLinejoin="round" d={extra} /> : null}
+    </svg>
+  );
+}
+
+/** Lucide-like PanelLeftClose (expanded → collapse). */
+function PanelLeftCloseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9 4v16" strokeLinecap="round" />
+      <path d="M15 9l-3 3 3 3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Lucide-like PanelLeftOpen (collapsed → expand). */
+function PanelLeftOpenIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9 4v16" strokeLinecap="round" />
+      <path d="M13 9l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -69,94 +100,122 @@ function shellNavLink(active: boolean) {
   return `pp-dash-nav-link${active ? " is-active" : ""}`;
 }
 
-function DashboardWorkspaceSelect({ locale, light }: { locale: AppLocale; light: boolean }) {
+function useModKeyLabel(): string {
+  const [mod, setMod] = useState("Ctrl");
+  useEffect(() => {
+    const mac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform) || navigator.userAgent.includes("Mac");
+    setMod(mac ? "⌘" : "Ctrl");
+  }, []);
+  return mod;
+}
+
+function DashboardWalletDropdown({
+  locale,
+  collapsed,
+}: {
+  locale: AppLocale;
+  collapsed?: boolean;
+}) {
   const ws = useWorkspaceOptional();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   if (!ws?.supabaseMode || !ws.ready || ws.workspaces.length === 0) return null;
   if (ws.workspaces.length <= 1 && getMaxWorkspaces(ws.planId) <= 1) return null;
+
   const t =
     locale === "fr"
       ? { label: "Portefeuille", settingsHint: "Gérer dans Paramètres" }
       : { label: "Wallet", settingsHint: "Manage in Settings" };
-  return (
-    <div className="flex min-w-0 max-w-[min(100%,14rem)] flex-col gap-0.5 sm:max-w-xs">
-      <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t.label}</label>
-      <select
-        value={ws.activeWorkspaceId ?? ""}
-        onChange={(e) => void ws.setActiveWorkspaceId(e.target.value)}
-        className={
-          light
-            ? "truncate rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-900 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
-            : "truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs font-medium text-slate-100 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
-        }
-        aria-label={t.label}
-      >
-        {ws.workspaces.map((w) => (
-          <option key={w.id} value={w.id}>
-            {w.name}
-          </option>
-        ))}
-      </select>
-      <Link
-        href="/settings#workspaces"
-        className={light ? "text-[10px] text-violet-700 hover:text-violet-600" : "text-[10px] text-violet-400/90 hover:text-violet-300"}
-      >
-        {t.settingsHint}
-      </Link>
-    </div>
-  );
-}
 
-function DashboardAccountSelect({ locale, light }: { locale: AppLocale; light: boolean }) {
-  const ws = useWorkspaceOptional();
-  const { user } = useAuth();
-  const ownerIds = useMemo(() => {
-    if (!ws) return [] as string[];
-    const seen = new Set<string>();
-    const ids: string[] = [];
-    for (const m of ws.myMemberships) {
-      if (!seen.has(m.ownerUserId)) {
-        seen.add(m.ownerUserId);
-        ids.push(m.ownerUserId);
-      }
-    }
-    return ids;
-  }, [ws]);
+  const active = ws.workspaces.find((w) => w.id === ws.activeWorkspaceId) ?? ws.workspaces[0];
 
-  if (!ws?.supabaseMode || !user?.id || ownerIds.length === 0) return null;
-
-  const current = ws.effectiveOwnerUserId ?? user.id;
-  const t =
-    locale === "fr"
-      ? { label: "Compte", my: "Mon compte" }
-      : { label: "Account", my: "My account" };
+  if (collapsed) return null;
 
   return (
-    <div className="flex min-w-0 max-w-[min(100%,14rem)] flex-col gap-0.5 sm:max-w-xs">
-      <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t.label}</label>
-      <select
-        value={current}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v === user.id) ws.switchToOwnAccount();
-          else ws.switchToMemberAccount(v);
-        }}
-        className={
-          light
-            ? "truncate rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-900 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
-            : "truncate rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs font-medium text-slate-100 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
-        }
+    <div className="pp-dash-sidebar__wallet relative mx-1 mt-3" ref={rootRef}>
+      <button
+        type="button"
+        className="pp-dash-wallet-trigger flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--pp-dash-line)] bg-[var(--pp-dash-card)] px-2.5 py-2 text-left outline-none transition hover:bg-[rgba(15,23,42,0.03)] focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
         aria-label={t.label}
+        onClick={() => setOpen((v) => !v)}
       >
-        <option value={user.id}>{t.my}</option>
-        {ownerIds.map((oid) => {
-          const label = ws.sharedAccountSummaries.find((s) => s.ownerUserId === oid)?.displayName ?? oid;
-          return (
-            <option key={oid} value={oid}>
-              {label}
-            </option>
-          );
-        })}
-      </select>
+        <span className="min-w-0">
+          <span className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">
+            {t.label}
+          </span>
+          <span className="block truncate text-xs font-semibold text-[var(--pp-dash-ink)]">{active?.name}</span>
+        </span>
+        <svg
+          className={`h-3.5 w-3.5 shrink-0 text-[var(--pp-dash-muted)] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          id={listId}
+          role="listbox"
+          aria-label={t.label}
+          className="pp-dash-wallet-menu absolute left-0 right-0 top-[calc(100%+0.35rem)] z-40 overflow-hidden rounded-xl border border-[var(--pp-dash-line)] bg-[var(--pp-dash-card)] py-1 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.45)]"
+        >
+          {ws.workspaces.map((w) => {
+            const selected = w.id === ws.activeWorkspaceId;
+            return (
+              <button
+                key={w.id}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`flex w-full items-center px-3 py-2 text-left text-xs font-medium transition-colors ${
+                  selected
+                    ? "bg-[rgba(15,23,42,0.06)] text-[var(--pp-dash-ink)]"
+                    : "text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                }`}
+                onClick={() => {
+                  void ws.setActiveWorkspaceId(w.id);
+                  setOpen(false);
+                }}
+              >
+                {w.name}
+              </button>
+            );
+          })}
+          <div className="mt-1 border-t border-[var(--pp-dash-line)] pt-1">
+            <Link
+              href="/settings#workspaces"
+              className="block px-3 py-2 text-xs font-medium text-[var(--pp-dash-link)] hover:underline"
+              onClick={() => setOpen(false)}
+            >
+              {t.settingsHint}
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -186,12 +245,17 @@ export function DashboardShell({
   const { user } = useAuth();
   const pathname = usePathname() ?? "";
   const pathnameNorm = pathname.replace(/\/+$/, "") || "/";
+  const initialRail = useInitialSidebarRail();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarRail, setSidebarRail] = useState(false);
+  const [sidebarRail, setSidebarRail] = useState(initialRail);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const [clientsHashActive, setClientsHashActive] = useState(false);
   const [avatarBroken, setAvatarBroken] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const searchRef = useRef<HTMLAnchorElement>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
+  const modKey = useModKeyLabel();
   const { items: notifications, unreadCount, markingAllRead, markOneRead, markAllRead } = useNotifications(user?.id);
   const isDashHome = pathname === "/dashboard" || pathname === "/dashboard/";
   const onRelances = pathnameNorm.startsWith("/dashboard/modeles-relance");
@@ -199,50 +263,52 @@ export function DashboardShell({
   const t =
     locale === "fr"
       ? {
-          overview: "Aperçu",
           plan: "Plan",
+          upgrade: "Plan / Mettre à niveau",
           settings: "Paramètres",
+          account: "Compte",
+          myAccount: "Mon compte",
           sitePaypulss: "Site PayPulss",
           contactPage: "Contact",
           legalHub: "Infos légales",
-          sidebarResources: "Liens utiles",
           logout: "Déconnexion",
-          upgrade: "Changer de plan",
           notif: "Notifications",
           closeHint: "Fermer",
           noNotifications: "Aucune notification pour le moment.",
           markAllRead: "Tout marquer comme lu",
           markAllReadBusy: "Mise à jour…",
-          profileAlt: "Photo de profil",
-          collapseSidebar: "Replier le menu",
-          expandSidebar: "Déplier le menu",
+          profileAlt: "Menu compte",
+          collapseSidebar: "Replier le menu (Ctrl/Cmd + B)",
+          expandSidebar: "Déplier le menu (Ctrl/Cmd + B)",
+          openMenu: "Ouvrir le menu",
+          closeMenu: "Fermer le menu",
+          searchKbd: "Rechercher",
         }
       : {
-          overview: "Overview",
           plan: "Plan",
+          upgrade: "Plan / Upgrade",
           settings: "Settings",
+          account: "Account",
+          myAccount: "My account",
           sitePaypulss: "PayPulss website",
           contactPage: "Contact",
           legalHub: "Legal",
-          sidebarResources: "Shortcuts",
           logout: "Log out",
-          upgrade: "Change plan",
           notif: "Notifications",
           closeHint: "Dismiss",
           noNotifications: "No notifications yet.",
           markAllRead: "Mark all as read",
           markAllReadBusy: "Updating…",
-          profileAlt: "Profile photo",
-          collapseSidebar: "Collapse menu",
-          expandSidebar: "Expand menu",
+          profileAlt: "Account menu",
+          collapseSidebar: "Collapse sidebar (Ctrl/Cmd + B)",
+          expandSidebar: "Expand sidebar (Ctrl/Cmd + B)",
+          openMenu: "Open menu",
+          closeMenu: "Close menu",
+          searchKbd: "Search",
         };
 
   const homeCopy = getDashboardHomeCopy(locale);
   const wsCtx = useWorkspaceOptional();
-  const workspaceLabel =
-    wsCtx?.workspaces.find((w) => w.id === wsCtx.activeWorkspaceId)?.name ??
-    wsCtx?.workspaces[0]?.name ??
-    null;
   const displayEmail = userEmail ?? user?.email ?? null;
   const initial = (displayEmail?.[0] ?? "?").toUpperCase();
   const avatarUrl = useMemo(() => {
@@ -257,6 +323,21 @@ export function DashboardShell({
   const homeActive = isDashHome && !clientsHashActive && activeNav !== "invoices";
   const clientsActive = isDashHome && (clientsHashActive || activeNav === "invoices");
 
+  const ownerIds = useMemo(() => {
+    if (!wsCtx) return [] as string[];
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const m of wsCtx.myMemberships) {
+      if (!seen.has(m.ownerUserId)) {
+        seen.add(m.ownerUserId);
+        ids.push(m.ownerUserId);
+      }
+    }
+    return ids;
+  }, [wsCtx]);
+  const showAccountSwitch = Boolean(wsCtx?.supabaseMode && user?.id && ownerIds.length > 0);
+  const currentOwner = wsCtx?.effectiveOwnerUserId ?? user?.id ?? "";
+
   useEffect(() => {
     setAvatarBroken(false);
   }, [avatarUrl]);
@@ -265,6 +346,7 @@ export function DashboardShell({
     queueMicrotask(() => {
       setMobileMenuOpen(false);
       setNotifOpen(false);
+      setAvatarOpen(false);
     });
   }, [pathname]);
 
@@ -306,18 +388,84 @@ export function DashboardShell({
 
   useEffect(() => subscribeUiThemePreferenceChange((pref) => setStoredThemePref(pref)), []);
 
+  /** Migrate legacy localStorage once if cookie was empty on SSR. */
   useEffect(() => {
+    if (initialRail) return;
     try {
       const stored = window.localStorage.getItem("pp-dash-sidebar-rail");
-      if (stored === "1") setSidebarRail(true);
+      if (stored === "1") {
+        setSidebarRail(true);
+        writeSidebarRailCookie(true);
+      }
     } catch {
       /* ignore */
     }
+  }, [initialRail]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!avatarOpen) return;
+    const onPointer = (e: MouseEvent) => {
+      if (!avatarRef.current?.contains(e.target as Node)) setAvatarOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAvatarOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [avatarOpen]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === "b") {
+        e.preventDefault();
+        if (window.matchMedia("(min-width: 1024px)").matches) {
+          setSidebarRail((prev) => {
+            const next = !prev;
+            writeSidebarRailCookie(next);
+            try {
+              window.localStorage.setItem("pp-dash-sidebar-rail", next ? "1" : "0");
+            } catch {
+              /* ignore */
+            }
+            return next;
+          });
+        }
+        return;
+      }
+      if (key === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   function toggleSidebarRail() {
     setSidebarRail((prev) => {
       const next = !prev;
+      writeSidebarRailCookie(next);
       try {
         window.localStorage.setItem("pp-dash-sidebar-rail", next ? "1" : "0");
       } catch {
@@ -350,6 +498,22 @@ export function DashboardShell({
     );
   }
 
+  function renderFooterLinks(onNavigate?: () => void) {
+    return (
+      <div className="pp-dash-sidebar__footer-links mt-auto border-t border-[var(--pp-dash-line)] px-2 pt-3 pb-1">
+        <Link href="/" onClick={onNavigate} className="pp-dash-sidebar__mute-link">
+          {t.sitePaypulss}
+        </Link>
+        <Link href="/contact" onClick={onNavigate} className="pp-dash-sidebar__mute-link">
+          {t.contactPage}
+        </Link>
+        <Link href="/legal" onClick={onNavigate} className="pp-dash-sidebar__mute-link">
+          {t.legalHub}
+        </Link>
+      </div>
+    );
+  }
+
   function formatRelative(dateIso: string): string {
     const diffSec = Math.max(1, Math.floor((nowTs - new Date(dateIso).getTime()) / 1000));
     if (locale === "fr") {
@@ -370,116 +534,99 @@ export function DashboardShell({
     return `${d}d ago`;
   }
 
+  const foldTitle = sidebarRail ? t.expandSidebar : t.collapseSidebar;
+
   return (
     <div
       className={`pp-dash-root flex min-h-screen overflow-x-hidden ${light ? "" : "pp-dash-root--dark"} ${
         sidebarRail ? "is-sidebar-rail" : ""
       }`}
     >
-      <aside className="pp-dash-sidebar pp-dash-sidebar--desktop fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 flex-col overflow-hidden px-3 py-4 lg:flex">
-        <div className="shrink-0">
-          <div className="flex items-start justify-between gap-1 px-1">
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
-                title="PayPulss"
-              >
-                <PayPulseLogo className="h-8 shrink-0" />
-                <span className="pp-dash-sidebar__brand-text text-sm font-bold tracking-tight text-[var(--pp-dash-ink)]">
-                  PayPulss
-                </span>
-              </Link>
-              {workspaceLabel ? (
-                <Link
-                  href="/settings#workspaces"
-                  className="pp-dash-sidebar__workspace truncate pl-10 text-xs font-medium text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-emerald-500/35"
-                >
-                  {workspaceLabel}
-                </Link>
-              ) : null}
-            </div>
+      <aside className="pp-dash-sidebar pp-dash-sidebar--desktop fixed inset-y-0 left-0 z-30 hidden h-dvh min-h-0 flex-col overflow-hidden px-2.5 py-4 lg:flex">
+        <div className="pp-dash-sidebar__brand shrink-0 px-1">
+          <div className="pp-dash-sidebar__brand-row flex items-start justify-between gap-1">
+            <Link
+              href="/dashboard"
+              className="flex min-w-0 items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+              title="PayPulss"
+            >
+              <PayPulseLogo className="h-8 shrink-0" />
+              <span className="pp-dash-sidebar__brand-text text-sm font-bold tracking-tight text-[var(--pp-dash-ink)]">
+                PayPulss
+              </span>
+            </Link>
             <button
               type="button"
               onClick={toggleSidebarRail}
-              className="pp-dash-sidebar__fold pp-dash-btn-ghost mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center text-[var(--pp-dash-muted)]"
-              aria-label={sidebarRail ? t.expandSidebar : t.collapseSidebar}
+              className="pp-dash-sidebar__fold pp-dash-btn-ghost inline-flex h-8 w-8 shrink-0 items-center justify-center text-[var(--pp-dash-muted)]"
+              aria-label={foldTitle}
               aria-pressed={sidebarRail}
-              title={sidebarRail ? t.expandSidebar : t.collapseSidebar}
+              title={foldTitle}
             >
-              {/* Icône « panneau pliable » (invention PayPulss) */}
-              <svg className="pp-dash-sidebar__fold-ico h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <rect x="3.5" y="4.5" width="17" height="15" rx="3.5" stroke="currentColor" strokeWidth="1.7" />
-                <path d="M9 5v14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                <path
-                  d="M14.2 9.2L11.4 12l2.8 2.8"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <span className="pp-dash-sidebar__fold-swap relative h-4 w-4">
+                <PanelLeftCloseIcon
+                  className={`pp-dash-sidebar__fold-ico pp-dash-sidebar__fold-ico--close absolute inset-0 h-4 w-4 ${
+                    sidebarRail ? "is-hidden" : ""
+                  }`}
                 />
-              </svg>
+                <PanelLeftOpenIcon
+                  className={`pp-dash-sidebar__fold-ico pp-dash-sidebar__fold-ico--open absolute inset-0 h-4 w-4 ${
+                    sidebarRail ? "" : "is-hidden"
+                  }`}
+                />
+              </span>
             </button>
           </div>
+          <button
+            type="button"
+            onClick={toggleSidebarRail}
+            className="pp-dash-sidebar__fold-below pp-dash-btn-ghost mx-auto mt-2 hidden h-8 w-8 items-center justify-center text-[var(--pp-dash-muted)]"
+            aria-label={foldTitle}
+            aria-pressed={sidebarRail}
+            title={foldTitle}
+          >
+            <PanelLeftOpenIcon className="h-4 w-4" />
+          </button>
+          <DashboardWalletDropdown locale={locale} collapsed={sidebarRail} />
           <Link
+            ref={searchRef}
             href="/dashboard#clients"
-            className="pp-dash-glass mx-1 mt-4 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-emerald-500/35"
-            title={homeCopy.searchPlaceholder}
+            className="pp-dash-sidebar__search pp-dash-glass mx-1 mt-3 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+            title={`${homeCopy.searchPlaceholder} (${modKey}+K)`}
+            aria-label={t.searchKbd}
           >
             <svg className="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
-            <span className="pp-dash-sidebar__search-text">{homeCopy.searchPlaceholder}</span>
+            <span className="pp-dash-sidebar__search-text min-w-0 flex-1 truncate">{homeCopy.searchPlaceholder}</span>
+            <kbd className="pp-dash-sidebar__search-kbd">{modKey}K</kbd>
           </Link>
         </div>
-        <div className="pp-dashboard-sidebar-scroll mt-2 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
-        <nav className="flex flex-col gap-0.5">{renderPrimaryNav()}</nav>
-        <div className="pp-dash-sidebar__resources mt-5 border-t border-[var(--pp-dash-line)] pt-4">
-          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">
-            {t.sidebarResources}
-          </p>
-          <Link href="/" className="pp-dash-nav-link text-xs" title={t.sitePaypulss}>
-            <span aria-hidden>↗</span>
-            <span className="pp-dash-sidebar__label">{t.sitePaypulss}</span>
-          </Link>
-          <Link href="/contact" className="pp-dash-nav-link text-xs" title={t.contactPage}>
-            <span aria-hidden>✉</span>
-            <span className="pp-dash-sidebar__label">{t.contactPage}</span>
-          </Link>
-          <Link href="/legal" className="pp-dash-nav-link text-xs" title={t.legalHub}>
-            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <span className="pp-dash-sidebar__label">{t.legalHub}</span>
-          </Link>
-        </div>
-        <Link
-          href="/#pricing"
-          className="pp-dash-sidebar__plan pp-dash-glass mb-1 mt-2 block rounded-xl px-3 py-2 outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
-          title={`${t.plan} ${planId.toUpperCase()}`}
-        >
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">{t.plan}</p>
-          <p className="text-xs font-bold tracking-wide text-[var(--pp-dash-ink)]">{planId.toUpperCase()}</p>
-        </Link>
+
+        <div className="pp-dashboard-sidebar-scroll mt-3 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain">
+          <nav className="flex flex-col gap-0.5">{renderPrimaryNav()}</nav>
+          <div className="mt-auto flex flex-col">
+            {renderFooterLinks()}
+            <Link
+              href="/#pricing"
+              className="pp-dash-sidebar__plan pp-dash-glass mx-1 mb-1 mt-2 block rounded-xl px-3 py-2 outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+              title={`${t.plan} ${planId.toUpperCase()}`}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">{t.plan}</p>
+              <p className="text-xs font-bold tracking-wide text-[var(--pp-dash-ink)]">{planId.toUpperCase()}</p>
+            </Link>
+          </div>
         </div>
       </aside>
 
       <div className="pp-dash-main-col flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="pp-dash-header sticky top-0 z-20 flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-2 lg:hidden">
-              <PayPulseLogo className="h-7" />
-            </div>
+        <header className="pp-dash-header sticky top-0 z-20 flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 lg:hidden">
             <button
               type="button"
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className="pp-dash-btn-ghost inline-flex h-9 w-9 items-center justify-center text-[var(--pp-dash-muted)] lg:hidden"
-              aria-label={mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              className="pp-dash-btn-ghost inline-flex h-9 w-9 items-center justify-center text-[var(--pp-dash-muted)]"
+              aria-label={mobileMenuOpen ? t.closeMenu : t.openMenu}
               aria-expanded={mobileMenuOpen}
               aria-controls="dashboard-mobile-drawer"
             >
@@ -493,23 +640,17 @@ export function DashboardShell({
                 </svg>
               )}
             </button>
-            <h1 className="truncate text-lg font-semibold tracking-tight text-[var(--pp-dash-ink)]">{t.overview}</h1>
-            <DashboardAccountSelect locale={locale} light={light} />
-            <DashboardWorkspaceSelect locale={locale} light={light} />
+            <PayPulseLogo className="h-7" />
           </div>
-          <div className="flex w-full min-w-0 items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
-            <Link href="/#pricing" className="pp-dash-btn-ghost hidden px-3 py-1.5 text-xs sm:inline-flex">
-              {t.upgrade}
-            </Link>
-            {onLogout ? (
-              <button type="button" onClick={onLogout} className="pp-dash-btn-ghost inline-flex px-3 py-1.5 text-xs">
-                {t.logout}
-              </button>
-            ) : null}
+
+          <div className="ml-auto flex min-w-0 items-center justify-end gap-2 sm:gap-3">
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setNotifOpen((v) => !v)}
+                onClick={() => {
+                  setNotifOpen((v) => !v);
+                  setAvatarOpen(false);
+                }}
                 className="pp-dash-btn-ghost relative inline-flex p-2 text-[var(--pp-dash-muted)]"
                 aria-label={t.notif}
                 aria-expanded={notifOpen}
@@ -523,9 +664,7 @@ export function DashboardShell({
                   />
                 </svg>
                 {unreadCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0b0d12] px-1.5 text-[10px] font-bold text-white">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--pp-dash-card)]" />
                 ) : null}
               </button>
               {notifOpen ? (
@@ -543,82 +682,195 @@ export function DashboardShell({
                         : "z-[61] flex max-h-[min(78dvh,calc(100dvh-5rem))] min-h-0 w-auto flex-col rounded-xl border border-white/10 bg-[#0e1018] p-2 shadow-2xl max-sm:fixed max-sm:left-3 max-sm:right-3 max-sm:top-16 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[min(92vw,360px)] sm:max-h-80"
                     }
                   >
-                  <div className="mb-2 flex shrink-0 items-center justify-between gap-2 px-1">
-                    <p className={light ? "text-xs font-semibold uppercase tracking-wide text-slate-500" : "text-xs font-semibold uppercase tracking-wide text-slate-400"}>{t.notif}</p>
-                    <button
-                      type="button"
-                      disabled={markingAllRead || unreadCount === 0}
-                      onClick={() => {
-                        void (async () => {
-                          const ok = await markAllRead();
-                          if (ok) setNotifOpen(false);
-                        })();
-                      }}
-                      className={
-                        markingAllRead || unreadCount === 0
-                          ? light
-                            ? "shrink-0 cursor-not-allowed text-[11px] text-slate-400"
-                            : "shrink-0 cursor-not-allowed text-[11px] text-slate-500"
-                          : light
-                            ? "shrink-0 text-[11px] text-violet-700 hover:text-violet-600"
-                            : "shrink-0 text-[11px] text-violet-300 hover:text-violet-200"
-                      }
-                    >
-                      {markingAllRead ? t.markAllReadBusy : t.markAllRead}
-                    </button>
-                  </div>
-                  <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain sm:max-h-80">
-                    {notifications.length === 0 ? (
-                      <p className={light ? "px-2 py-2 text-sm text-slate-500" : "px-2 py-2 text-sm text-slate-400"}>{t.noNotifications}</p>
-                    ) : (
-                      notifications.map((n) => {
-                        const { title, body } = formatDashboardNotificationCopy(n, locale);
-                        return (
-                          <button
-                            key={n.id}
-                            type="button"
-                            onClick={() => void markOneRead(n.id)}
-                            className={`w-full rounded-lg px-2 py-2 text-left transition ${
-                              light ? "hover:bg-slate-50" : "hover:bg-white/[0.04]"
-                            } ${n.readAt ? "" : light ? "bg-violet-50/80" : "bg-violet-500/10"}`}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <p className={light ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>
-                                {title}
-                              </p>
-                              <span className={light ? "shrink-0 text-[10px] text-slate-500" : "shrink-0 text-[10px] text-slate-500"}>
-                                {formatRelative(n.createdAt)}
-                              </span>
-                            </div>
-                            <p className={light ? "mt-0.5 text-xs text-slate-600" : "mt-0.5 text-xs text-slate-300"}>{body}</p>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
+                    <div className="mb-2 flex shrink-0 items-center justify-between gap-2 px-1">
+                      <p
+                        className={
+                          light
+                            ? "text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            : "text-xs font-semibold uppercase tracking-wide text-slate-400"
+                        }
+                      >
+                        {t.notif}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={markingAllRead || unreadCount === 0}
+                        onClick={() => {
+                          void (async () => {
+                            const ok = await markAllRead();
+                            if (ok) setNotifOpen(false);
+                          })();
+                        }}
+                        className={
+                          markingAllRead || unreadCount === 0
+                            ? light
+                              ? "shrink-0 cursor-not-allowed text-[11px] text-slate-400"
+                              : "shrink-0 cursor-not-allowed text-[11px] text-slate-500"
+                            : light
+                              ? "shrink-0 text-[11px] text-indigo-700 hover:text-indigo-600"
+                              : "shrink-0 text-[11px] text-indigo-300 hover:text-indigo-200"
+                        }
+                      >
+                        {markingAllRead ? t.markAllReadBusy : t.markAllRead}
+                      </button>
+                    </div>
+                    <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain sm:max-h-80">
+                      {notifications.length === 0 ? (
+                        <p className={light ? "px-2 py-2 text-sm text-slate-500" : "px-2 py-2 text-sm text-slate-400"}>
+                          {t.noNotifications}
+                        </p>
+                      ) : (
+                        notifications.map((n) => {
+                          const { title, body } = formatDashboardNotificationCopy(n, locale);
+                          return (
+                            <button
+                              key={n.id}
+                              type="button"
+                              onClick={() => void markOneRead(n.id)}
+                              className={`w-full rounded-lg px-2 py-2 text-left transition ${
+                                light ? "hover:bg-slate-50" : "hover:bg-white/[0.04]"
+                              } ${n.readAt ? "" : light ? "bg-indigo-50/80" : "bg-indigo-500/10"}`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <p className={light ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>
+                                  {title}
+                                </p>
+                                <span className={light ? "shrink-0 text-[10px] text-slate-500" : "shrink-0 text-[10px] text-slate-500"}>
+                                  {formatRelative(n.createdAt)}
+                                </span>
+                              </div>
+                              <p className={light ? "mt-0.5 text-xs text-slate-600" : "mt-0.5 text-xs text-slate-300"}>{body}</p>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </>
               ) : null}
             </div>
-            <Link
-              href="/settings"
-              className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#0b0d12] text-xs font-bold text-white ring-1 ring-[var(--pp-dash-line)] transition hover:opacity-90"
-              title={displayEmail ?? t.settings}
-              aria-label={t.profileAlt}
-            >
-              {showAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element -- URL Google dynamique
-                <img
-                  src={avatarUrl!}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  referrerPolicy="no-referrer"
-                  onError={() => setAvatarBroken(true)}
-                />
-              ) : (
-                initial
-              )}
-            </Link>
+
+            <div className="relative" ref={avatarRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setAvatarOpen((v) => !v);
+                  setNotifOpen(false);
+                }}
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#0b0d12] text-xs font-bold text-white ring-1 ring-[var(--pp-dash-line)] transition hover:opacity-90"
+                title={displayEmail ?? t.account}
+                aria-label={t.profileAlt}
+                aria-haspopup="menu"
+                aria-expanded={avatarOpen}
+              >
+                {showAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- URL Google dynamique
+                  <img
+                    src={avatarUrl!}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={() => setAvatarBroken(true)}
+                  />
+                ) : (
+                  initial
+                )}
+              </button>
+              {avatarOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+0.4rem)] z-[62] min-w-[12.5rem] overflow-hidden rounded-xl border border-[var(--pp-dash-line)] bg-[var(--pp-dash-card)] py-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.45)]"
+                >
+                  {displayEmail ? (
+                    <p className="truncate border-b border-[var(--pp-dash-line)] px-3 py-2 text-[11px] text-[var(--pp-dash-muted)]">
+                      {displayEmail}
+                    </p>
+                  ) : null}
+                  {showAccountSwitch ? (
+                    <div className="border-b border-[var(--pp-dash-line)] py-1">
+                      <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">
+                        {t.account}
+                      </p>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={`flex w-full px-3 py-2 text-left text-xs font-medium ${
+                          currentOwner === user?.id
+                            ? "bg-[rgba(15,23,42,0.06)] text-[var(--pp-dash-ink)]"
+                            : "text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                        }`}
+                        onClick={() => {
+                          wsCtx?.switchToOwnAccount();
+                          setAvatarOpen(false);
+                        }}
+                      >
+                        {t.myAccount}
+                      </button>
+                      {ownerIds.map((oid) => {
+                        const label =
+                          wsCtx?.sharedAccountSummaries.find((s) => s.ownerUserId === oid)?.displayName ?? oid;
+                        return (
+                          <button
+                            key={oid}
+                            type="button"
+                            role="menuitem"
+                            className={`flex w-full px-3 py-2 text-left text-xs font-medium ${
+                              currentOwner === oid
+                                ? "bg-[rgba(15,23,42,0.06)] text-[var(--pp-dash-ink)]"
+                                : "text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                            }`}
+                            onClick={() => {
+                              wsCtx?.switchToMemberAccount(oid);
+                              setAvatarOpen(false);
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <Link
+                      href="/settings"
+                      role="menuitem"
+                      className="block px-3 py-2 text-xs font-medium text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                      onClick={() => setAvatarOpen(false)}
+                    >
+                      {t.account}
+                    </Link>
+                  )}
+                  <Link
+                    href="/#pricing"
+                    role="menuitem"
+                    className="block px-3 py-2 text-xs font-medium text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                    onClick={() => setAvatarOpen(false)}
+                  >
+                    {t.upgrade}
+                  </Link>
+                  <Link
+                    href="/settings"
+                    role="menuitem"
+                    className="block px-3 py-2 text-xs font-medium text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                    onClick={() => setAvatarOpen(false)}
+                  >
+                    {t.settings}
+                  </Link>
+                  {onLogout ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full border-t border-[var(--pp-dash-line)] px-3 py-2 text-left text-xs font-medium text-[var(--pp-dash-ink)] hover:bg-[rgba(15,23,42,0.04)]"
+                      onClick={() => {
+                        setAvatarOpen(false);
+                        onLogout();
+                      }}
+                    >
+                      {t.logout}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
         </header>
 
@@ -627,7 +879,7 @@ export function DashboardShell({
             type="button"
             onClick={() => setMobileMenuOpen(false)}
             className="fixed inset-0 z-30 bg-black/45 lg:hidden"
-            aria-label="Fermer le menu mobile"
+            aria-label={t.closeMenu}
           />
         ) : null}
         <aside
@@ -641,7 +893,7 @@ export function DashboardShell({
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+              className="flex items-center gap-2 rounded-lg outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/35"
             >
               <PayPulseLogo className="h-7" />
               <span className="text-sm font-bold tracking-tight text-[var(--pp-dash-ink)]">PayPulss</span>
@@ -650,49 +902,38 @@ export function DashboardShell({
               type="button"
               onClick={() => setMobileMenuOpen(false)}
               className="pp-dash-btn-ghost inline-flex h-8 w-8 items-center justify-center"
-              aria-label="Fermer le menu"
+              aria-label={t.closeMenu}
             >
               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <div className="pp-dashboard-sidebar-scroll mt-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
-          <Link
-            href="/dashboard#clients"
-            onClick={() => setMobileMenuOpen(false)}
-            className="pp-dash-glass mb-3 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-emerald-500/35"
-          >
-            <svg className="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-            </svg>
-            <span>{homeCopy.searchPlaceholder}</span>
-          </Link>
-          <nav className="flex flex-col gap-1">
-            {renderPrimaryNav(() => setMobileMenuOpen(false))}
-            <div className="mt-4 border-t border-[var(--pp-dash-line)] pt-4">
-              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">
-                {t.sidebarResources}
-              </p>
-              <Link href="/" onClick={() => setMobileMenuOpen(false)} className="pp-dash-nav-link text-xs">
-                {t.sitePaypulss}
-              </Link>
-              <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="pp-dash-nav-link text-xs">
-                {t.contactPage}
-              </Link>
-              <Link href="/legal" onClick={() => setMobileMenuOpen(false)} className="pp-dash-nav-link text-xs">
-                {t.legalHub}
+          <DashboardWalletDropdown locale={locale} />
+          <div className="pp-dashboard-sidebar-scroll mt-3 flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain">
+            <Link
+              href="/dashboard#clients"
+              onClick={() => setMobileMenuOpen(false)}
+              className="pp-dash-glass mb-3 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[var(--pp-dash-muted)] outline-none transition hover:text-[var(--pp-dash-ink)] focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+            >
+              <svg className="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+              </svg>
+              <span className="min-w-0 flex-1 truncate">{homeCopy.searchPlaceholder}</span>
+              <kbd className="pp-dash-sidebar__search-kbd">{modKey}K</kbd>
+            </Link>
+            <nav className="flex flex-col gap-1">{renderPrimaryNav(() => setMobileMenuOpen(false))}</nav>
+            <div className="mt-auto flex flex-col">
+              {renderFooterLinks(() => setMobileMenuOpen(false))}
+              <Link
+                href="/#pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="pp-dash-glass mx-1 mb-1 mt-2 block rounded-xl px-3 py-2 outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">{t.plan}</p>
+                <p className="text-xs font-bold tracking-wide text-[var(--pp-dash-ink)]">{planId.toUpperCase()}</p>
               </Link>
             </div>
-            <Link
-              href="/#pricing"
-              onClick={() => setMobileMenuOpen(false)}
-              className="pp-dash-glass mt-3 block rounded-xl px-3 py-2 outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/35"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--pp-dash-muted)]">{t.plan}</p>
-              <p className="text-xs font-bold tracking-wide text-[var(--pp-dash-ink)]">{planId.toUpperCase()}</p>
-            </Link>
-          </nav>
           </div>
         </aside>
 

@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { useLocale } from "@/app/locale-context";
 import type { AppLocale } from "@/lib/app-locale";
 import { pickQuad } from "@/lib/messages/pick";
 import { AuthPageShell } from "@/app/auth/auth-page-shell";
@@ -91,7 +90,8 @@ function signupCopy(locale: AppLocale) {
 }
 
 export default function SignupPage() {
-  const { locale } = useLocale();
+  /** Public auth page: English only. */
+  const locale = "en" as const;
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const t = signupCopy(locale);

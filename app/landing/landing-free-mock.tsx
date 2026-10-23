@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AppLocale } from "@/lib/app-locale";
-import { getLandingLossCopy } from "@/lib/messages/landing-loss-copy";
+import {
+  formatLandingDemoUsd,
+  LANDING_DEMO_COPY,
+} from "@/lib/messages/landing-demo-copy";
 
 type Status = "wait" | "remind" | "paid";
 type MockTheme = "dark" | "light";
@@ -16,9 +18,9 @@ type Row = {
 };
 
 const INITIAL: Row[] = [
-  { id: "lumen", name: "Studio Lumen", amount: 1200, detail: "12 jours de retard", status: "wait" },
-  { id: "nord", name: "Atelier Nord", amount: 480, detail: "Relance envoyée", status: "remind" },
-  { id: "marc", name: "Marc D.", amount: 900, detail: "Réglé aujourd'hui", status: "paid" },
+  { id: "lumen", name: "Studio Lumen", amount: 1200, detail: LANDING_DEMO_COPY.daysLate, status: "wait" },
+  { id: "nord", name: "Atelier Nord", amount: 480, detail: LANDING_DEMO_COPY.reminderSent, status: "remind" },
+  { id: "marc", name: "Marc D.", amount: 900, detail: LANDING_DEMO_COPY.paidToday, status: "paid" },
 ];
 
 function nextStatus(s: Status): Status {
@@ -27,21 +29,21 @@ function nextStatus(s: Status): Status {
   return "paid";
 }
 
-function formatEuro(value: number): string {
-  try {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      maximumFractionDigits: 0,
-    }).format(value);
-  } catch {
-    return `${value} €`;
-  }
+function statusLabel(s: Status): string {
+  if (s === "wait") return LANDING_DEMO_COPY.statusPending;
+  if (s === "remind") return LANDING_DEMO_COPY.statusFollowedUp;
+  return LANDING_DEMO_COPY.statusPaid;
 }
 
-/** Maquette Free interactive + thème sombre/clair local uniquement. */
-export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
-  const t = getLandingLossCopy(locale);
+function statusDetail(s: Status): string {
+  if (s === "wait") return LANDING_DEMO_COPY.daysLate;
+  if (s === "remind") return LANDING_DEMO_COPY.reminderSent;
+  return LANDING_DEMO_COPY.paidToday;
+}
+
+/** Interactive Free mock for the public landing (English + USD only). */
+export function LandingFreeMock() {
+  const t = LANDING_DEMO_COPY;
   const [rows, setRows] = useState<Row[]>(INITIAL);
   const [nudge, setNudge] = useState(true);
   const [pulse, setPulse] = useState(false);
@@ -59,9 +61,6 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
     return { total, openCount };
   }, [rows]);
 
-  const statusLabel = (s: Status) =>
-    s === "wait" ? t.statusWait : s === "remind" ? t.statusRemind : t.statusPaid;
-
   function onRowActivate(id: string) {
     setNudge(false);
     setRows((prev) =>
@@ -71,7 +70,7 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
         return {
           ...row,
           status,
-          detail: status === "wait" ? "En attente" : status === "remind" ? "Relance envoyée" : "Réglé",
+          detail: statusDetail(status),
         };
       }),
     );
@@ -79,9 +78,12 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
     window.setTimeout(() => setPulse(false), 420);
   }
 
+  const openHint =
+    openCount === 1 ? t.openInvoicesOne : t.openInvoicesMany(openCount);
+
   return (
     <div
-      className={`pp-free-mock pp-glass pp-reveal ${theme === "light" ? "pp-free-mock--light" : ""}`}
+      className={`pp-free-mock pp-glass pp-enter-mock ${theme === "light" ? "pp-free-mock--light" : ""}`}
       id="apercu"
       data-theme={theme}
     >
@@ -89,11 +91,11 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
         <span className="pp-free-mock-dot" />
         <span className="pp-free-mock-dot" />
         <span className="pp-free-mock-dot" />
-        <span className="pp-free-mock-title">PayPulss · Accueil</span>
+        <span className="pp-free-mock-title">{t.windowTitle}</span>
         <button
           type="button"
           className="pp-free-mock-theme"
-          aria-label={theme === "dark" ? "Passer la maquette en mode clair" : "Passer la maquette en mode sombre"}
+          aria-label={theme === "dark" ? t.themeToLight : t.themeToDark}
           onClick={() => setTheme((th) => (th === "dark" ? "light" : "dark"))}
         >
           {theme === "dark" ? (
@@ -121,11 +123,9 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
 
       <div className="pp-free-mock-body">
         <div className={`pp-free-mock-total ${pulse ? "pp-free-mock-total--pulse" : ""}`}>
-          <p className="pp-free-mock-total-label">À récupérer</p>
-          <p className="pp-free-mock-total-value">{formatEuro(total)}</p>
-          <p className="pp-free-mock-total-hint">
-            {openCount} dossier{openCount === 1 ? "" : "s"} ouvert{openCount === 1 ? "" : "s"}
-          </p>
+          <p className="pp-free-mock-total-label">{t.toCollect}</p>
+          <p className="pp-free-mock-total-value">{formatLandingDemoUsd(total)}</p>
+          <p className="pp-free-mock-total-hint">{openHint}</p>
         </div>
 
         <ul className="pp-free-mock-list">
@@ -141,7 +141,7 @@ export function LandingFreeMock({ locale = "fr" }: { locale?: AppLocale }) {
               >
                 <div className="pp-free-mock-row-main">
                   <span className="pp-free-mock-name">{row.name}</span>
-                  <span className="pp-free-mock-amount">{formatEuro(row.amount)}</span>
+                  <span className="pp-free-mock-amount">{formatLandingDemoUsd(row.amount)}</span>
                 </div>
                 <div className="pp-free-mock-row-meta">
                   <span className="pp-free-mock-detail">{row.detail}</span>

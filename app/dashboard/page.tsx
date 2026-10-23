@@ -5,7 +5,7 @@ import { DashboardView } from "./dashboard-view";
 
 export const metadata: Metadata = {
   title: "Dashboard | PayPulss",
-  description: "Suivez vos clients, vos impayes et envoyez vos relances depuis PayPulss.",
+  description: "Private workspace: track clients, unpaid invoices, and send reminders.",
 };
 
 export default function DashboardPage() {

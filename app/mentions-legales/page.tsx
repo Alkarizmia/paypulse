@@ -1,94 +1,92 @@
 import type { Metadata } from "next";
 import { LegalLayout } from "@/app/legal/legal-layout";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "Mentions légales | PayPulss",
-  description: "Mentions légales PayPulss : éditeur Alkarizmia (Belgique), hébergeur, contact.",
-  alternates: { canonical: "/mentions-legales" },
+  title: "Legal Notice | PayPulss",
+  description: "PayPulss legal notice: publisher Alkarizmia (Belgium), host, contact.",
+  alternates: { canonical: getSiteUrl() + "/mentions-legales" },
 };
 
 export default function MentionsLegalesPage() {
   const e = LEGAL_ENTITY;
   return (
-    <LegalLayout title="Mentions légales" updated="9 mai 2026">
+    <LegalLayout title="Legal Notice" updated="May 9, 2026">
       <p>
-        Les informations ci-dessous identifient l&apos;éditeur du site et du service <strong>{e.productBrand}</strong>{" "}
-        (marque d&apos;<strong>{e.denomination}</strong>), ainsi que l&apos;hébergeur technique. Elles sont fournies
-        conformément aux usages en vigueur pour les sites professionnels en Belgique et dans l&apos;Union européenne.
+        The information below identifies the publisher of the site and service <strong>{e.productBrand}</strong>{" "}
+        (a brand of <strong>{e.denomination}</strong>), as well as the technical host. It is provided in line with
+        common practice for professional sites in Belgium and the European Union.
       </p>
 
-      <h2>1. Éditeur du site et du service</h2>
+      <h2>1. Publisher of the site and service</h2>
       <ul>
         <li>
-          <strong>Dénomination sociale :</strong> {e.denomination}
+          <strong>Legal name:</strong> {e.denomination}
         </li>
         <li>
-          <strong>Forme juridique :</strong> {e.legalForm}
+          <strong>Legal form:</strong> {e.legalForm}
         </li>
         <li>
-          <strong>Capital social :</strong> {e.capitalSocial}
+          <strong>Share capital:</strong> {e.capitalSocial}
         </li>
         <li>
-          <strong>Domiciliation professionnelle / siège d&apos;exploitation :</strong> {e.address}
+          <strong>Professional address / place of business:</strong> {e.address}
         </li>
         <li>
-          <strong>Immatriculation :</strong> numéro d&apos;entreprise BCE/KBO {e.kbo}
+          <strong>Registration:</strong> company number BCE/KBO {e.kbo}
         </li>
         <li>
-          <strong>Numéro TVA intracommunautaire :</strong> {e.tva}
+          <strong>Intra-Community VAT number:</strong> {e.tva}
         </li>
         <li>
-          <strong>Directeur de la publication :</strong> {e.publicationDirector}
+          <strong>Publication director:</strong> {e.publicationDirector}
         </li>
         <li>
-          <strong>Contact :</strong>{" "}
+          <strong>Contact:</strong>{" "}
           <a href={`mailto:${e.contactEmail}?subject=Contact%20${e.productBrand}`} className="text-blue-700 underline hover:text-blue-600">
             {e.contactEmail}
           </a>
         </li>
         <li>
-          <strong>Fondateur :</strong> {e.founder}
+          <strong>Founder:</strong> {e.founder}
         </li>
         <li>
-          <strong>Service commercialisé sous la marque :</strong> {e.productBrand}
+          <strong>Service marketed under the brand:</strong> {e.productBrand}
         </li>
       </ul>
 
-      <h2>2. Hébergement</h2>
+      <h2>2. Hosting</h2>
       <ul>
         <li>
-          <strong>Hébergeur :</strong> {e.host.name}
+          <strong>Host:</strong> {e.host.name}
         </li>
         <li>
-          <strong>Adresse :</strong> {e.host.address}
+          <strong>Address:</strong> {e.host.address}
         </li>
         <li>
-          <strong>Site web :</strong>{" "}
+          <strong>Website:</strong>{" "}
           <a href={e.host.url} className="text-blue-700 underline hover:text-blue-600" rel="noopener noreferrer">
             {e.host.url}
           </a>
         </li>
       </ul>
       <p className="text-sm text-slate-600">
-        Les coordonnées d&apos;hébergement correspondent au prestataire habituellement utilisé pour une application
-        Next.js déployée sur Vercel ; vérifiez qu&apos;elles correspondent bien à votre contrat effectif au moment de la
-        mise en ligne.
+        Hosting details correspond to the provider typically used for a Next.js application deployed on Vercel;
+        verify they match your actual contract at the time of publication.
       </p>
 
-      <h2>3. Propriété intellectuelle</h2>
+      <h2>3. Intellectual property</h2>
       <p>
-        L&apos;ensemble des éléments du site (textes, graphismes, logo, structure) est la propriété de l&apos;éditeur ou
-        fait l&apos;objet d&apos;autorisations d&apos;utilisation. Toute reproduction non autorisée est interdite sous
-        réserve des exceptions légales.
+        All elements of the site (texts, graphics, logo, structure) are the property of the publisher or are used
+        under license. Unauthorized reproduction is prohibited subject to legal exceptions.
       </p>
 
-      <h2>4. Médiation et litiges (si applicable)</h2>
+      <h2>4. Mediation and disputes (if applicable)</h2>
       <p>
-        Selon votre statut, votre public (consommateurs ou professionnels) et le droit applicable (Belgique, Union
-        européenne), vous pouvez être tenu d&apos;indiquer un dispositif de médiation ou les voies de réclamation
-        compétentes. Complétez cette section avec les coordonnées officielles lorsque votre conseil ou votre autorité de
-        contrôle vous y oblige.
+        Depending on your status, your audience (consumers or professionals), and applicable law (Belgium,
+        European Union), you may be required to indicate a mediation scheme or competent complaint channels. Complete
+        this section with official contact details when your counsel or supervisory authority requires it.
       </p>
     </LegalLayout>
   );

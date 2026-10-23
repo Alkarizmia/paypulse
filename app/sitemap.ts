@@ -1,15 +1,16 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 
-/** Pages marketing publiques uniquement (pas d'auth / dashboard). */
+/** Public marketing and legal pages only (no auth / dashboard). */
 const ROUTES = [
   "",
+  "/signup",
   "/a-propos",
   "/contact",
   "/legal",
   "/mentions-legales",
-  "/confidentialite",
-  "/conditions-utilisation",
+  "/privacy",
+  "/terms",
   "/droits-securite-donnees",
 ];
 
@@ -21,6 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}${route}`,
     lastModified: now,
     changeFrequency: route === "" ? "daily" : "monthly",
-    priority: route === "" ? 1 : 0.6,
+    priority: route === "" ? 1 : route === "/signup" ? 0.8 : 0.6,
   }));
 }

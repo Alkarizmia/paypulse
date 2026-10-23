@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "PayPulss — Suivi des impayés et relances pour freelances";
+export const alt = "PayPulss — Invoice reminder software for freelancers";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/** OG 1200×630 : noir premium + accent indigo, lisible en partage. */
+/** OG 1200×630: premium dark + indigo accent, readable when shared. */
 export default function OpenGraphImage() {
   return new ImageResponse(
     (
@@ -43,10 +43,10 @@ export default function OpenGraphImage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 920 }}>
           <div style={{ fontSize: 52, fontWeight: 650, lineHeight: 1.12, letterSpacing: "-0.03em" }}>
-            Sachez qui vous doit quoi, et relancez en deux clics.
+            Stop chasing late payments. Get paid on time.
           </div>
           <div style={{ fontSize: 26, color: "#94a3b8", lineHeight: 1.35 }}>
-            Suivi des impayés pour freelances et petites agences.
+            Invoice reminder software for freelancers and small agencies.
           </div>
         </div>
 
@@ -59,11 +59,11 @@ export default function OpenGraphImage() {
             color: "#cbd5e1",
           }}
         >
-          <span style={{ color: "#f59e0b" }}>En attente</span>
+          <span style={{ color: "#f59e0b" }}>Pending</span>
           <span style={{ color: "#6366f1" }}>—</span>
-          <span style={{ color: "#6366f1" }}>Relancé</span>
+          <span style={{ color: "#6366f1" }}>Reminded</span>
           <span style={{ color: "#6366f1" }}>—</span>
-          <span style={{ color: "#10b981" }}>Payé</span>
+          <span style={{ color: "#10b981" }}>Paid</span>
         </div>
       </div>
     ),

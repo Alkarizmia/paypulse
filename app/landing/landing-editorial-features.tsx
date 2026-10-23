@@ -3,8 +3,9 @@ import type { AppLocale } from "@/lib/app-locale";
 import { getLandingPremiumCopy } from "@/lib/messages/landing-premium-copy";
 
 /** 3 features max, résultats freelance, sans mock dashboard lourd. */
-export function LandingEditorialFeatures({ locale }: { locale: AppLocale }) {
-  const c = getLandingPremiumCopy(locale);
+export function LandingEditorialFeatures({ locale: _locale }: { locale?: AppLocale }) {
+  /** Public landing is English-only. */
+  const c = getLandingPremiumCopy("en");
 
   const rows = [
     { title: c.feature1Title, body: c.feature1Body },

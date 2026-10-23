@@ -22,16 +22,16 @@ type Props = {
   primaryHref: string;
 };
 
-function formatEuro(value: number, locale: AppLocale): string {
-  const loc = locale === "en" ? "en-US" : locale === "nl" ? "nl-NL" : locale === "es" ? "es-ES" : "fr-FR";
+/** Landing marketing amounts: fixed USD for now (later: pricing/currency system). */
+function formatLandingMoney(value: number): string {
   try {
-    return new Intl.NumberFormat(loc, {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "EUR",
+      currency: "USD",
       maximumFractionDigits: 0,
     }).format(Math.round(value));
   } catch {
-    return `${Math.round(value)} €`;
+    return `$${Math.round(value)}`;
   }
 }
 
@@ -88,13 +88,14 @@ function useAnimatedNumber(target: number, reduced: boolean): number {
 }
 
 export function LandingLossCalculator({
-  locale,
+  locale: _locale,
   ctaLabel,
   waitlistMode,
   onWaitlistClick,
   primaryHref,
 }: Props) {
-  const t = getLandingLossCopy(locale);
+  /** Public landing is English-only. */
+  const t = getLandingLossCopy("en");
   const reduced = usePrefersReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const [invoices, setInvoices] = useState(DEFAULT_INVOICES);
@@ -278,7 +279,7 @@ export function LandingLossCalculator({
             max={3000}
             step={50}
             value={amount}
-            display={formatEuro(amount, locale)}
+            display={formatLandingMoney(amount)}
             onChange={(v) => {
               setAmount(v);
               scheduleReplay();
@@ -303,7 +304,7 @@ export function LandingLossCalculator({
 
         <div className="pp-loss-result pp-glass pp-reveal mt-8 rounded-2xl px-5 py-6 text-center">
           <p className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            {formatEuro(animBlocked, locale)}
+            {formatLandingMoney(animBlocked)}
           </p>
           <p className="mt-1 text-sm text-slate-300">{t.blockedSuffix}</p>
           <p className="mt-5 text-xl font-semibold text-indigo-300 sm:text-2xl">

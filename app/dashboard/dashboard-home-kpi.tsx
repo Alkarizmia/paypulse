@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, type CSSProperties } from "react";
 import type { Client } from "./types";
-import { averagePaymentDelayDays, eachRecognizedPayment } from "@/lib/dashboard-metrics";
+import {
+  averagePaymentDelayDays,
+  eachRecognizedPayment,
+  unpaidDueBucket,
+} from "@/lib/dashboard-metrics";
 import type { UiResolvedAppearance } from "@/lib/ui-theme";
 import type { AppLocale } from "@/lib/app-locale";
 import { useMoney } from "@/app/display-currency-context";
@@ -22,30 +26,54 @@ type DashboardHomeKpiProps = {
   clients: Client[];
   locale: AppLocale;
   appearance: UiResolvedAppearance;
-  remindersSentCount: number;
+  remindersSentThisMonth: number;
   onAddClient: () => void;
-  onReminders: () => void;
+  onSendOverdueReminders: () => void;
+  invoiceActionsDisabled?: boolean;
 };
-
-type Tone = "danger" | "success" | "warning" | "accent";
 
 export function DashboardHomeKpi({
   clients,
   locale,
   appearance,
-  remindersSentCount,
+  remindersSentThisMonth,
   onAddClient,
-  onReminders,
+  onSendOverdueReminders,
+  invoiceActionsDisabled,
 }: DashboardHomeKpiProps) {
   void appearance;
   const t = getDashboardHomeCopy(locale);
   const money = useMoney();
   const emptyAccount = clients.length === 0;
 
-  const unpaidTotal = useMemo(
-    () => clients.filter((c) => c.status === "unpaid").reduce((s, c) => s + c.amountDue, 0),
-    [clients],
-  );
+  const unpaid = useMemo(() => clients.filter((c) => c.status === "unpaid"), [clients]);
+
+  const unpaidTotal = useMemo(() => unpaid.reduce((s, c) => s + c.amountDue, 0), [unpaid]);
+
+  const buckets = useMemo(() => {
+    let overdue = 0;
+    let dueSoon = 0;
+    let notDue = 0;
+    let overdueAmount = 0;
+    let dueSoonAmount = 0;
+    let notDueAmount = 0;
+    for (const c of unpaid) {
+      const b = unpaidDueBucket(c.dueDate);
+      if (b === "overdue") {
+        overdue += 1;
+        overdueAmount += c.amountDue;
+      } else if (b === "dueSoon") {
+        dueSoon += 1;
+        dueSoonAmount += c.amountDue;
+      } else if (b === "notDue") {
+        notDue += 1;
+        notDueAmount += c.amountDue;
+      }
+    }
+    return { overdue, dueSoon, notDue, overdueAmount, dueSoonAmount, notDueAmount };
+  }, [unpaid]);
+
+  const barTotal = buckets.overdueAmount + buckets.dueSoonAmount + buckets.notDueAmount;
 
   const receivedThisMonth = useMemo(() => {
     const now = new Date();
@@ -54,105 +82,140 @@ export function DashboardHomeKpi({
 
   const avgDelay = useMemo(() => averagePaymentDelayDays(clients), [clients]);
 
-  const labelClass = "text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pp-dash-muted)]";
-  const valueClass = "mt-2 text-2xl font-semibold tracking-tight tabular-nums text-[var(--pp-dash-ink)] sm:text-[1.65rem]";
-  const hintClass = "mt-2 text-sm font-medium leading-snug text-[var(--pp-dash-ink)]";
+  const labelClass =
+    "text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pp-dash-muted)]";
+  const heroValueClass =
+    "mt-2 text-[2.25rem] font-semibold leading-none tracking-tight tabular-nums text-[var(--pp-dash-ink)] sm:text-[2.5rem]";
+  const statValueClass =
+    "mt-2 text-2xl font-semibold tracking-tight tabular-nums text-[var(--pp-dash-ink)]";
 
-  function onEmptyKeyDown(e: KeyboardEvent<HTMLDivElement>, action: () => void) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      action();
-    }
-  }
-
-  function renderCard(opts: {
-    tone: Tone;
-    delay: string;
-    title: string;
-    emptyHint: string;
-    onEmptyClick: () => void;
-    filled: ReactNode;
-  }) {
-    const className = `pp-dash-kpi pp-dash-blur-in${emptyAccount ? " is-empty" : ""}`;
-    const style = { "--pp-rise-delay": opts.delay } as CSSProperties;
-
-    if (emptyAccount) {
-      return (
-        <div
-          className={className}
-          data-tone={opts.tone}
-          style={style}
-          role="button"
-          tabIndex={0}
-          onClick={opts.onEmptyClick}
-          onKeyDown={(e) => onEmptyKeyDown(e, opts.onEmptyClick)}
-        >
-          <p className={labelClass}>{opts.title}</p>
-          <p className={hintClass}>{opts.emptyHint}</p>
-        </div>
-      );
-    }
-
+  if (emptyAccount) {
     return (
-      <div className={className} data-tone={opts.tone} style={style}>
-        <p className={labelClass}>{opts.title}</p>
-        {opts.filled}
+      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-4">
+        <button
+          type="button"
+          onClick={onAddClient}
+          className="pp-dash-card pp-dash-blur-in p-5 text-left sm:p-6"
+          style={{ "--pp-rise-delay": "0.04s" } as CSSProperties}
+        >
+          <p className={labelClass}>{t.kpiUnpaid}</p>
+          <p className="mt-3 text-sm font-medium text-[var(--pp-dash-ink)]">{t.kpiEmptyCta}</p>
+        </button>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 lg:gap-3">
+          {[t.kpiReceivedMonth, t.kpiAvgDelay, t.kpiRemindersSent].map((title, i) => (
+            <button
+              key={title}
+              type="button"
+              onClick={onAddClient}
+              className="pp-dash-card pp-dash-blur-in p-4 text-left"
+              style={{ "--pp-rise-delay": `${0.1 + i * 0.04}s` } as CSSProperties}
+            >
+              <p className={labelClass}>{title}</p>
+              <p className="mt-2 text-sm text-[var(--pp-dash-muted)]">{t.kpiEmptyCta}</p>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-      {renderCard({
-        tone: "danger",
-        delay: "0.04s",
-        title: t.kpiUnpaid,
-        emptyHint: t.kpiHintUnpaid,
-        onEmptyClick: onAddClient,
-        filled: <p className={valueClass}>{money.format(unpaidTotal)}</p>,
-      })}
-      {renderCard({
-        tone: "success",
-        delay: "0.1s",
-        title: t.kpiReceivedMonth,
-        emptyHint: t.kpiHintReceived,
-        onEmptyClick: onAddClient,
-        filled: <p className={valueClass}>{money.format(receivedThisMonth)}</p>,
-      })}
-      {renderCard({
-        tone: "warning",
-        delay: "0.16s",
-        title: t.kpiAvgDelay,
-        emptyHint: t.kpiHintDelay,
-        onEmptyClick: onAddClient,
-        filled:
-          avgDelay === null ? (
-            <p className="mt-2 text-base font-medium text-[var(--pp-dash-muted)]">{t.kpiNoHistory}</p>
-          ) : (
-            <p className={valueClass}>
-              {avgDelay} <span className="text-base font-medium text-[var(--pp-dash-muted)]">{t.kpiDays}</span>
-            </p>
-          ),
-      })}
-      {renderCard({
-        tone: "accent",
-        delay: "0.22s",
-        title: t.kpiRemindersSent,
-        emptyHint: t.kpiHintReminders,
-        onEmptyClick: onAddClient,
-        filled:
-          remindersSentCount === 0 ? (
-            <button
-              type="button"
-              onClick={onReminders}
-              className="mt-2 text-left text-sm font-medium text-[var(--pp-dash-ink)]"
+    <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-4">
+      <section
+        className="pp-dash-card pp-dash-blur-in flex flex-col p-5 sm:p-6"
+        style={{ "--pp-rise-delay": "0.04s" } as CSSProperties}
+      >
+        <p className={labelClass}>{t.kpiUnpaid}</p>
+        <p className={heroValueClass}>{money.format(unpaidTotal)}</p>
+        <p className="mt-2 text-sm text-[var(--pp-dash-muted)]">
+          {t.kpiOwedSubtext(unpaid.length, buckets.overdue)}
+        </p>
+
+        {barTotal > 0 ? (
+          <>
+            <div
+              className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-[var(--pp-dash-track)]"
+              role="img"
+              aria-label={`${t.legendOverdue}, ${t.legendDueSoon}, ${t.legendNotDue}`}
             >
-              {t.kpiHintReminders}
-            </button>
+              {buckets.overdueAmount > 0 ? (
+                <span
+                  className="h-full bg-[var(--pp-dash-overdue)]"
+                  style={{ width: `${(buckets.overdueAmount / barTotal) * 100}%` }}
+                />
+              ) : null}
+              {buckets.dueSoonAmount > 0 ? (
+                <span
+                  className="h-full bg-[var(--pp-dash-due-soon)]"
+                  style={{ width: `${(buckets.dueSoonAmount / barTotal) * 100}%` }}
+                />
+              ) : null}
+              {buckets.notDueAmount > 0 ? (
+                <span
+                  className="h-full bg-[var(--pp-dash-not-due)]"
+                  style={{ width: `${(buckets.notDueAmount / barTotal) * 100}%` }}
+                />
+              ) : null}
+            </div>
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--pp-dash-muted)]">
+              <li className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--pp-dash-overdue)]" aria-hidden />
+                {t.legendOverdue}
+              </li>
+              <li className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--pp-dash-due-soon)]" aria-hidden />
+                {t.legendDueSoon}
+              </li>
+              <li className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--pp-dash-not-due)]" aria-hidden />
+                {t.legendNotDue}
+              </li>
+            </ul>
+          </>
+        ) : null}
+
+        <div className="mt-5">
+          <button
+            type="button"
+            disabled={invoiceActionsDisabled || buckets.overdue === 0}
+            onClick={onSendOverdueReminders}
+            className="pp-dash-btn-ink inline-flex px-4 py-2.5 text-sm disabled:opacity-50"
+          >
+            {t.sendRemindersBtn(buckets.overdue)}
+          </button>
+        </div>
+      </section>
+
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+        <div
+          className="pp-dash-card pp-dash-blur-in p-4 sm:p-5"
+          style={{ "--pp-rise-delay": "0.1s" } as CSSProperties}
+        >
+          <p className={labelClass}>{t.kpiReceivedMonth}</p>
+          <p className={statValueClass}>{money.format(receivedThisMonth)}</p>
+        </div>
+        <div
+          className="pp-dash-card pp-dash-blur-in p-4 sm:p-5"
+          style={{ "--pp-rise-delay": "0.14s" } as CSSProperties}
+        >
+          <p className={labelClass}>{t.kpiAvgDelay}</p>
+          {avgDelay === null ? (
+            <p className="mt-2 text-sm font-medium text-[var(--pp-dash-muted)]">{t.kpiNoHistory}</p>
           ) : (
-            <p className={valueClass}>{remindersSentCount}</p>
-          ),
-      })}
+            <p className={statValueClass}>
+              {avgDelay}{" "}
+              <span className="text-sm font-medium text-[var(--pp-dash-muted)]">{t.kpiDays}</span>
+            </p>
+          )}
+        </div>
+        <div
+          className="pp-dash-card pp-dash-blur-in p-4 sm:p-5"
+          style={{ "--pp-rise-delay": "0.18s" } as CSSProperties}
+        >
+          <p className={labelClass}>{t.kpiRemindersSent}</p>
+          <p className={statValueClass}>{t.remindersThisMonth(remindersSentThisMonth)}</p>
+        </div>
+      </div>
     </div>
   );
 }

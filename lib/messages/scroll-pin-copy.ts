@@ -4,7 +4,7 @@ const fr = {
   sectionAria: "Aperçu PayPulss au défilement",
   scene2Title: "Interface pensée pour l'encaissement",
   scene2Sub: "Statuts lisibles, relances calées sur l'échéance, tableau de bord aéré.",
-  tryFreeCta: "Essayez Paypulss Gratuitement",
+  tryFreeCta: "Essayez PayPulss Gratuitement",
   mockRows: [
     { name: "Studio Mirabelle", amount: "1 890 €", status: "En attente" },
     { name: "Atelier Nord", amount: "640 €", status: "Relancé" },

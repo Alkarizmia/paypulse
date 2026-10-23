@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useLocale } from "@/app/locale-context";
 import {
   type CookieConsentChoice,
   applyAnalyticsConsent,
@@ -12,8 +11,8 @@ import {
 import { getCookieConsentCopy } from "@/lib/messages/cookie-consent-copy";
 
 export function CookieConsentBanner() {
-  const { locale } = useLocale();
-  const t = getCookieConsentCopy(locale);
+  /** Public surfaces stay English-only. */
+  const t = getCookieConsentCopy("en");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -44,7 +43,7 @@ export function CookieConsentBanner() {
           <p className="text-sm font-semibold text-text">{t.title}</p>
           <p className="mt-1 text-sm leading-relaxed text-text-muted">
             {t.body}{" "}
-            <Link href="/confidentialite" className="font-medium text-accent underline underline-offset-2">
+            <Link href="/privacy" className="font-medium text-accent underline underline-offset-2">
               {t.privacy}
             </Link>
             .

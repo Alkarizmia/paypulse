@@ -26,23 +26,23 @@ function metadataBaseUrl(): URL {
 }
 
 export const metadata: Metadata = {
-  title: "PayPulss · Relance facture impayée pour freelances",
+  title: "Invoice Reminder Software for Freelancers | PayPulss",
   description:
-    "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
+    "Track unpaid invoices and send automatic payment reminders. PayPulss helps freelancers get paid on time. Free plan available.",
   metadataBase: metadataBaseUrl(),
   openGraph: {
-    title: "PayPulss · Relance facture impayée pour freelances",
+    title: "Invoice Reminder Software for Freelancers | PayPulss",
     description:
-      "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
+      "Track unpaid invoices and send automatic payment reminders. PayPulss helps freelancers get paid on time.",
     siteName: "PayPulss",
-    locale: "fr_FR",
+    locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PayPulss · Relance facture impayée pour freelances",
+    title: "Invoice Reminder Software for Freelancers | PayPulss",
     description:
-      "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
+      "Track unpaid invoices and send automatic payment reminders. PayPulss helps freelancers get paid on time.",
   },
   robots: {
     index: true,
@@ -63,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={font.variable} suppressHydrationWarning>
+    <html lang="en" className={font.variable} suppressHydrationWarning>
       <body className={`${font.className} min-h-screen antialiased`} suppressHydrationWarning>
         <LowPerformanceHtmlAttrs />
         <PageVisibilityHtmlAttrs />

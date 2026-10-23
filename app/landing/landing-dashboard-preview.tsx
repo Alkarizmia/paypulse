@@ -1,19 +1,14 @@
 import { LandingFreeMock } from "@/app/landing/landing-free-mock";
 
 /**
- * Ancien aperçu branché sur DashboardAnalytics : remplacé par la maquette Free
- * statique pour éviter charts / framer sur la landing.
+ * Legacy preview wrapper: Free mock only (no charts / framer on the landing).
  */
-export function LandingDashboardPreview(props: {
+export function LandingDashboardPreview(_props?: {
   locale?: unknown;
   appearance?: unknown;
   onToggleAppearance?: unknown;
   frameClassName?: string;
   heroScrollReveal?: boolean;
 }) {
-  const locale =
-    props.locale === "fr" || props.locale === "en" || props.locale === "nl" || props.locale === "es"
-      ? props.locale
-      : "fr";
-  return <LandingFreeMock locale={locale} />;
+  return <LandingFreeMock />;
 }

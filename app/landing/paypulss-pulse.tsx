@@ -1,4 +1,6 @@
-/** Ligne « pouls » : En attente → Relancé → Payé. Accent signature PayPulss. */
+import { LANDING_DEMO_COPY } from "@/lib/messages/landing-demo-copy";
+
+/** Signature pulse line: PENDING → FOLLOWED UP → PAID. */
 export function PaypulssPulse({
   className = "",
   labels = true,
@@ -6,8 +8,11 @@ export function PaypulssPulse({
   className?: string;
   labels?: boolean;
 }) {
+  const t = LANDING_DEMO_COPY;
+  const aria = `${t.timelinePending}, ${t.timelineFollowedUp}, ${t.timelinePaid}`;
+
   return (
-    <div className={`pp-pulse ${className}`} role="img" aria-label="En attente, Relancé, Payé">
+    <div className={`pp-pulse ${className}`} role="img" aria-label={aria}>
       <svg className="pp-pulse-svg" viewBox="0 0 320 28" fill="none" aria-hidden>
         <path
           className="pp-pulse-line"
@@ -22,16 +27,16 @@ export function PaypulssPulse({
       </svg>
       {labels ? (
         <div className="pp-pulse-labels">
-          <span className="pp-pulse-label pp-pulse-label--wait">En attente</span>
-          <span className="pp-pulse-label pp-pulse-label--remind">Relancé</span>
-          <span className="pp-pulse-label pp-pulse-label--paid">Payé</span>
+          <span className="pp-pulse-label pp-pulse-label--wait">{t.timelinePending}</span>
+          <span className="pp-pulse-label pp-pulse-label--remind">{t.timelineFollowedUp}</span>
+          <span className="pp-pulse-label pp-pulse-label--paid">{t.timelinePaid}</span>
         </div>
       ) : null}
     </div>
   );
 }
 
-/** Séparateur horizontal discret (même signature). */
+/** Quiet horizontal divider (same signature). */
 export function PaypulssPulseDivider({ className = "" }: { className?: string }) {
   return (
     <div className={`pp-pulse-divider ${className}`} aria-hidden>

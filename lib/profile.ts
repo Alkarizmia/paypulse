@@ -49,7 +49,7 @@ function coerceUiTheme(v: string | null | undefined): UiThemePreference {
 }
 
 function mapProfile(row: ProfileRow): UserProfile {
-  const lang = isAppLocale(row.language) ? row.language : "fr";
+  const lang = isAppLocale(row.language) ? row.language : "en";
   return {
     userId: row.user_id,
     fullName: row.full_name ?? "",
@@ -221,7 +221,7 @@ export async function updateProfileAutoReminders(
   }
   const { error } = await supabase.from("profiles").insert({
     user_id: userId,
-    language: "fr",
+    language: "en",
     auto_reminders_enabled: enabled,
     email_product_updates: true,
     invoice_list_compact: false,
@@ -248,7 +248,7 @@ export async function setProfileActiveWorkspace(
   }
   const { error } = await supabase.from("profiles").insert({
     user_id: userId,
-    language: "fr",
+    language: "en",
     auto_reminders_enabled: true,
     email_product_updates: true,
     invoice_list_compact: false,

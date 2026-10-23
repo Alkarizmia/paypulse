@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   const sourceRaw = typeof body.source === "string" ? body.source.trim().slice(0, MAX_SOURCE_LEN) : "";
   const source = sourceRaw || "landing";
   const langueRaw = typeof body.langue === "string" ? body.langue.trim().toLowerCase() : "";
-  const langue: AppLocale = isAppLocale(langueRaw) ? langueRaw : "fr";
+  const langue: AppLocale = isAppLocale(langueRaw) ? langueRaw : "en";
 
   const supabase = getSupabaseServerClient();
   if (!supabase.ok) {

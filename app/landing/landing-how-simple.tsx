@@ -3,28 +3,28 @@ import { PaypulssPulseDivider } from "@/app/landing/paypulss-pulse";
 const STEPS = [
   {
     n: "1",
-    title: "Ajoutez vos clients et factures",
-    body: "Nom, montant, échéance. Tout tient dans une liste claire, pas dans cinq tableurs.",
+    title: "Add your clients and invoices",
+    body: "Name, amount, due date. Everything lives in one clear list, not five spreadsheets.",
   },
   {
     n: "2",
-    title: "Voyez qui doit payer",
-    body: "Statuts lisibles : en attente, relancé, payé. Vous savez quoi faire ce matin.",
+    title: "See who still owes you",
+    body: "Readable statuses: pending, followed up, paid. You know what to do this morning.",
   },
   {
     n: "3",
-    title: "Relancez en deux clics",
-    body: "Ouvrez un message prêt à envoyer depuis votre messagerie. Simple, pro, sans stress.",
+    title: "Follow up in two clicks",
+    body: "Open a ready-to-send message in your mail app. Simple, professional, low stress.",
   },
 ] as const;
 
-/** Section « Comment ça marche » en 3 étapes, sans motion lourde. */
+/** How it works: three steps, no heavy motion. */
 export function LandingHowSimple() {
   return (
     <section id="how" className="scroll-mt-28 px-4 py-20 sm:px-6 sm:py-24">
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="pp-reveal text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">
-          Comment ça marche
+        <h2 className="text-3xl font-semibold tracking-[-0.03em] text-text sm:text-4xl">
+          How it works
         </h2>
         <PaypulssPulseDivider className="mx-auto mt-8" />
       </div>

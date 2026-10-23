@@ -32,7 +32,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "PayPulss",
     short_name: "PayPulss",
-    description: "PayPulss relance vos clients a votre place jusqu'au paiement.",
+    description: "PayPulss tracks unpaid invoices and sends payment reminders for freelancers.",
     start_url: "/",
     scope: "/",
     display: "standalone",

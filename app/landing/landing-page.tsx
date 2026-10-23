@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
 import type { PlanId } from "@/lib/plans";
-import { useLocale } from "@/app/locale-context";
 import { useAuth } from "@/app/auth-context";
 import { getLandingCopy } from "@/lib/messages/landing-copy";
 import { getLandingPremiumCopy } from "@/lib/messages/landing-premium-copy";
@@ -40,7 +39,8 @@ const LandingPricingGrid = dynamic(
 );
 
 export function LandingPage() {
-  const { locale } = useLocale();
+  /** Public marketing is English-only; in-app locale switcher stays for logged-in users. */
+  const locale = "en" as const;
   const { isAuthenticated } = useAuth();
   const waitlist = isWaitlistMode();
   const showPricing = isShowPricing();
@@ -95,14 +95,11 @@ export function LandingPage() {
       <main className="relative z-[1]">
         <div className="pp-lp-top-scene">
           <LandingHero
-            locale={locale}
-            primaryHref={primaryHref}
-            primaryLabel={primaryLabel}
             waitlistMode={waitlist}
             onWaitlistClick={() => openWaitlist("landing-hero", "hero")}
             trustOverride={waitlist ? waitlistTrust : undefined}
           />
-          <LandingProductShowcase locale={locale} />
+          <LandingProductShowcase />
           <div className="pp-blend pp-blend--to-dark" aria-hidden />
         </div>
 
@@ -253,12 +250,12 @@ export function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/confidentialite" className="hover:text-text">
+                  <Link href="/privacy" className="hover:text-text">
                     {t.footerLinks.privacy}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/conditions-utilisation" className="hover:text-text">
+                  <Link href="/terms" className="hover:text-text">
                     {t.footerLinks.terms}
                   </Link>
                 </li>

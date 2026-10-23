@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { OrganisationView } from "./organisation-view";
 
 export const metadata: Metadata = {
-  title: "Organisation | PayPulss",
-  description: "Profil, calendrier des échéances, relances et encaissements.",
+  title: "Organization | PayPulss",
+  description: "Profile, due-date calendar, reminders, and collections overview.",
 };
 
 export default function OrganisationPage() {

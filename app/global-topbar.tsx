@@ -26,7 +26,9 @@ export function GlobalTopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
 
-  const t = getGlobalTopBarCopy(locale);
+  /** Public pages stay English; in-app switcher applies when logged in. */
+  const uiLocale = isAuthenticated ? locale : "en";
+  const t = getGlobalTopBarCopy(uiLocale);
 
   useEffect(() => {
     const id = window.setTimeout(() => setMenuOpen(false), 0);
@@ -264,20 +266,22 @@ export function GlobalTopBar() {
                 {user.email}
               </span>
             )}
-            <div
-              className={`inline-flex max-w-full flex-wrap justify-end gap-0.5 overflow-hidden rounded-full border border-slate-200 bg-white px-0.5 py-0.5 text-[10px] font-semibold text-slate-600 sm:text-[11px] ${homeMobileExtrasClass}`}
-            >
-              {APP_LOCALES.map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setLocale(code)}
-                  className={`rounded-full px-2 py-1 ${locale === code ? "bg-blue-600 text-white" : "hover:bg-slate-50"}`}
-                >
-                  {code.toUpperCase()}
-                </button>
-              ))}
-            </div>
+            {isAuthenticated ? (
+              <div
+                className={`inline-flex max-w-full flex-wrap justify-end gap-0.5 overflow-hidden rounded-full border border-slate-200 bg-white px-0.5 py-0.5 text-[10px] font-semibold text-slate-600 sm:text-[11px] ${homeMobileExtrasClass}`}
+              >
+                {APP_LOCALES.map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setLocale(code)}
+                    className={`rounded-full px-2 py-1 ${locale === code ? "bg-blue-600 text-white" : "hover:bg-slate-50"}`}
+                  >
+                    {code.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </header>
@@ -378,21 +382,23 @@ export function GlobalTopBar() {
                   ) : null}
                 </div>
 
-                <div className="mt-6 px-1 pb-2">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">{t.menuLangSection}</p>
-                  <div className="inline-flex flex-wrap gap-1 rounded-full border border-slate-200 bg-white p-1 text-[11px] font-semibold text-slate-600">
-                    {APP_LOCALES.map((code) => (
-                      <button
-                        key={code}
-                        type="button"
-                        onClick={() => setLocale(code)}
-                        className={`rounded-full px-3 py-1.5 ${locale === code ? "bg-blue-600 text-white" : "hover:bg-slate-50"}`}
-                      >
-                        {code.toUpperCase()}
-                      </button>
-                    ))}
+                {isAuthenticated ? (
+                  <div className="mt-6 px-1 pb-2">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">{t.menuLangSection}</p>
+                    <div className="inline-flex flex-wrap gap-1 rounded-full border border-slate-200 bg-white p-1 text-[11px] font-semibold text-slate-600">
+                      {APP_LOCALES.map((code) => (
+                        <button
+                          key={code}
+                          type="button"
+                          onClick={() => setLocale(code)}
+                          className={`rounded-full px-3 py-1.5 ${locale === code ? "bg-blue-600 text-white" : "hover:bg-slate-50"}`}
+                        >
+                          {code.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : null}
               </div>
 
               <div className="shrink-0 border-t border-slate-100 p-4 text-[11px] leading-relaxed text-slate-500">

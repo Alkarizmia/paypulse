@@ -21,6 +21,20 @@ if (isProd) {
 }
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/confidentialite",
+        destination: "/privacy",
+        permanent: true,
+      },
+      {
+        source: "/conditions-utilisation",
+        destination: "/terms",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

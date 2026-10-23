@@ -3,8 +3,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PayPulseLogo } from "@/app/dashboard/pay-pulse-logo";
-import { useLocale } from "@/app/locale-context";
-import { APP_LOCALES } from "@/lib/app-locale";
 import { getGlobalTopBarCopy } from "@/lib/messages/global-topbar-copy";
 import "@/app/landing/landing-premium.css";
 
@@ -15,8 +13,8 @@ export function AuthPageShell({
   children: ReactNode;
   variant: "login" | "signup";
 }) {
-  const { locale, setLocale } = useLocale();
-  const t = getGlobalTopBarCopy(locale);
+  /** Login/signup are public: English only (no language switcher). */
+  const t = getGlobalTopBarCopy("en");
   const ctaHref = variant === "login" ? "/signup" : "/login";
   const ctaLabel = variant === "login" ? t.cta : t.login;
 
@@ -31,20 +29,6 @@ export function AuthPageShell({
             <span className="pp-lp-nav-wordmark">PayPulss</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-0.5">
-              {APP_LOCALES.map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setLocale(code)}
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    locale === code ? "text-accent" : "text-text-muted hover:text-text"
-                  }`}
-                >
-                  {code.toUpperCase()}
-                </button>
-              ))}
-            </div>
             <Link href={ctaHref} className="pp-lp-btn bg-primary px-4 py-1.5 text-white">
               {ctaLabel}
             </Link>

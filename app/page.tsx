@@ -2,24 +2,33 @@ import type { Metadata } from "next";
 import { LandingPage } from "@/app/landing/landing-page";
 import { getSiteUrl } from "@/lib/site-url";
 
+const TITLE = "Invoice Reminder Software for Freelancers | PayPulss";
+const DESCRIPTION =
+  "Track unpaid invoices and send automatic payment reminders. PayPulss helps freelancers get paid on time. Free plan available.";
+
 export const metadata: Metadata = {
-  title: "PayPulss · Relance facture impayée pour freelances",
-  description:
-    "Suivez vos impayés et relancez vos clients en deux clics. Tableau clair pour freelances et petites agences. Sans tableur dispersé.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: {
     canonical: getSiteUrl() + "/",
   },
   openGraph: {
-    title: "PayPulss · Relance facture impayée pour freelances",
+    title: TITLE,
     description:
-      "Suivez vos impayés et relancez vos clients en deux clics. Pour freelances et petites agences.",
+      "Track unpaid invoices and send automatic payment reminders. PayPulss helps freelancers get paid on time.",
     url: getSiteUrl() + "/",
-    locale: "fr_FR",
+    locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description:
+      "Track unpaid invoices and send automatic payment reminders. PayPulss helps freelancers get paid on time.",
   },
 };
 
-/** Landing en SSR (Client Component hydraté) : H1 et copy présents dans le HTML initial. */
+/** Landing in SSR (Client Component hydrated): H1 and copy present in the initial HTML. */
 export default function Home() {
   return <LandingPage />;
 }

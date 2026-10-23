@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       custom_text: {
         submit: {
           message:
-            "Code promo : cherchez le lien « Ajouter un code promotionnel » sous le sous-total, dans la colonne de gauche (récapitulatif du panier), puis saisissez votre code avant de payer.",
+            "Promo code: look for “Add promotion code” under the subtotal in the left summary column, then enter your code before paying.",
         },
       },
       success_url: `${origin}/dashboard?stripe=success`,

@@ -57,7 +57,11 @@ import {
 } from "@/lib/subscriptions";
 import { buildMailtoSingleRecipient, MAILTO_HREF_SAFE_MAX } from "@/lib/mailto-build";
 import { createMemberActionNotifications } from "@/lib/notifications";
-import { markClientReminderSent, countClientRemindersSent } from "@/lib/client-reminder-track";
+import {
+  markClientReminderSent,
+  countClientRemindersSentThisMonth,
+} from "@/lib/client-reminder-track";
+import { unpaidDueBucket } from "@/lib/dashboard-metrics";
 import { getDashboardHomeCopy } from "@/lib/messages/dashboard-home-copy";
 import { DashboardHomeKpi } from "./dashboard-home-kpi";
 import { DashboardHomeCashChart } from "./dashboard-home-cash-chart";
@@ -152,6 +156,7 @@ export function DashboardView() {
   const remindCooldownTimerRef = useRef<Map<string, number>>(new Map());
   const reminderAlertRef = useRef<HTMLDivElement>(null);
   const [reminderModalClient, setReminderModalClient] = useState<Client | null>(null);
+  const [reminderQueue, setReminderQueue] = useState<Client[]>([]);
   const [remindCooldownUntil, setRemindCooldownUntil] = useState<Record<string, number>>({});
 
   const startRemindCooldown = useCallback((clientId: string) => {
@@ -322,8 +327,8 @@ export function DashboardView() {
     });
   }, [reminderModalClient, locale, caps.aiReminderDrafts, currentPlanId, supabase, ws.activeWorkspaceId, money]);
 
-  const remindersSentCount = useMemo(
-    () => countClientRemindersSent(clients.map((c) => c.id)),
+  const remindersSentThisMonth = useMemo(
+    () => countClientRemindersSentThisMonth(clients.map((c) => c.id)),
     [clients],
   );
 
@@ -491,6 +496,7 @@ export function DashboardView() {
   function handleRequestSendReminder(client: Client) {
     setReminderMailHardError(null);
     setReminderToast(null);
+    setReminderQueue([]);
     if (client.status !== "unpaid") return;
     const cooldownEnd = remindCooldownUntil[client.id];
     if (typeof cooldownEnd === "number" && Date.now() < cooldownEnd) return;
@@ -499,6 +505,24 @@ export function DashboardView() {
       return;
     }
     setReminderModalClient(client);
+  }
+
+  function handleSendOverdueReminders() {
+    setReminderMailHardError(null);
+    setReminderToast(null);
+    const overdue = clients
+      .filter((c) => c.status === "unpaid" && unpaidDueBucket(c.dueDate) === "overdue")
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    if (overdue.length === 0) return;
+    if (!window.confirm(homeCopy.sendRemindersConfirm(overdue.length))) return;
+    const withEmail = overdue.filter((c) => c.email?.trim());
+    if (withEmail.length === 0) {
+      setReminderMailHardError(copy.clientEmailMissing);
+      return;
+    }
+    const [first, ...rest] = withEmail;
+    setReminderQueue(rest);
+    setReminderModalClient(first);
   }
 
   async function handleReminderModalSend(payload: { subject: string; body: string }) {
@@ -530,7 +554,6 @@ export function DashboardView() {
       return;
     }
 
-    setReminderModalClient(null);
     setReminderMailHardError(null);
     try {
       const a = document.createElement("a");
@@ -549,6 +572,14 @@ export function DashboardView() {
     });
     startRemindCooldown(client.id);
     markClientReminderSent(client.id);
+
+    if (reminderQueue.length > 0) {
+      const [next, ...rest] = reminderQueue;
+      setReminderQueue(rest);
+      setReminderModalClient(next);
+    } else {
+      setReminderModalClient(null);
+    }
   }
 
   async function handleMoveToTrash(clientId: string) {
@@ -1058,13 +1089,6 @@ export function DashboardView() {
               >
                 {homeCopy.newClient}
               </button>
-              <button
-                type="button"
-                onClick={() => handleNav("relances")}
-                className="pp-dash-btn-ghost inline-flex px-4 py-2.5 text-sm"
-              >
-                {homeCopy.sendReminder}
-              </button>
             </div>
           </div>
 
@@ -1072,12 +1096,11 @@ export function DashboardView() {
             clients={clients}
             locale={locale}
             appearance={shellAppearance}
-            remindersSentCount={remindersSentCount}
+            remindersSentThisMonth={remindersSentThisMonth}
             onAddClient={openAddClientModal}
-            onReminders={() => handleNav("relances")}
+            onSendOverdueReminders={handleSendOverdueReminders}
+            invoiceActionsDisabled={invoiceReadOnly}
           />
-
-          <DashboardHomeCashChart clients={clients} locale={locale} appearance={shellAppearance} />
 
           <PriorityRemindTable
             clients={clients}
@@ -1086,7 +1109,12 @@ export function DashboardView() {
             onRemind={handleRequestSendReminder}
             remindCooldownUntil={remindCooldownUntil}
             invoiceActionsDisabled={invoiceReadOnly}
+            onViewAll={() => {
+              invoicesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
           />
+
+          <DashboardHomeCashChart clients={clients} locale={locale} appearance={shellAppearance} />
         </div>
 
         <div ref={invoicesRef} id="clients" className="min-w-0 scroll-mt-28 mt-12 space-y-6">
@@ -1196,7 +1224,10 @@ export function DashboardView() {
             sending: copy.reminderModalSending,
             subjectRequired: copy.reminderModalSubjectRequired,
           }}
-          onClose={() => setReminderModalClient(null)}
+          onClose={() => {
+            setReminderQueue([]);
+            setReminderModalClient(null);
+          }}
           onSend={handleReminderModalSend}
         />
       ) : null}

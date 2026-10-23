@@ -18,6 +18,8 @@ const ALLOWED_PAGE_PREFIXES = [
   "/mentions-legales",
   "/confidentialite",
   "/conditions-utilisation",
+  "/privacy",
+  "/terms",
   "/droits-securite-donnees",
   "/free",
   "/gratuit",
